@@ -16,6 +16,18 @@ This project uses Docker to run. Make sure you have Docker and Docker Compose in
 
     This command will start the server, which will be accessible at `http://localhost:3000`.
 
+## Development
+
+### List All Routes
+
+To see a list of all registered API endpoints, you can run the following command:
+
+```sh
+make list-routes
+```
+
+This will output a table with all available paths and their corresponding HTTP methods.
+
 ## API Endpoints
 
 Here are the available endpoints.
@@ -49,7 +61,7 @@ curl http://localhost:3000/api/cats/random-cat
 Adds a new cat breed to the list. The breed must not already exist.
 
 -   **Method:** `POST`
--   **URL:** `/api/cats/`
+-   **URL:** `/api/cats/add`
 -   **Body:** `json`
 
 **Example with `curl`:**
@@ -58,7 +70,7 @@ Adds a new cat breed to the list. The breed must not already exist.
 curl -X POST \
   -H "Content-Type: application/json" \
   -d '{"breed": "Turkish Angora"}' \
-  http://localhost:3000/api/cats/
+  http://localhost:3000/api/cats/add
 ```
 
 **Success Response (201 Created):**

@@ -17,7 +17,7 @@ router.get(
 );
 
 router.post(
-  "/", // POST to /api/cats/
+  "/add", // POST to /api/cats/add
   (req, res) => catController.addBreed(req, res)
 );
 
