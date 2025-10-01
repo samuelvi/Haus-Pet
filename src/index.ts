@@ -1,5 +1,5 @@
 import express, { Express, Request, Response } from "express";
-import apiRoutes from "./routes";
+import apiRoutes from "./routes/api";
 
 const app: Express = express();
 const port: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;

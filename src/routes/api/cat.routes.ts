@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { CatController } from "../infrastructure/http/controllers/cat.controller";
-import { CatService } from "../application/cat.service";
-import { InMemoryCatRepository } from "../infrastructure/repositories/in-memory-cat.repository";
+import { CatController } from "../../infrastructure/http/controllers/cat.controller";
+import { CatService } from "../../application/cat.service";
+import { InMemoryCatRepository } from "../../infrastructure/repositories/in-memory-cat.repository";
 
 const router = Router();
 
