@@ -1,26 +1,19 @@
 import { Router } from "express";
+import { CatController } from "../infrastructure/http/controllers/cat.controller";
+import { CatService } from "../application/cat.service";
+import { InMemoryCatRepository } from "../infrastructure/repositories/in-memory-cat.repository";
 
 const router = Router();
 
+// Dependency Injection / Composition Root
+const catRepository = new InMemoryCatRepository();
+const catService = new CatService(catRepository);
+const catController = new CatController(catService);
 
-const catBreeds: string[] = [
-  "Siamese",
-  "Persian",
-  "Maine Coon",
-  "Ragdoll",
-  "Bengal",
-  "Sphynx",
-  "British Shorthair",
-  "Abyssinian",
-  "Scottish Fold",
-  "Birman",
-];
-
-// Usage: http://localhost:3000/api/cats/random-cat
-router.get("/random-cat", (_req, res) => {
-  const randomIndex = Math.floor(Math.random() * catBreeds.length);
-  const randomBreed = catBreeds[randomIndex];
-  res.json({ breed: randomBreed });
-});
+// Define the route
+router.get(
+  "/random-cat",
+  (req, res) => catController.getRandomBreed(req, res) // Bind the controller method
+);
 
 export default router;
