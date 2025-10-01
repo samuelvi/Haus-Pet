@@ -1,5 +1,6 @@
 import { CatRepository } from "../domain/cat.repository";
 import { Cat } from "../domain/cat";
+import { CatBreedAlreadyExistsError } from "../domain/errors/cat-breed-already-exists.error";
 
 export class CatService {
   constructor(private readonly catRepository: CatRepository) {}
@@ -11,5 +12,16 @@ export class CatService {
     }
     const randomIndex = Math.floor(Math.random() * breeds.length);
     return breeds[randomIndex];
+  }
+
+  public async addCatBreed(breed: string): Promise<Cat> {
+    const existingCat = await this.catRepository.findByBreed(breed);
+    if (existingCat) {
+      throw new CatBreedAlreadyExistsError("Cat breed already exists");
+    }
+
+    const newCat: Cat = { breed };
+    await this.catRepository.save(newCat);
+    return newCat;
   }
 }

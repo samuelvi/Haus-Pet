@@ -18,4 +18,13 @@ export class InMemoryCatRepository implements CatRepository {
   public async findAll(): Promise<Cat[]> {
     return this.cats;
   }
+
+  public async findByBreed(breed: string): Promise<Cat | null> {
+    const foundCat = this.cats.find((cat) => cat.breed.toLowerCase() === breed.toLowerCase());
+    return foundCat || null;
+  }
+
+  public async save(cat: Cat): Promise<void> {
+    this.cats.push(cat);
+  }
 }
