@@ -1,0 +1,15 @@
+# Dependency directories
+node_modules/
+
+# Build output
+dist/
+
+# Log files
+*.log
+npm-debug.log*
+
+# IDE configuration
+.idea/
+
+# Lockfiles
+package-lock.json

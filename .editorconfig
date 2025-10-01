@@ -1,0 +1,32 @@
+# .editorconfig
+# Basado en las guías de estilo de Airbnb y estándares de la comunidad
+# para TypeScript, JavaScript, JSON y más.
+
+# Declaramos este como el archivo principal para que no busque en directorios superiores.
+root = true
+
+[*]
+# Estilo de indentación: usa espacios, no tabuladores.
+indent_style = space
+# Tamaño de la indentación: 2 espacios. Es el estándar más extendido.
+indent_size = 2
+
+# Final de línea: usa Line Feed (LF), común en sistemas Unix (Linux/macOS).
+# Evita problemas de formato entre diferentes sistemas operativos.
+end_of_line = lf
+
+# Codificación de caracteres: UTF-8 para máxima compatibilidad.
+charset = utf-8
+
+# Elimina espacios en blanco al final de las líneas.
+trim_trailing_whitespace = true
+# Asegura que el archivo termine con una línea en blanco.
+insert_final_newline = true
+
+# Puedes definir un ancho de línea máximo, aunque los linters suelen gestionar esto.
+# max_line_length = 100
+
+[*.md]
+# Para archivos Markdown, a menudo se prefiere no eliminar los espacios finales
+# ya que pueden ser significativos (ej. para forzar un salto de línea).
+trim_trailing_whitespace = false

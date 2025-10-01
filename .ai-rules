@@ -1,0 +1,1040 @@
+# TypeScript DDD Project Guidelines for AI Agents
+
+## General Principles
+- Always use TypeScript with strict type checking
+- Follow Domain-Driven Design (DDD) principles
+- Maintain clear separation between layers: Domain, Application, and Infrastructure
+- Use Value Objects for domain concepts
+- Write self-documenting code with clear variable and function names
+- All comments and documentation must be in English
+
+## Architecture Overview
+
+### Layer Structure
+```
+src/
+├── domain/              # Domain Layer (Business Logic)
+│   ├── entities/        # Domain entities
+│   ├── value-objects/   # Value objects (immutable)
+│   ├── repositories/    # Repository interfaces
+│   ├── services/        # Domain services
+│   ├── events/          # Domain events
+│   └── exceptions/      # Domain exceptions
+├── application/         # Application Layer (Use Cases)
+│   ├── use-cases/       # Application use cases
+│   ├── dto/             # Data Transfer Objects
+│   ├── mappers/         # Entity <-> DTO mappers
+│   └── services/        # Application services
+├── infrastructure/      # Infrastructure Layer (Technical Details)
+│   ├── persistence/     # Database implementations
+│   │   ├── repositories/
+│   │   └── models/      # ORM models
+│   ├── http/           # HTTP/REST implementations
+│   │   ├── controllers/
+│   │   ├── middlewares/
+│   │   └── routes/
+│   ├── messaging/      # Message queue implementations
+│   └── external/       # External service integrations
+└── shared/             # Shared Kernel
+    ├── types/          # Shared types
+    └── utils/          # Shared utilities
+```
+
+## Type Safety Rules
+
+### 1. Variable Declarations
+```typescript
+// ✅ GOOD: Explicit types for all variables
+const port: number = Number(process.env.PORT ?? 3000);
+const apiKey: string = process.env.API_KEY ?? '';
+const isProduction: boolean = process.env.NODE_ENV === 'production';
+
+// ❌ BAD: Implicit types
+const port = process.env.PORT || 3000;
+const apiKey = process.env.API_KEY;
+```
+
+### 2. Function Signatures
+```typescript
+// ✅ GOOD: Explicit parameter and return types
+function calculateTotal(price: number, quantity: number): number {
+  return price * quantity;
+}
+
+async function fetchUser(id: string): Promise {
+  const response = await fetch(`/api/users/${id}`);
+  return response.json();
+}
+
+// ❌ BAD: Missing types
+function calculateTotal(price, quantity) {
+  return price * quantity;
+}
+```
+
+## Domain Layer
+
+### Value Objects
+Value Objects are immutable objects that represent domain concepts without identity.
+
+```typescript
+// ✅ GOOD: Value Object implementation
+export class Email {
+  private readonly value: string;
+
+  private constructor(value: string) {
+    this.value = value;
+  }
+
+  /**
+   * Creates a new Email value object
+   * @param value - The email string to validate and create
+   * @returns Result containing Email or Error
+   */
+  public static create(value: string): Result {
+    if (!this.isValid(value)) {
+      return Result.fail(new Error('Invalid email format'));
+    }
+    return Result.ok(new Email(value));
+  }
+
+  private static isValid(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  public getValue(): string {
+    return this.value;
+  }
+
+  public equals(other: Email): boolean {
+    return this.value === other.value;
+  }
+
+  public toString(): string {
+    return this.value;
+  }
+}
+
+// ✅ GOOD: Money value object
+export class Money {
+  private readonly amount: number;
+  private readonly currency: Currency;
+
+  private constructor(amount: number, currency: Currency) {
+    this.amount = amount;
+    this.currency = currency;
+  }
+
+  public static create(amount: number, currency: Currency): Result {
+    if (amount < 0) {
+      return Result.fail(new Error('Amount cannot be negative'));
+    }
+    return Result.ok(new Money(amount, currency));
+  }
+
+  public add(other: Money): Result {
+    if (!this.currency.equals(other.currency)) {
+      return Result.fail(new Error('Cannot add money with different currencies'));
+    }
+    return Money.create(this.amount + other.amount, this.currency);
+  }
+
+  public getAmount(): number {
+    return this.amount;
+  }
+
+  public getCurrency(): Currency {
+    return this.currency;
+  }
+
+  public equals(other: Money): boolean {
+    return this.amount === other.amount &&
+           this.currency.equals(other.currency);
+  }
+}
+
+// ✅ GOOD: UserId value object
+export class UserId {
+  private readonly value: string;
+
+  private constructor(value: string) {
+    this.value = value;
+  }
+
+  public static create(value?: string): UserId {
+    return new UserId(value ?? crypto.randomUUID());
+  }
+
+  public static fromString(value: string): Result {
+    if (!value || value.trim().length === 0) {
+      return Result.fail(new Error('UserId cannot be empty'));
+    }
+    return Result.ok(new UserId(value));
+  }
+
+  public getValue(): string {
+    return this.value;
+  }
+
+  public equals(other: UserId): boolean {
+    return this.value === other.value;
+  }
+
+  public toString(): string {
+    return this.value;
+  }
+}
+```
+
+### Entities
+Entities have identity and lifecycle. They use Value Objects internally.
+
+```typescript
+// ✅ GOOD: Entity implementation
+export interface UserProps {
+  id: UserId;
+  email: Email;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export class User {
+  private readonly id: UserId;
+  private email: Email;
+  private name: string;
+  private readonly createdAt: Date;
+  private updatedAt: Date;
+
+  private constructor(props: UserProps) {
+    this.id = props.id;
+    this.email = props.email;
+    this.name = props.name;
+    this.createdAt = props.createdAt;
+    this.updatedAt = props.updatedAt;
+  }
+
+  /**
+   * Creates a new User entity
+   * @param props - User properties
+   * @returns Result containing User or Error
+   */
+  public static create(props: Omit): User {
+    const now = new Date();
+    return new User({
+      id: UserId.create(),
+      email: props.email,
+      name: props.name,
+      createdAt: now,
+      updatedAt: now
+    });
+  }
+
+  /**
+   * Reconstructs a User entity from persistence
+   */
+  public static fromPersistence(props: UserProps): User {
+    return new User(props);
+  }
+
+  // Getters
+  public getId(): UserId {
+    return this.id;
+  }
+
+  public getEmail(): Email {
+    return this.email;
+  }
+
+  public getName(): string {
+    return this.name;
+  }
+
+  // Business methods
+  public changeEmail(newEmail: Email): void {
+    this.email = newEmail;
+    this.updatedAt = new Date();
+  }
+
+  public changeName(newName: string): Result {
+    if (!newName || newName.trim().length === 0) {
+      return Result.fail(new Error('Name cannot be empty'));
+    }
+    this.name = newName;
+    this.updatedAt = new Date();
+    return Result.ok(undefined);
+  }
+}
+```
+
+### Repository Interfaces (Domain Layer)
+```typescript
+// ✅ GOOD: Repository interface in domain layer
+export interface UserRepository {
+  /**
+   * Finds a user by their ID
+   * @param id - User identifier
+   * @returns Promise with optional User
+   */
+  findById(id: UserId): Promise;
+
+  /**
+   * Finds a user by their email
+   * @param email - User email
+   * @returns Promise with optional User
+   */
+  findByEmail(email: Email): Promise;
+
+  /**
+   * Saves a user (create or update)
+   * @param user - User entity to save
+   * @returns Promise with saved User
+   */
+  save(user: User): Promise;
+
+  /**
+   * Deletes a user by their ID
+   * @param id - User identifier
+   * @returns Promise with deletion result
+   */
+  delete(id: UserId): Promise;
+
+  /**
+   * Finds all users with pagination
+   * @param limit - Maximum number of results
+   * @param offset - Number of results to skip
+   * @returns Promise with array of Users
+   */
+  findAll(limit: number, offset: number): Promise;
+}
+```
+
+### Domain Services
+```typescript
+// ✅ GOOD: Domain service
+export class UserDomainService {
+  /**
+   * Checks if a user can be deleted
+   * @param user - User to check
+   * @returns Result indicating if deletion is allowed
+   */
+  public canDelete(user: User): Result {
+    // Business rules for deletion
+    if (this.hasActiveSubscription(user)) {
+      return Result.fail(new Error('Cannot delete user with active subscription'));
+    }
+    return Result.ok(undefined);
+  }
+
+  private hasActiveSubscription(user: User): boolean {
+    // Domain logic
+    return false;
+  }
+}
+```
+
+### Domain Events
+```typescript
+// ✅ GOOD: Domain event
+export interface DomainEvent {
+  occurredOn: Date;
+  aggregateId: string;
+}
+
+export class UserCreatedEvent implements DomainEvent {
+  public readonly occurredOn: Date;
+  public readonly aggregateId: string;
+  public readonly email: string;
+  public readonly name: string;
+
+  constructor(userId: UserId, email: Email, name: string) {
+    this.occurredOn = new Date();
+    this.aggregateId = userId.getValue();
+    this.email = email.getValue();
+    this.name = name;
+  }
+}
+```
+
+### Domain Exceptions
+```typescript
+// ✅ GOOD: Domain exceptions
+export class DomainException extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = this.constructor.name;
+    Object.setPrototypeOf(this, DomainException.prototype);
+  }
+}
+
+export class UserNotFoundException extends DomainException {
+  constructor(userId: string) {
+    super(`User with id ${userId} not found`);
+  }
+}
+
+export class InvalidEmailException extends DomainException {
+  constructor(email: string) {
+    super(`Invalid email: ${email}`);
+  }
+}
+```
+
+## Application Layer
+
+### Use Cases
+```typescript
+// ✅ GOOD: Use case implementation
+export interface CreateUserDTO {
+  email: string;
+  name: string;
+}
+
+export interface CreateUserResponse {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: Date;
+}
+
+export class CreateUserUseCase {
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly eventBus: EventBus
+  ) {}
+
+  /**
+   * Executes the create user use case
+   * @param dto - Data transfer object with user data
+   * @returns Promise with Result containing user response or error
+   */
+  public async execute(dto: CreateUserDTO): Promise<Result> {
+    // Validate email
+    const emailOrError = Email.create(dto.email);
+    if (emailOrError.isFailure()) {
+      return Result.fail(emailOrError.error);
+    }
+
+    const email: Email = emailOrError.value;
+
+    // Check if user already exists
+    const existingUser: User | null = await this.userRepository.findByEmail(email);
+    if (existingUser) {
+      return Result.fail(new Error('User with this email already exists'));
+    }
+
+    // Create user entity
+    const user: User = User.create({
+      email,
+      name: dto.name
+    });
+
+    // Save to repository
+    const savedUser: User = await this.userRepository.save(user);
+
+    // Publish domain event
+    const event: UserCreatedEvent = new UserCreatedEvent(
+      savedUser.getId(),
+      savedUser.getEmail(),
+      savedUser.getName()
+    );
+    await this.eventBus.publish(event);
+
+    // Return response
+    return Result.ok({
+      id: savedUser.getId().getValue(),
+      email: savedUser.getEmail().getValue(),
+      name: savedUser.getName(),
+      createdAt: savedUser.getCreatedAt()
+    });
+  }
+}
+```
+
+### DTOs (Data Transfer Objects)
+```typescript
+// ✅ GOOD: DTO definitions
+export interface UserDTO {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateUserRequestDTO {
+  email: string;
+  name: string;
+}
+
+export interface UpdateUserRequestDTO {
+  name?: string;
+  email?: string;
+}
+
+export interface PaginatedResponseDTO {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+```
+
+### Mappers
+```typescript
+// ✅ GOOD: Mapper between Entity and DTO
+export class UserMapper {
+  /**
+   * Maps User entity to UserDTO
+   * @param user - User entity
+   * @returns UserDTO
+   */
+  public static toDTO(user: User): UserDTO {
+    return {
+      id: user.getId().getValue(),
+      email: user.getEmail().getValue(),
+      name: user.getName(),
+      createdAt: user.getCreatedAt().toISOString(),
+      updatedAt: user.getUpdatedAt().toISOString()
+    };
+  }
+
+  /**
+   * Maps persistence data to User entity
+   * @param data - Raw persistence data
+   * @returns Result with User entity or Error
+   */
+  public static toDomain(data: PersistenceUser): Result {
+    const emailOrError = Email.create(data.email);
+    if (emailOrError.isFailure()) {
+      return Result.fail(emailOrError.error);
+    }
+
+    const userIdOrError = UserId.fromString(data.id);
+    if (userIdOrError.isFailure()) {
+      return Result.fail(userIdOrError.error);
+    }
+
+    const user: User = User.fromPersistence({
+      id: userIdOrError.value,
+      email: emailOrError.value,
+      name: data.name,
+      createdAt: new Date(data.created_at),
+      updatedAt: new Date(data.updated_at)
+    });
+
+    return Result.ok(user);
+  }
+}
+```
+
+## Infrastructure Layer
+
+### Repository Implementation
+```typescript
+// ✅ GOOD: Repository implementation in infrastructure
+export class PostgresUserRepository implements UserRepository {
+  constructor(private readonly db: Database) {}
+
+  /**
+   * Finds a user by their ID
+   */
+  public async findById(id: UserId): Promise {
+    const row: PersistenceUser | undefined = await this.db
+      .selectFrom('users')
+      .where('id', '=', id.getValue())
+      .selectAll()
+      .executeTakeFirst();
+
+    if (!row) {
+      return null;
+    }
+
+    const userOrError: Result = UserMapper.toDomain(row);
+    if (userOrError.isFailure()) {
+      throw userOrError.error;
+    }
+
+    return userOrError.value;
+  }
+
+  /**
+   * Saves a user to the database
+   */
+  public async save(user: User): Promise {
+    const data: PersistenceUser = {
+      id: user.getId().getValue(),
+      email: user.getEmail().getValue(),
+      name: user.getName(),
+      created_at: user.getCreatedAt().toISOString(),
+      updated_at: user.getUpdatedAt().toISOString()
+    };
+
+    await this.db
+      .insertInto('users')
+      .values(data)
+      .onConflict((oc) => oc.column('id').doUpdateSet(data))
+      .execute();
+
+    return user;
+  }
+
+  public async delete(id: UserId): Promise {
+    await this.db
+      .deleteFrom('users')
+      .where('id', '=', id.getValue())
+      .execute();
+  }
+
+  public async findByEmail(email: Email): Promise {
+    const row: PersistenceUser | undefined = await this.db
+      .selectFrom('users')
+      .where('email', '=', email.getValue())
+      .selectAll()
+      .executeTakeFirst();
+
+    if (!row) {
+      return null;
+    }
+
+    const userOrError: Result = UserMapper.toDomain(row);
+    if (userOrError.isFailure()) {
+      throw userOrError.error;
+    }
+
+    return userOrError.value;
+  }
+
+  public async findAll(limit: number, offset: number): Promise {
+    const rows: PersistenceUser[] = await this.db
+      .selectFrom('users')
+      .selectAll()
+      .limit(limit)
+      .offset(offset)
+      .execute();
+
+    const users: User[] = [];
+    for (const row of rows) {
+      const userOrError: Result = UserMapper.toDomain(row);
+      if (userOrError.isSuccess()) {
+        users.push(userOrError.value);
+      }
+    }
+
+    return users;
+  }
+}
+```
+
+### HTTP Controllers
+```typescript
+// ✅ GOOD: Controller implementation
+export class UserController {
+  constructor(
+    private readonly createUserUseCase: CreateUserUseCase,
+    private readonly getUserUseCase: GetUserUseCase
+  ) {}
+
+  /**
+   * Creates a new user
+   * @param req - Express request
+   * @param res - Express response
+   */
+  public async create(req: Request, res: Response): Promise {
+    try {
+      const dto: CreateUserRequestDTO = req.body;
+
+      const result: Result =
+        await this.createUserUseCase.execute(dto);
+
+      if (result.isFailure()) {
+        res.status(400).json({
+          error: result.error.message
+        });
+        return;
+      }
+
+      res.status(201).json(result.value);
+    } catch (error) {
+      const err = error as Error;
+      res.status(500).json({
+        error: err.message
+      });
+    }
+  }
+
+  /**
+   * Gets a user by ID
+   */
+  public async getById(req: Request, res: Response): Promise {
+    try {
+      const userId: string = req.params.id;
+
+      const result: Result =
+        await this.getUserUseCase.execute(userId);
+
+      if (result.isFailure()) {
+        res.status(404).json({
+          error: result.error.message
+        });
+        return;
+      }
+
+      res.status(200).json(result.value);
+    } catch (error) {
+      const err = error as Error;
+      res.status(500).json({
+        error: err.message
+      });
+    }
+  }
+}
+```
+
+## Shared Kernel
+
+### Result Type (Functional Error Handling)
+```typescript
+// ✅ GOOD: Result type for error handling
+export class Result {
+  private readonly _isSuccess: boolean;
+  private readonly _value?: T;
+  private readonly _error?: E;
+
+  private constructor(isSuccess: boolean, value?: T, error?: E) {
+    this._isSuccess = isSuccess;
+    this._value = value;
+    this._error = error;
+  }
+
+  public static ok(value: T): Result {
+    return new Result(true, value);
+  }
+
+  public static fail(error: E): Result {
+    return new Result(false, undefined, error);
+  }
+
+  public isSuccess(): boolean {
+    return this._isSuccess;
+  }
+
+  public isFailure(): boolean {
+    return !this._isSuccess;
+  }
+
+  public get value(): T {
+    if (!this._isSuccess) {
+      throw new Error('Cannot get value from a failed result');
+    }
+    return this._value as T;
+  }
+
+  public get error(): E {
+    if (this._isSuccess) {
+      throw new Error('Cannot get error from a successful result');
+    }
+    return this._error as E;
+  }
+}
+```
+
+### Pagination Types
+```typescript
+// ✅ GOOD: Pagination value objects
+export interface PaginationParams {
+  page: number;
+  pageSize: number;
+}
+
+export class Pagination {
+  private readonly page: number;
+  private readonly pageSize: number;
+
+  private constructor(page: number, pageSize: number) {
+    this.page = page;
+    this.pageSize = pageSize;
+  }
+
+  public static create(page: number, pageSize: number): Result {
+    if (page < 1) {
+      return Result.fail(new Error('Page must be greater than 0'));
+    }
+    if (pageSize < 1 || pageSize > 100) {
+      return Result.fail(new Error('Page size must be between 1 and 100'));
+    }
+    return Result.ok(new Pagination(page, pageSize));
+  }
+
+  public getPage(): number {
+    return this.page;
+  }
+
+  public getPageSize(): number {
+    return this.pageSize;
+  }
+
+  public getOffset(): number {
+    return (this.page - 1) * this.pageSize;
+  }
+}
+```
+
+## Dependency Injection
+
+```typescript
+// ✅ GOOD: Dependency injection container
+export class Container {
+  private readonly services: Map = new Map();
+
+  /**
+   * Registers a service in the container
+   */
+  public register(key: string, service: T): void {
+    this.services.set(key, service);
+  }
+
+  /**
+   * Resolves a service from the container
+   */
+  public resolve(key: string): T {
+    const service = this.services.get(key);
+    if (!service) {
+      throw new Error(`Service ${key} not found in container`);
+    }
+    return service as T;
+  }
+}
+
+// ✅ GOOD: Service registration
+export function setupContainer(db: Database): Container {
+  const container: Container = new Container();
+
+  // Repositories
+  const userRepository: UserRepository = new PostgresUserRepository(db);
+  container.register('UserRepository', userRepository);
+
+  // Use Cases
+  const createUserUseCase: CreateUserUseCase = new CreateUserUseCase(
+    userRepository,
+    eventBus
+  );
+  container.register('CreateUserUseCase', createUserUseCase);
+
+  // Controllers
+  const userController: UserController = new UserController(
+    createUserUseCase,
+    getUserUseCase
+  );
+  container.register('UserController', userController);
+
+  return container;
+}
+```
+
+## Code Style
+
+### Naming Conventions
+- `camelCase` for variables and functions: `getUserById`, `isActive`
+- `PascalCase` for classes, interfaces, types: `User`, `UserRepository`, `Email`
+- `UPPER_SNAKE_CASE` for constants: `MAX_RETRIES`, `API_BASE_URL`
+- Use descriptive names that reflect domain concepts
+
+### Comments
+```typescript
+// ✅ GOOD: English comments with JSDoc
+/**
+ * Represents a user's email address
+ * This is a Value Object that ensures email validity
+ */
+export class Email {
+  // Private fields use readonly when immutable
+  private readonly value: string;
+
+  /**
+   * Creates a new Email instance
+   * @param value - The email string to validate
+   * @returns Result containing Email or Error
+   * @throws Never throws, returns Result instead
+   */
+  public static create(value: string): Result {
+    // Validation logic here
+  }
+}
+
+// ❌ BAD: Spanish comments
+// Crea un nuevo Email
+public static create(value: string): Result {
+  // ...
+}
+```
+
+### Import Organization
+```typescript
+// 1. External dependencies
+import express from 'express';
+import { z } from 'zod';
+
+// 2. Domain layer
+import type { User } from '@/domain/entities/User';
+import type { UserRepository } from '@/domain/repositories/UserRepository';
+import { Email } from '@/domain/value-objects/Email';
+
+// 3. Application layer
+import type { CreateUserDTO } from '@/application/dto/UserDTO';
+import { UserMapper } from '@/application/mappers/UserMapper';
+
+// 4. Infrastructure layer
+import { PostgresUserRepository } from '@/infrastructure/persistence/repositories/PostgresUserRepository';
+```
+
+## Testing
+
+### Unit Tests (Domain)
+```typescript
+// ✅ GOOD: Domain unit tests
+describe('Email Value Object', () => {
+  it('should create a valid email', () => {
+    const result: Result = Email.create('test@example.com');
+
+    expect(result.isSuccess()).toBe(true);
+    expect(result.value.getValue()).toBe('test@example.com');
+  });
+
+  it('should reject invalid email format', () => {
+    const result: Result = Email.create('invalid-email');
+
+    expect(result.isFailure()).toBe(true);
+    expect(result.error.message).toContain('Invalid email');
+  });
+});
+
+describe('User Entity', () => {
+  it('should create a new user', () => {
+    const emailResult: Result = Email.create('john@example.com');
+    const email: Email = emailResult.value;
+
+    const user: User = User.create({
+      email,
+      name: 'John Doe'
+    });
+
+    expect(user.getName()).toBe('John Doe');
+    expect(user.getEmail().getValue()).toBe('john@example.com');
+  });
+});
+```
+
+### Integration Tests (Application)
+```typescript
+// ✅ GOOD: Use case integration tests
+describe('CreateUserUseCase', () => {
+  let useCase: CreateUserUseCase;
+  let mockRepository: jest.Mocked;
+  let mockEventBus: jest.Mocked;
+
+  beforeEach(() => {
+    mockRepository = {
+      findByEmail: jest.fn(),
+      save: jest.fn()
+    } as unknown as jest.Mocked;
+
+    mockEventBus = {
+      publish: jest.fn()
+    } as unknown as jest.Mocked;
+
+    useCase = new CreateUserUseCase(mockRepository, mockEventBus);
+  });
+
+  it('should create a user successfully', async () => {
+    mockRepository.findByEmail.mockResolvedValue(null);
+    mockRepository.save.mockImplementation(async (user: User) => user);
+
+    const dto: CreateUserDTO = {
+      email: 'john@example.com',
+      name: 'John Doe'
+    };
+
+    const result: Result = await useCase.execute(dto);
+
+    expect(result.isSuccess()).toBe(true);
+    expect(result.value.email).toBe('john@example.com');
+    expect(mockRepository.save).toHaveBeenCalledTimes(1);
+    expect(mockEventBus.publish).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+## TSConfig for DDD
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/domain/*": ["domain/*"],
+      "@/application/*": ["application/*"],
+      "@/infrastructure/*": ["infrastructure/*"],
+      "@/shared/*": ["shared/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
+}
+```
+
+## Don't Use
+- `any` type (use `unknown` instead)
+- `@ts-ignore` comments (fix the type issue properly)
+- Non-null assertions (`!`) unless absolutely necessary
+- `var` keyword (use `const` or `let`)
+- Anemic domain models (entities without behavior)
+- Direct database access from application or domain layers
+- Business logic in controllers or repositories
+- Spanish comments or documentation
+
+## DDD Best Practices Summary
+
+1. **Domain Layer**
+   - Contains all business logic and rules
+   - No dependencies on other layers
+   - Uses Value Objects for domain concepts
+   - Entities have rich behavior, not just data
+   - Repository interfaces defined here
+
+2. **Application Layer**
+   - Orchestrates domain objects
+   - Contains use cases (application services)
+   - Uses DTOs for input/output
+   - No business logic, only coordination
+
+3. **Infrastructure Layer**
+   - Implements domain interfaces
+   - Contains technical details (DB, HTTP, messaging)
+   - Depends on domain layer
+   - Converts between domain and persistence models
+
+4. **Always**
+   - Use Value Objects for domain primitives
+   - Keep entities immutable when possible
+   - Return Result types for operations that can fail
+   - Write comments in English
+   - Type everything explicitly
+   - Follow the dependency rule (inner layers don't depend on outer layers)
