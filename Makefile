@@ -1,7 +1,8 @@
 COMPOSE_FILE = docker/docker-compose.yaml
 COMPOSE = docker compose -f $(COMPOSE_FILE)
+API_SERVICE = apicat_api
 
-.PHONY: up down logs restart install shell list-routes
+.PHONY: up down logs restart install shell list-routes prune
 
 up:
 	$(COMPOSE) up -d
@@ -9,18 +10,21 @@ up:
 down:
 	$(COMPOSE) down
 
+prune:
+	$(COMPOSE) down -v
+
 logs:
-	$(COMPOSE) logs -f api_cat_nodejs
+	$(COMPOSE) logs -f $(API_SERVICE)
 
 restart:
 	$(COMPOSE) down
 	$(COMPOSE) up -d
 
 install:
-	$(COMPOSE) run --rm api_cat_nodejs sh -c "npm install"
+	$(COMPOSE) run --rm $(API_SERVICE) sh -c "npm install"
 
 shell:
-	$(COMPOSE) exec api_cat_nodejs sh
+	$(COMPOSE) exec $(API_SERVICE) sh
 
 list-routes:
-	$(COMPOSE) run --rm api_cat_nodejs sh -c "npm run list-routes"
+	$(COMPOSE) run --rm $(API_SERVICE) sh -c "npm run list-routes"

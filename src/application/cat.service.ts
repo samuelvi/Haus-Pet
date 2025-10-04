@@ -25,7 +25,8 @@ export class CatService {
     }
 
     const newCat: Cat = { breed };
-    await this.catRepository.save(newCat);
-    return newCat;
+    // Capturamos y devolvemos el gato completo, con su ID, tal como lo devuelve el repositorio.
+    const savedCat = await this.catRepository.save(newCat);
+    return savedCat;
   }
 }

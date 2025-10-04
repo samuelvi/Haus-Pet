@@ -1,22 +1,22 @@
 import { Request, Response } from "express";
-import { CatService } from "../../../application/cat.service";
+import { AuditLoggingCatServiceDecorator } from "../../../application/audit-logging-cat.service.decorator";
 import { CatBreedAlreadyExistsError } from "../../../domain/errors/cat-breed-already-exists.error";
 
 export class CatController {
-  constructor(private readonly catService: CatService) {}
+  constructor(private readonly catService: AuditLoggingCatServiceDecorator) {}
 
-  public async getAllBreeds(_req: Request, res: Response): Promise<void> {
+  public async getAllBreeds(req: Request, res: Response): Promise<void> {
     try {
-      const cats = await this.catService.getAllCatBreeds();
+      const cats = await this.catService.getAllCatBreeds(req.auditContext!);
       res.status(200).json({ status: "OK", data: cats });
     } catch (error) {
       res.status(500).json({ status: "ERROR", message: "Error fetching cat breeds" });
     }
   }
 
-  public async getRandomBreed(_req: Request, res: Response): Promise<void> {
+  public async getRandomBreed(req: Request, res: Response): Promise<void> {
     try {
-      const cat = await this.catService.getRandomCatBreed();
+      const cat = await this.catService.getRandomCatBreed(req.auditContext!);
       if (cat) {
         res.status(200).json({ status: "OK", data: cat });
       } else {
@@ -35,7 +35,7 @@ export class CatController {
         return;
       }
 
-      const newCat = await this.catService.addCatBreed(breed);
+      const newCat = await this.catService.addCatBreed(breed, req.auditContext!);
       res.status(201).json({ status: "OK", data: { message: "Cat breed added successfully", cat: newCat } });
     } catch (error: any) {
       if (error instanceof CatBreedAlreadyExistsError) {
