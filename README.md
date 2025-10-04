@@ -32,7 +32,39 @@ This will output a table with all available paths and their corresponding HTTP m
 
 Here are the available endpoints.
 
-### 1. Get a Random Cat Breed
+### 1. Get All Cat Breeds
+
+Retrieves a list of all cat breeds.
+
+-   **Method:** `GET`
+-   **URL:** `/api/cats/`
+
+**Example with `curl`:**
+
+```sh
+curl http://localhost:3000/api/cats/
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "status": "OK",
+  "data": [
+    {
+      "breed": "Siamese"
+    },
+    {
+      "breed": "Persian"
+    },
+    {
+      "breed": "Maine Coon"
+    }
+  ]
+}
+```
+
+### 2. Get a Random Cat Breed
 
 Retrieves a random cat breed from the list.
 
@@ -56,7 +88,7 @@ curl http://localhost:3000/api/cats/random-cat
 }
 ```
 
-### 2. Add a New Cat Breed
+### 3. Add a New Cat Breed
 
 Adds a new cat breed to the list. The breed must not already exist.
 

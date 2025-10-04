@@ -5,6 +5,15 @@ import { CatBreedAlreadyExistsError } from "../../../domain/errors/cat-breed-alr
 export class CatController {
   constructor(private readonly catService: CatService) {}
 
+  public async getAllBreeds(_req: Request, res: Response): Promise<void> {
+    try {
+      const cats = await this.catService.getAllCatBreeds();
+      res.status(200).json({ status: "OK", data: cats });
+    } catch (error) {
+      res.status(500).json({ status: "ERROR", message: "Error fetching cat breeds" });
+    }
+  }
+
   public async getRandomBreed(_req: Request, res: Response): Promise<void> {
     try {
       const cat = await this.catService.getRandomCatBreed();

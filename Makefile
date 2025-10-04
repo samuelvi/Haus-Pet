@@ -1,23 +1,26 @@
+COMPOSE_FILE = docker/docker-compose.yaml
+COMPOSE = docker compose -f $(COMPOSE_FILE)
+
 .PHONY: up down logs restart install shell list-routes
 
 up:
-	docker compose up -d
+	$(COMPOSE) up -d
 
 down:
-	docker compose down
+	$(COMPOSE) down
 
 logs:
-	docker compose logs -f api_cat_nodejs
+	$(COMPOSE) logs -f api_cat_nodejs
 
 restart:
-	docker compose down
-	docker compose up -d
+	$(COMPOSE) down
+	$(COMPOSE) up -d
 
 install:
-	docker compose run --rm api_cat_nodejs sh -c "npm install"
+	$(COMPOSE) run --rm api_cat_nodejs sh -c "npm install"
 
 shell:
-	docker compose exec api_cat_nodejs sh
+	$(COMPOSE) exec api_cat_nodejs sh
 
 list-routes:
-	docker compose run --rm api_cat_nodejs sh -c "npm run list-routes"
+	$(COMPOSE) run --rm api_cat_nodejs sh -c "npm run list-routes"

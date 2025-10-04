@@ -5,6 +5,10 @@ import { CatBreedAlreadyExistsError } from "../domain/errors/cat-breed-already-e
 export class CatService {
   constructor(private readonly catRepository: CatRepository) {}
 
+  public async getAllCatBreeds(): Promise<Cat[]> {
+    return this.catRepository.findAll();
+  }
+
   public async getRandomCatBreed(): Promise<Cat | null> {
     const breeds = await this.catRepository.findAll();
     if (breeds.length === 0) {
