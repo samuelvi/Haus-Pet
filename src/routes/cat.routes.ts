@@ -3,9 +3,9 @@ import { CatController } from "../infrastructure/http/controllers/cat.controller
 import { CatService } from "../application/cat.service";
 import { createCatRepository } from "../infrastructure/repositories/repository.factory";
 import { AuditService } from "../application/audit.service";
-import { PostgresAuditRepository } from "../infrastructure/repositories/postgres-audit.repository";
+import { MongoAuditRepository } from "../infrastructure/repositories/mongo-audit.repository";
 import { AuditLoggingCatServiceDecorator } from "../application/audit-logging-cat.service.decorator";
-import { pool } from "../infrastructure/database/postgres-pool";
+import mongoClient from "../infrastructure/database/mongo-client";
 import { QueueService } from "../infrastructure/queue/queue.service";
 import { RedisHealthService } from "../infrastructure/queue/redis-health.service";
 import redisConnection from "../infrastructure/queue/redis-connection";
@@ -14,12 +14,12 @@ const router = Router();
 
 // --- Dependency Injection / Composition Root ---
 
-// 1. Create Cat infrastructure
+// 1. Create Cat infrastructure (PostgreSQL)
 const catRepository = createCatRepository();
 const realCatService = new CatService(catRepository);
 
-// 2. Create Audit infrastructure (for synchronous fallback)
-const auditRepository = new PostgresAuditRepository(pool);
+// 2. Create Audit infrastructure (MongoDB), for synchronous fallback
+const auditRepository = new MongoAuditRepository(mongoClient);
 const auditService = new AuditService(auditRepository);
 
 // 3. Create Queue and Health Check infrastructure

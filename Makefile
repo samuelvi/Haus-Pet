@@ -1,8 +1,9 @@
 COMPOSE_FILE = docker/docker-compose.yaml
 COMPOSE = docker compose -f $(COMPOSE_FILE)
 API_SERVICE = apicat_api
+MONGO_SHELL_CMD = mongosh -u audit_user -p audit_pass --authenticationDatabase admin
 
-.PHONY: up down logs restart install shell list-routes prune
+.PHONY: up down logs restart install shell list-routes prune mongo-shell
 
 up:
 	$(COMPOSE) up -d
@@ -28,3 +29,6 @@ shell:
 
 list-routes:
 	$(COMPOSE) run --rm $(API_SERVICE) sh -c "npm run list-routes"
+
+mongo-shell:
+	$(COMPOSE) exec apicat_audit_db $(MONGO_SHELL_CMD)

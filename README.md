@@ -18,6 +18,35 @@ This project uses Docker to run. Make sure you have Docker and Docker Compose in
 
 ## Development
 
+### Suggesting a Commit Message (AI-assisted)
+
+This project includes a tool to help you write Conventional Commit messages with AI assistance.
+
+1.  Stage your changes as you normally would:
+    ```sh
+    git add .
+    ```
+
+2.  Run the suggestion script:
+    ```sh
+    npm run commit-msg:suggest
+    ```
+
+3.  The script will analyze your staged files and generate a detailed prompt in your terminal.
+
+4.  **Copy the entire prompt** from the terminal.
+
+5.  **Paste the prompt to the AI** (e.g., me) and ask for a commit message.
+
+6.  Use the suggested message to create your commit:
+    ```sh
+    git commit -m "feat(api): add user authentication endpoint"
+    ```
+
+### Enforcing Commit Message Format
+
+This project uses `commitlint` and `husky` to ensure all commit messages follow the [Conventional Commits](https://www.conventionalcommits.org/) standard. If your commit message is not formatted correctly, the commit will be automatically rejected.
+
 ### List All Routes
 
 To see a list of all registered API endpoints, you can run the following command:
@@ -27,6 +56,34 @@ make list-routes
 ```
 
 This will output a table with all available paths and their corresponding HTTP methods.
+
+### Accessing the Audit Database (MongoDB)
+
+To connect to the MongoDB shell and inspect the audit logs, you can run:
+
+```sh
+make mongo-shell
+```
+
+Once inside the shell, you can run the following commands to see the logs:
+
+```javascript
+// Switch to the correct database
+use audit_log_db;
+
+// Find all documents in the 'logs' collection and display them nicely
+db.logs.find().pretty();
+```
+
+### Connecting an IDE to the Audit Database
+
+To connect a database client or IDE (like PhpStorm, DataGrip, etc.) to the MongoDB audit database, it is highly recommended to use the full connection string, as it includes the necessary authentication details.
+
+-   **Connection String:**
+    ```
+    mongodb://audit_user:audit_pass@localhost:27017/audit_log_db?authSource=admin
+    ```
+-   **Key Parameter:** The `authSource=admin` parameter is crucial. It tells the client to authenticate against the `admin` database, where the user was created, even though you will be working with the `audit_log_db` database.
 
 ## API Endpoints
 

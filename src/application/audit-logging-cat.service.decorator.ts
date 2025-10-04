@@ -11,6 +11,9 @@ interface AuditContext {
   requestBody?: string;
 }
 
+// Helper function to create a timeout promise
+const timeout = (ms: number) => new Promise((_, reject) => setTimeout(() => reject(new Error(`Timeout after ${ms} ms`)), ms));
+
 export class AuditLoggingCatServiceDecorator {
   constructor(
     private readonly decoratedService: CatService,
@@ -20,21 +23,33 @@ export class AuditLoggingCatServiceDecorator {
   ) {}
 
   private async audit(jobName: string, auditContext: AuditContext, beforeState: string, afterState?: string) {
-    const auditData = { ...auditContext, beforeState, afterState };
+    const auditData = {
+      timestamp: new Date(),
+      ...auditContext,
+      beforeState,
+      afterState,
+    };
 
     if (this.redisHealthService.isCircuitOpen) {
-      console.warn("Redis circuit is open. Falling back to synchronous audit logging.");
-      await this.auditService.log(auditData); // Fallback
+      console.warn("[AUDIT FALLBACK] Circuit breaker is open. Writing directly to DB.");
+      await this.auditService.log(auditData);
       return;
     }
 
     try {
-      // Fire-and-forget publish to Redis
-      this.queueService.publish(jobName, auditData);
+      // Race the publish operation against a 500ms timeout.
+      // This ensures the API remains fast, but we can still catch errors.
+      await Promise.race([
+        this.queueService.publish(jobName, auditData),
+        timeout(500)
+      ]);
+      console.log(`[AUDIT SUCCESS] Event ${jobName} published to Redis queue.`);
     } catch (error) {
-      console.error("Failed to publish audit event to Redis. Falling back to synchronous logging.", error);
-      this.redisHealthService.isHealthy(); // Record the failure
-      await this.auditService.log(auditData); // Fallback
+      console.error("[AUDIT FALLBACK] Redis unavailable or timed out. Writing directly to DB.", error);
+      // Check health to potentially open the circuit breaker on next requests
+      this.redisHealthService.isHealthy();
+      // Execute the synchronous fallback to avoid data loss
+      await this.auditService.log(auditData);
     }
   }
 

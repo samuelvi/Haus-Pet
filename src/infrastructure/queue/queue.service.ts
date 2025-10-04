@@ -1,4 +1,4 @@
-import { Queue } from "bullmq";
+import { Queue, JobsOptions } from "bullmq";
 import connection from "./redis-connection";
 
 const AUDIT_QUEUE_NAME = "audit-log";
@@ -11,10 +11,16 @@ export class QueueService {
   }
 
   public async publish(jobName: string, data: any): Promise<void> {
-    // Opciones del trabajo: eliminar de la cola si se completa con éxito.
-    const opts = {
+    // Opciones del trabajo, incluyendo la estrategia de reintentos.
+    const opts: JobsOptions = {
       removeOnComplete: true,
       removeOnFail: 1000, // Mantener los últimos 1000 trabajos fallidos
+      // Retry strategy
+      attempts: 5,
+      backoff: {
+        type: "exponential",
+        delay: 1000, // 1s, 2s, 4s, 8s, 16s
+      },
     };
     await this.auditQueue.add(jobName, data, opts);
   }

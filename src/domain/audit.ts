@@ -1,4 +1,5 @@
 export interface AuditLog {
+  timestamp: Date;
   ipAddress?: string;
   httpMethod: string;
   path: string;
