@@ -1,5 +1,5 @@
 import express, { Express, Request, Response } from "express";
-import apiRoutes from "./routes";
+import mainRouter from "./routes/main.router"; // Import the single main router
 import { auditMiddleware } from "./infrastructure/http/middleware/audit.middleware";
 
 const app: Express = express();
@@ -10,11 +10,12 @@ app.use(express.json());
 // Middleware to capture audit context
 app.use(auditMiddleware);
 
-app.get("/", (_req: Request, res: Response) => {
-  res.send("Hello World");
-});
+// Mount the main router. All path logic (like /api) is handled inside it.
+app.use(mainRouter);
 
-// Usar las rutas de la API
-app.use("/api", apiRoutes);
+// A simple health-check or root endpoint can remain here
+app.get("/", (_req: Request, res: Response) => {
+  res.send("ApiCat is running!");
+});
 
 export default app;

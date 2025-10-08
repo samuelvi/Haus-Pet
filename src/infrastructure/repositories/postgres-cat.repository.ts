@@ -1,8 +1,9 @@
 import { Pool } from "pg";
-import { CatRepository } from "../../domain/cat.repository";
+import { CatReadRepository } from "../../domain/cat-read.repository";
+import { CatWriteRepository } from "../../domain/cat-write.repository";
 import { Cat } from "../../domain/cat";
 
-export class PostgresCatRepository implements CatRepository {
+export class PostgresCatRepository implements CatReadRepository, CatWriteRepository {
   constructor(private readonly pool: Pool) {}
 
   public async findAll(): Promise<Cat[]> {

@@ -1,7 +1,8 @@
-import { CatRepository } from "../../domain/cat.repository";
+import { CatReadRepository } from "../../domain/cat-read.repository";
+import { CatWriteRepository } from "../../domain/cat-write.repository";
 import { Cat } from "../../domain/cat";
 
-export class InMemoryCatRepository implements CatRepository {
+export class InMemoryCatRepository implements CatReadRepository, CatWriteRepository {
   private cats: Cat[] = [
     { id: 1, breed: "Siamese" },
     { id: 2, breed: "Persian" },
