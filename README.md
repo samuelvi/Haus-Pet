@@ -76,7 +76,7 @@ make mongo-shell
 
 Once inside the shell, you can run the following commands to see the logs:
 
-```javascript
+```shell
 // Switch to the correct database
 use audit_log_db;
 
