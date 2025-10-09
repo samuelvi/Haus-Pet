@@ -3,8 +3,13 @@ COMPOSE = docker compose -f $(COMPOSE_FILE)
 API_SERVICE = hauspet_api
 MONGO_SHELL_CMD = mongosh -u audit_user -p audit_pass --authenticationDatabase admin
 
-.PHONY: up down logs restart install shell list-routes prune mongo-shell
+# --- Test Environment ---
+TEST_COMPOSE_FILE = docker/docker-compose.test.yaml
+TEST_COMPOSE = docker compose -f $(TEST_COMPOSE_FILE)
 
+.PHONY: up down logs restart install shell list-routes prune mongo-shell test test-up test-down test-run
+
+# --- Development Environment ---
 up:
 	$(COMPOSE) up -d
 
@@ -33,3 +38,21 @@ list-routes:
 
 mongo-shell:
 	$(COMPOSE) exec hauspet_audit_db $(MONGO_SHELL_CMD)
+
+# --- Test Environment ---
+test-up:
+	@echo "Starting test environment..."
+	@$(TEST_COMPOSE) up -d --build
+
+test-down:
+	@echo "Stopping test environment..."
+	@$(TEST_COMPOSE) down -v
+
+test-run:
+	@echo "Running Playwright tests inside the container..."
+	@$(TEST_COMPOSE) run --rm hauspet_api sh -c "npm install > /dev/null && npx playwright test"
+
+test:
+	@make test-up
+	@make test-run
+	@make test-down

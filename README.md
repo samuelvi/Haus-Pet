@@ -84,6 +84,18 @@ use audit_log_db;
 db.logs.find().pretty();
 ```
 
+## Testing
+
+This project uses **Playwright** for functional API testing. The tests run against a real, isolated database to ensure that the entire application stack works as expected.
+
+To run the tests, you can use the following command:
+
+```sh
+npm run test:functional
+```
+
+For a more detailed explanation of the testing philosophy, environment, and available commands, please see the **[Testing Guide](./docs/TESTING.md)**.
+
 ## API Endpoints
 
 The API is divided into generic routes and type-specific routes.
@@ -157,26 +169,6 @@ Retrieves a list of all pets of a specific type.
 curl http://localhost:3000/api/pets/dog/
 ```
 
-**Success Response (200 OK):**
-
-```json
-{
-  "status": "OK",
-  "data": [
-    {
-      "id": 11,
-      "breed": "Golden Retriever",
-      "type": "dog"
-    },
-    {
-      "id": 12,
-      "breed": "Labrador Retriever",
-      "type": "dog"
-    }
-  ]
-}
-```
-
 #### 2. Get a Random Pet by Type
 
 Retrieves a random pet of a specific type.
@@ -188,19 +180,6 @@ Retrieves a random pet of a specific type.
 
 ```sh
 curl http://localhost:3000/api/pets/cat/random-pet
-```
-
-**Success Response (200 OK):**
-
-```json
-{
-  "status": "OK",
-  "data": {
-    "id": 2,
-    "breed": "Persian",
-    "type": "cat"
-  }
-}
 ```
 
 #### 3. Add a New Pet by Type
@@ -222,20 +201,4 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -d '{"breed": "Beagle"}' \
   http://localhost:3000/api/pets/dog/add
-```
-
-**Success Response (201 Created):**
-
-```json
-{
-  "status": "OK",
-  "data": {
-    "message": "dog added successfully",
-    "pet": {
-      "id": 31,
-      "breed": "Beagle",
-      "type": "dog"
-    }
-  }
-}
 ```

@@ -1,0 +1,67 @@
+services:
+  hauspet_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    depends_on:
+      hauspet_test_db:
+        condition: service_healthy
+      hauspet_redis:
+        condition: service_healthy
+    container_name: hauspet_api_test
+    working_dir: /app
+    environment:
+      - NODE_ENV=test
+      - PORT=3000
+      - PERSISTENCE_TYPE=postgres
+      - DB_HOST=hauspet_test_db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=hauspet_test_db
+      - DB_PORT=5432
+      - REDIS_HOST=hauspet_redis
+      - REDIS_PORT=6379
+      - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db:27017/audit_log_db?authSource=admin
+    ports:
+      - "3000:3000" # We can reuse the port as the dev env and test env won't run simultaneously for now
+    volumes:
+      - ..:/app
+      - /app/node_modules
+    command: sh -c "npm install && ./node_modules/.bin/ts-node-dev src/index.ts"
+    restart: unless-stopped
+
+  hauspet_test_db:
+    image: postgres:14-alpine
+    container_name: hauspet_test_db
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=hauspet_test_db
+    ports:
+      - "5433:5432" # Use a different port to avoid conflicts with the dev database
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d hauspet_test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # The other services can be reused as they are stateless or their state is not critical for tests
+  hauspet_audit_db:
+    image: mongo:6.0
+    container_name: hauspet_audit_db_test
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_audit_test_data:/data/db
+
+  hauspet_redis:
+    image: redis:7-alpine
+    container_name: hauspet_redis_test
+
+volumes:
+  postgres_test_data:
+  mongo_audit_test_data:
