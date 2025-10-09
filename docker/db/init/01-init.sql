@@ -1,18 +1,44 @@
--- Create the cat table
-CREATE TABLE cat (
+-- Create the pet table
+CREATE TABLE pet (
     id SERIAL PRIMARY KEY,
-    breed VARCHAR(255) UNIQUE NOT NULL
+    breed VARCHAR(255) UNIQUE NOT NULL,
+    type VARCHAR(255) NOT NULL
 );
 
 -- Insert some initial data (optional, but good for testing)
-INSERT INTO cat (breed) VALUES
-    ('Siamese'),
-    ('Persian'),
-    ('Maine Coon'),
-    ('Ragdoll'),
-    ('Bengal'),
-    ('Sphynx'),
-    ('British Shorthair'),
-    ('Abyssinian'),
-    ('Scottish Fold'),
-    ('Birman');
+INSERT INTO pet (breed, type) VALUES
+    -- Cats
+    ('Siamese', 'cat'),
+    ('Persian', 'cat'),
+    ('Maine Coon', 'cat'),
+    ('Ragdoll', 'cat'),
+    ('Bengal', 'cat'),
+    ('Sphynx', 'cat'),
+    ('British Shorthair', 'cat'),
+    ('Abyssinian', 'cat'),
+    ('Scottish Fold', 'cat'),
+    ('Birman', 'cat'),
+
+    -- Dogs
+    ('Golden Retriever', 'dog'),
+    ('Labrador Retriever', 'dog'),
+    ('German Shepherd', 'dog'),
+    ('Beagle', 'dog'),
+    ('Poodle', 'dog'),
+    ('Bulldog', 'dog'),
+    ('Rottweiler', 'dog'),
+    ('Dachshund', 'dog'),
+    ('Siberian Husky', 'dog'),
+    ('Chihuahua', 'dog'),
+
+    -- Birds
+    ('Parakeet', 'bird'),
+    ('Cockatiel', 'bird'),
+    ('Macaw', 'bird'),
+    ('Canary', 'bird'),
+    ('Finch', 'bird'),
+    ('Lovebird', 'bird'),
+    ('African Grey Parrot', 'bird'),
+    ('Cockatoo', 'bird'),
+    ('Amazon Parrot', 'bird'),
+    ('Budgerigar', 'bird');

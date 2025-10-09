@@ -1,29 +1,27 @@
-version: "3.9"
-
 services:
-  apicat_api:
+  hauspet_api:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     depends_on:
-      apicat_db:
+      hauspet_db:
         condition: service_healthy
-      apicat_redis:
+      hauspet_redis:
         condition: service_healthy
-    container_name: apicat_api
+    container_name: hauspet_api
     working_dir: /app
     environment:
       - NODE_ENV=development
       - PORT=3000
       - PERSISTENCE_TYPE=postgres
-      - DB_HOST=apicat_db
+      - DB_HOST=hauspet_db
       - DB_USER=user
       - DB_PASSWORD=password
-      - DB_NAME=apicat_db
+      - DB_NAME=hauspet_db
       - DB_PORT=5432
-      - REDIS_HOST=apicat_redis
+      - REDIS_HOST=hauspet_redis
       - REDIS_PORT=6379
-      - AUDIT_DB_URI=mongodb://audit_user:audit_pass@apicat_audit_db:27017/audit_log_db?authSource=admin
+      - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db:27017/audit_log_db?authSource=admin
     ports:
       - "3000:3000"
     volumes:
@@ -32,21 +30,21 @@ services:
     command: sh -c "npm install && ./node_modules/.bin/ts-node-dev src/index.ts"
     restart: unless-stopped
 
-  apicat_worker:
+  hauspet_worker:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     depends_on:
-      apicat_audit_db:
+      hauspet_audit_db:
         condition: service_healthy
-      apicat_redis:
+      hauspet_redis:
         condition: service_healthy
-    container_name: apicat_worker
+    container_name: hauspet_worker
     working_dir: /app
     environment:
       - NODE_ENV=development
-      - AUDIT_DB_URI=mongodb://audit_user:audit_pass@apicat_audit_db:27017/audit_log_db?authSource=admin
-      - REDIS_HOST=apicat_redis
+      - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db:27017/audit_log_db?authSource=admin
+      - REDIS_HOST=hauspet_redis
       - REDIS_PORT=6379
     volumes:
       - ..:/app
@@ -54,13 +52,13 @@ services:
     command: sh -c "npm install && ./node_modules/.bin/ts-node src/worker.ts"
     restart: unless-stopped
 
-  apicat_db:
+  hauspet_db:
     image: postgres:14-alpine
-    container_name: apicat_db
+    container_name: hauspet_db
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=apicat_db
+      - POSTGRES_DB=hauspet_db
     ports:
       - "5432:5432"
     volumes:
@@ -68,14 +66,14 @@ services:
       - ./db/init:/docker-entrypoint-initdb.d
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d apicat_db"]
+      test: ["CMD-SHELL", "pg_isready -U user -d hauspet_db"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  apicat_audit_db:
+  hauspet_audit_db:
     image: mongo:6.0
-    container_name: apicat_audit_db
+    container_name: hauspet_audit_db
     environment:
       - MONGO_INITDB_ROOT_USERNAME=audit_user
       - MONGO_INITDB_ROOT_PASSWORD=audit_pass
@@ -90,9 +88,9 @@ services:
       timeout: 5s
       retries: 5
 
-  apicat_redis:
+  hauspet_redis:
     image: redis:7-alpine
-    container_name: apicat_redis
+    container_name: hauspet_redis
     restart: unless-stopped
     ports:
       - "6379:6379"

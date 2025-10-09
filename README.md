@@ -1,6 +1,6 @@
-# ApiCat
+# HausPet
 
-A simple REST API for managing cat breeds, built with Node.js, Express, and TypeScript, following Domain-Driven Design (DDD) principles.
+A simple REST API for managing pet breeds, built with Node.js, Express, and TypeScript, following Domain-Driven Design (DDD) principles.
 
 ## Getting Started
 
@@ -98,17 +98,17 @@ To connect a database client or IDE (like PhpStorm, DataGrip, etc.) to the Mongo
 
 Here are the available endpoints.
 
-### 1. Get All Cat Breeds
+### 1. Get All Animal Breeds
 
-Retrieves a list of all cat breeds.
+Retrieves a list of all animal breeds.
 
 -   **Method:** `GET`
--   **URL:** `/api/cats/`
+-   **URL:** `/api/pets/`
 
 **Example with `curl`:**
 
 ```sh
-curl http://localhost:3000/api/cats/
+curl http://localhost:3000/api/pets/
 ```
 
 **Success Response (200 OK):**
@@ -118,29 +118,35 @@ curl http://localhost:3000/api/cats/
   "status": "OK",
   "data": [
     {
-      "breed": "Siamese"
+      "id": 1,
+      "breed": "Siamese",
+      "type": "cat"
     },
     {
-      "breed": "Persian"
+      "id": 2,
+      "breed": "Persian",
+      "type": "cat"
     },
     {
-      "breed": "Maine Coon"
+      "id": 3,
+      "breed": "Golden Retriever",
+      "type": "dog"
     }
   ]
 }
 ```
 
-### 2. Get a Random Cat Breed
+### 2. Get a Random Animal Breed
 
-Retrieves a random cat breed from the list.
+Retrieves a random animal breed from the list.
 
 -   **Method:** `GET`
--   **URL:** `/api/cats/random-cat`
+-   **URL:** `/api/pets/random-pet`
 
 **Example with `curl`:**
 
 ```sh
-curl http://localhost:3000/api/cats/random-cat
+curl http://localhost:3000/api/pets/random-pet
 ```
 
 **Success Response (200 OK):**
@@ -149,26 +155,33 @@ curl http://localhost:3000/api/cats/random-cat
 {
   "status": "OK",
   "data": {
-    "breed": "Siamese"
+    "id": 3,
+    "breed": "Golden Retriever",
+    "type": "dog"
   }
 }
 ```
 
-### 3. Add a New Cat Breed
+### 3. Add a New Animal Breed
 
-Adds a new cat breed to the list. The breed must not already exist.
+Adds a new animal breed to the list. The breed must not already exist.
 
 -   **Method:** `POST`
--   **URL:** `/api/cats/add`
+-   **URL:** `/api/pets/add`
 -   **Body:** `json`
+
+**Request Body:**
+
+-   `breed` (string, required): The name of the breed.
+-   `type` (string, required): The type of animal. Must be one of `cat`, `dog`, or `bird`.
 
 **Example with `curl`:**
 
 ```sh
 curl -X POST \
   -H "Content-Type: application/json" \
-  -d '{"breed": "Turkish Angora"}' \
-  http://localhost:3000/api/cats/add
+  -d '{"breed": "Parakeet", "type": "bird"}' \
+  http://localhost:3000/api/pets/add
 ```
 
 **Success Response (201 Created):**
@@ -177,9 +190,11 @@ curl -X POST \
 {
   "status": "OK",
   "data": {
-    "message": "Cat breed added successfully",
-    "cat": {
-      "breed": "Turkish Angora"
+    "message": "Pet added successfully",
+    "pet": {
+      "id": 6,
+      "breed": "Parakeet",
+      "type": "bird"
     }
   }
 }
@@ -192,6 +207,15 @@ If you try to add the same breed again, you will get the following response:
 ```json
 {
   "status": "ERROR",
-  "message": "Cat breed already exists"
+  "message": "Pet breed already exists"
+}
+```
+
+**Error Response (400 Bad Request - Invalid input):**
+
+```json
+{
+  "status": "ERROR",
+  "message": "Invalid input: 'type' must be one of cat, dog, bird"
 }
 ```

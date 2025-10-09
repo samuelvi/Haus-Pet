@@ -1,9 +1,9 @@
 import { Router } from "express";
-import catRouter from "./cat.router";
+import petRouter from "./pet.router";
 
 const router = Router();
 
 // Mount all API entity routers here
-router.use("/cats", catRouter);
+router.use("/pets", petRouter);
 
 export default router;
