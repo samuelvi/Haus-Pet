@@ -54,7 +54,7 @@ This project includes a tool to help you write Conventional Commit messages with
 
 ### Enforcing Commit Message Format
 
-This project uses `commitlint` and `husky` to ensure all commit messages follow the [Conventional Commits](https://www.conventionalcommits.org/) standard. If your commit message is not formatted correctly, the commit will be automatically rejected.
+This project uses `commitlint` and `husky` to ensure all commit messages follow the [Conventional Commits](https.conventionalcommits.org/) standard. If your commit message is not formatted correctly, the commit will be automatically rejected.
 
 ### List All Routes
 
@@ -84,23 +84,17 @@ use audit_log_db;
 db.logs.find().pretty();
 ```
 
-### Connecting an IDE to the Audit Database
-
-To connect a database client or IDE (like PhpStorm, DataGrip, etc.) to the MongoDB audit database, it is highly recommended to use the full connection string, as it includes the necessary authentication details.
-
--   **Connection String:**
-    ```
-    mongodb://audit_user:audit_pass@localhost:27017/audit_log_db?authSource=admin
-    ```
--   **Key Parameter:** The `authSource=admin` parameter is crucial. It tells the client to authenticate against the `admin` database, where the user was created, even though you will be working with the `audit_log_db` database.
-
 ## API Endpoints
 
-Here are the available endpoints.
+The API is divided into generic routes and type-specific routes.
 
-### 1. Get All Animal Breeds
+### Generic Routes
 
-Retrieves a list of all animal breeds.
+These endpoints operate on all pet types.
+
+#### 1. Get All Pets
+
+Retrieves a list of all pets of all types.
 
 -   **Method:** `GET`
 -   **URL:** `/api/pets/`
@@ -111,34 +105,9 @@ Retrieves a list of all animal breeds.
 curl http://localhost:3000/api/pets/
 ```
 
-**Success Response (200 OK):**
+#### 2. Get a Random Pet
 
-```json
-{
-  "status": "OK",
-  "data": [
-    {
-      "id": 1,
-      "breed": "Siamese",
-      "type": "cat"
-    },
-    {
-      "id": 2,
-      "breed": "Persian",
-      "type": "cat"
-    },
-    {
-      "id": 3,
-      "breed": "Golden Retriever",
-      "type": "dog"
-    }
-  ]
-}
-```
-
-### 2. Get a Random Animal Breed
-
-Retrieves a random animal breed from the list.
+Retrieves a random pet from the entire collection.
 
 -   **Method:** `GET`
 -   **URL:** `/api/pets/random-pet`
@@ -149,22 +118,9 @@ Retrieves a random animal breed from the list.
 curl http://localhost:3000/api/pets/random-pet
 ```
 
-**Success Response (200 OK):**
+#### 3. Add a New Pet (Generic)
 
-```json
-{
-  "status": "OK",
-  "data": {
-    "id": 3,
-    "breed": "Golden Retriever",
-    "type": "dog"
-  }
-}
-```
-
-### 3. Add a New Animal Breed
-
-Adds a new animal breed to the list. The breed must not already exist.
+Adds a new pet to the list. This generic endpoint requires specifying the `type` in the request body.
 
 -   **Method:** `POST`
 -   **URL:** `/api/pets/add`
@@ -184,38 +140,102 @@ curl -X POST \
   http://localhost:3000/api/pets/add
 ```
 
+### Type-Specific Routes
+
+These endpoints allow you to work with a specific type of pet (`cat`, `dog`, or `bird`).
+
+#### 1. Get Pets by Type
+
+Retrieves a list of all pets of a specific type.
+
+-   **Method:** `GET`
+-   **URL:** `/api/pets/:type/`
+
+**Example with `curl` (for dogs):**
+
+```sh
+curl http://localhost:3000/api/pets/dog/
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "status": "OK",
+  "data": [
+    {
+      "id": 11,
+      "breed": "Golden Retriever",
+      "type": "dog"
+    },
+    {
+      "id": 12,
+      "breed": "Labrador Retriever",
+      "type": "dog"
+    }
+  ]
+}
+```
+
+#### 2. Get a Random Pet by Type
+
+Retrieves a random pet of a specific type.
+
+-   **Method:** `GET`
+-   **URL:** `/api/pets/:type/random-pet`
+
+**Example with `curl` (for cats):**
+
+```sh
+curl http://localhost:3000/api/pets/cat/random-pet
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "status": "OK",
+  "data": {
+    "id": 2,
+    "breed": "Persian",
+    "type": "cat"
+  }
+}
+```
+
+#### 3. Add a New Pet by Type
+
+Adds a new pet breed to the specified type. The `type` is taken from the URL, so you only need to provide the `breed`.
+
+-   **Method:** `POST`
+-   **URL:** `/api/pets/:type/add`
+-   **Body:** `json`
+
+**Request Body:**
+
+-   `breed` (string, required): The name of the breed.
+
+**Example with `curl` (for dogs):**
+
+```sh
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"breed": "Beagle"}' \
+  http://localhost:3000/api/pets/dog/add
+```
+
 **Success Response (201 Created):**
 
 ```json
 {
   "status": "OK",
   "data": {
-    "message": "Pet added successfully",
+    "message": "dog added successfully",
     "pet": {
-      "id": 6,
-      "breed": "Parakeet",
-      "type": "bird"
+      "id": 31,
+      "breed": "Beagle",
+      "type": "dog"
     }
   }
-}
-```
-
-**Error Response (409 Conflict - Breed already exists):**
-
-If you try to add the same breed again, you will get the following response:
-
-```json
-{
-  "status": "ERROR",
-  "message": "Pet breed already exists"
-}
-```
-
-**Error Response (400 Bad Request - Invalid input):**
-
-```json
-{
-  "status": "ERROR",
-  "message": "Invalid input: 'type' must be one of cat, dog, bird"
 }
 ```

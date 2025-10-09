@@ -26,6 +26,15 @@ export class PetService {
     return pets[randomIndex];
   }
 
+  public async getRandomPetByType(type: PetType): Promise<Pet | null> {
+    const pets = await this.petReadRepository.findByType(type);
+    if (pets.length === 0) {
+      return null;
+    }
+    const randomIndex = Math.floor(Math.random() * pets.length);
+    return pets[randomIndex];
+  }
+
   public async addPet(breed: string, type: PetType): Promise<Pet> {
     const existingPet = await this.petReadRepository.findByBreed(breed);
     if (existingPet) {

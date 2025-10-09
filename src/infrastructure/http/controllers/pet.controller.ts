@@ -15,6 +15,16 @@ export class PetController {
     }
   }
 
+  public async getPetsByType(req: Request, res: Response): Promise<void> {
+    const type = req.params.type as PetType;
+    try {
+      const pets = await this.petService.getPetsByType(type, req.auditContext!);
+      res.status(200).json({ status: "OK", data: pets });
+    } catch (error) {
+      res.status(500).json({ status: "ERROR", message: `Error fetching ${type}s` });
+    }
+  }
+
   public async getRandomPet(req: Request, res: Response): Promise<void> {
     try {
       const pet = await this.petService.getRandomPet(req.auditContext!);
@@ -25,6 +35,20 @@ export class PetController {
       }
     } catch (error) {
       res.status(500).json({ status: "ERROR", message: "Error fetching random pet" });
+    }
+  }
+
+  public async getRandomPetByType(req: Request, res: Response): Promise<void> {
+    const type = req.params.type as PetType;
+    try {
+      const pet = await this.petService.getRandomPetByType(type, req.auditContext!);
+      if (pet) {
+        res.status(200).json({ status: "OK", data: pet });
+      } else {
+        res.status(404).json({ status: "ERROR", message: `No ${type}s found` });
+      }
+    } catch (error) {
+      res.status(500).json({ status: "ERROR", message: `Error fetching random ${type}` });
     }
   }
 
@@ -47,6 +71,26 @@ export class PetController {
         res.status(409).json({ status: "ERROR", message: error.message }); // 409 Conflict
       } else {
         res.status(500).json({ status: "ERROR", message: "Error adding pet" });
+      }
+    }
+  }
+
+  public async addPetToType(req: Request, res: Response): Promise<void> {
+    const type = req.params.type as PetType;
+    try {
+      const { breed } = req.body;
+      if (!breed || typeof breed !== 'string') {
+        res.status(400).json({ status: "ERROR", message: "Invalid input: 'breed' must be a non-empty string" });
+        return;
+      }
+
+      const newPet = await this.petService.addPet(breed, type, req.auditContext!);
+      res.status(201).json({ status: "OK", data: { message: `${type} added successfully`, pet: newPet } });
+    } catch (error: any) {
+      if (error instanceof PetBreedAlreadyExistsError) {
+        res.status(409).json({ status: "ERROR", message: error.message }); // 409 Conflict
+      } else {
+        res.status(500).json({ status: "ERROR", message: `Error adding ${type}` });
       }
     }
   }

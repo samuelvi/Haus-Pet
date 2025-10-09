@@ -37,8 +37,6 @@ export class AuditLoggingPetServiceDecorator {
     }
 
     try {
-      // Race the publish operation against a 500ms timeout.
-      // This ensures the API remains fast, but we can still catch errors.
       await Promise.race([
         this.queueService.publish(jobName, auditData),
         timeout(500)
@@ -46,9 +44,7 @@ export class AuditLoggingPetServiceDecorator {
       console.log(`[AUDIT SUCCESS] Event ${jobName} published to Redis queue.`);
     } catch (error) {
       console.error("[AUDIT FALLBACK] Redis unavailable or timed out. Writing directly to DB.", error);
-      // Check health to potentially open the circuit breaker on next requests
       this.redisHealthService.isHealthy();
-      // Execute the synchronous fallback to avoid data loss
       await this.auditService.log(auditData);
     }
   }
@@ -60,10 +56,24 @@ export class AuditLoggingPetServiceDecorator {
     return result;
   }
 
+  public async getPetsByType(type: PetType, auditContext: AuditContext): Promise<Pet[]> {
+    await this.audit("getPetsByType", auditContext, `Attempting to get all pets of type ${type}.`);
+    const result = await this.decoratedService.getPetsByType(type);
+    await this.audit("getPetsByType", auditContext, "", `Successfully retrieved ${result.length} pets of type ${type}.`);
+    return result;
+  }
+
   public async getRandomPet(auditContext: AuditContext): Promise<Pet | null> {
     await this.audit("getRandomPet", auditContext, "Attempting to get a random pet.");
     const result = await this.decoratedService.getRandomPet();
     await this.audit("getRandomPet", auditContext, "", result ? `Successfully retrieved random pet: ${result.breed}` : "No pets found.");
+    return result;
+  }
+
+  public async getRandomPetByType(type: PetType, auditContext: AuditContext): Promise<Pet | null> {
+    await this.audit("getRandomPetByType", auditContext, `Attempting to get a random pet of type ${type}.`);
+    const result = await this.decoratedService.getRandomPetByType(type);
+    await this.audit("getRandomPetByType", auditContext, "", result ? `Successfully retrieved random pet: ${result.breed}` : `No pets of type ${type} found.`);
     return result;
   }
 

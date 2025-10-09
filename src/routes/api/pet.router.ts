@@ -9,50 +9,43 @@ import mongoClient from "../../infrastructure/database/mongo-client";
 import { QueueService } from "../../infrastructure/queue/queue.service";
 import { RedisHealthService } from "../../infrastructure/queue/redis-health.service";
 import redisConnection from "../../infrastructure/queue/redis-connection";
+import { PetType } from "../../domain/pet";
 
 const router = Router();
 
 // --- Dependency Injection / Composition Root ---
 
-// 1. Create Pet repository (implements both read and write interfaces)
 const petRepository = createPetRepository();
-
-// 2. Inject the repository for both read and write operations into the service
 const realPetService = new PetService(petRepository, petRepository);
-
-// 3. Create Audit infrastructure
 const auditRepository = new MongoAuditRepository(mongoClient);
 const auditService = new AuditService(auditRepository);
-
-// 4. Create Queue and Health Check infrastructure
 const queueService = new QueueService();
 const redisHealthService = new RedisHealthService(redisConnection);
-
-// 5. Decorate the real PetService with auditing functionality
 const decoratedPetService = new AuditLoggingPetServiceDecorator(
   realPetService,
   auditService,
   queueService,
   redisHealthService
 );
-
-// 6. Inject the fully decorated service into the controller
 const petController = new PetController(decoratedPetService);
 
-// --- Define the routes ---
-router.get(
-  "/", // GET /api/pets/
-  (req, res) => petController.getAllPets(req, res)
-);
+// --- Middleware to validate pet type ---
+const validatePetType = (req, res, next) => {
+  const type = req.params.type;
+  if (!Object.values(PetType).includes(type as PetType)) {
+    return res.status(400).json({ status: "ERROR", message: `Invalid pet type: '${type}'` });
+  }
+  next();
+};
 
-router.get(
-  "/random-pet", // GET /api/pets/random-pet
-  (req, res) => petController.getRandomPet(req, res)
-);
+// --- Generic Routes ---
+router.get("/", (req, res) => petController.getAllPets(req, res));
+router.get("/random-pet", (req, res) => petController.getRandomPet(req, res));
+router.post("/add", (req, res) => petController.addPet(req, res));
 
-router.post(
-  "/add", // POST /api/pets/add
-  (req, res) => petController.addPet(req, res)
-);
+// --- Type-Specific Routes ---
+router.get("/:type/", validatePetType, (req, res) => petController.getPetsByType(req, res));
+router.get("/:type/random-pet", validatePetType, (req, res) => petController.getRandomPetByType(req, res));
+router.post("/:type/add", validatePetType, (req, res) => petController.addPetToType(req, res));
 
 export default router;
