@@ -4,17 +4,26 @@ A simple REST API for managing cat breeds, built with Node.js, Express, and Type
 
 ## Getting Started
 
+### Version Management
+
+This project ensures consistent development and production environments through version pinning:
+
+-   **Node.js:** The project uses Node.js version 22, as specified in the `.nvmrc` file. If you use a version manager like `nvm` or `fnm`, you can run `nvm use` or `fnm use` in the project root to automatically switch to the correct Node version.
+-   **npm:** The specific npm version (`11.6.1`) is automatically installed inside the Docker containers at startup, ensuring a consistent build environment.
+
+### Running the Project
+
 This project uses Docker to run. Make sure you have Docker and Docker Compose installed.
 
 1.  **Clone the repository** (if you haven't already).
 
-2.  **Build and run the container** in detached mode:
+2.  **Build and run all containers** in detached mode:
 
     ```sh
     make up
     ```
 
-    This command will start the server, which will be accessible at `http://localhost:3000`.
+    This command will start the full stack (API, Worker, PostgreSQL, MongoDB, Redis), which will be accessible at `http://localhost:3000`.
 
 ## Development
 
