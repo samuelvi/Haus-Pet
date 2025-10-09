@@ -8,6 +8,8 @@ services:
         condition: service_healthy
       hauspet_redis:
         condition: service_healthy
+      hauspet_audit_db:
+        condition: service_healthy
     container_name: hauspet_api_test
     working_dir: /app
     environment:
@@ -23,12 +25,14 @@ services:
       - REDIS_PORT=6379
       - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db:27017/audit_log_db?authSource=admin
     ports:
-      - "3000:3000" # We can reuse the port as the dev env and test env won't run simultaneously for now
+      - "3000:3000"
     volumes:
       - ..:/app
       - /app/node_modules
-    command: sh -c "npm install && ./node_modules/.bin/ts-node-dev src/index.ts"
+    command: sh -c "npm install --silent && ./node_modules/.bin/ts-node src/index.ts"
     restart: unless-stopped
+    networks:
+      - hauspet-test-network
 
   hauspet_test_db:
     image: postgres:14-alpine
@@ -38,9 +42,9 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=hauspet_test_db
     ports:
-      - "5433:5432" # Use a different port to avoid conflicts with the dev database
+      - "5433:5432"
     volumes:
-      - postgres_test_data:/var/lib/postgresql/data
+      - ./data/postgres_test:/var/lib/postgresql/data
       - ./db/init:/docker-entrypoint-initdb.d
     restart: unless-stopped
     healthcheck:
@@ -48,20 +52,40 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - hauspet-test-network
 
-  # The other services can be reused as they are stateless or their state is not critical for tests
   hauspet_audit_db:
     image: mongo:6.0
     container_name: hauspet_audit_db_test
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=audit_user
+      - MONGO_INITDB_ROOT_PASSWORD=audit_pass
     ports:
       - "27018:27017"
     volumes:
-      - mongo_audit_test_data:/data/db
+      - ./data/mongo_test:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hauspet-test-network
 
   hauspet_redis:
     image: redis:7-alpine
     container_name: hauspet_redis_test
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hauspet-test-network
 
-volumes:
-  postgres_test_data:
-  mongo_audit_test_data:
+networks:
+  hauspet-test-network:
+    driver: bridge

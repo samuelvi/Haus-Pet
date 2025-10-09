@@ -4,8 +4,8 @@ import { defineConfig } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  // Look for test files in the "tests" directory, relative to this configuration file.
-  testDir: './tests',
+  // Look for test files in the "tests/functional" directory, relative to this configuration file.
+  testDir: './tests/functional',
 
   // Reporter to use. See https://playwright.dev/docs/test-reporters
   reporter: 'html',

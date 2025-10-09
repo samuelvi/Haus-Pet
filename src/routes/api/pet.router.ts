@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { PetController } from "../../infrastructure/http/controllers/pet.controller";
 import { PetService } from "../../application/pet.service";
 import { createPetRepository } from "../../infrastructure/repositories/repository.factory";
@@ -30,7 +30,7 @@ const decoratedPetService = new AuditLoggingPetServiceDecorator(
 const petController = new PetController(decoratedPetService);
 
 // --- Middleware to validate pet type ---
-const validatePetType = (req, res, next) => {
+const validatePetType = (req: Request, res: Response, next: NextFunction) => {
   const type = req.params.type;
   if (!Object.values(PetType).includes(type as PetType)) {
     return res.status(400).json({ status: "ERROR", message: `Invalid pet type: '${type}'` });
@@ -39,13 +39,13 @@ const validatePetType = (req, res, next) => {
 };
 
 // --- Generic Routes ---
-router.get("/", (req, res) => petController.getAllPets(req, res));
-router.get("/random-pet", (req, res) => petController.getRandomPet(req, res));
-router.post("/add", (req, res) => petController.addPet(req, res));
+router.get("/", (req: Request, res: Response) => petController.getAllPets(req, res));
+router.get("/random-pet", (req: Request, res: Response) => petController.getRandomPet(req, res));
+router.post("/add", (req: Request, res: Response) => petController.addPet(req, res));
 
 // --- Type-Specific Routes ---
-router.get("/:type/", validatePetType, (req, res) => petController.getPetsByType(req, res));
-router.get("/:type/random-pet", validatePetType, (req, res) => petController.getRandomPetByType(req, res));
-router.post("/:type/add", validatePetType, (req, res) => petController.addPetToType(req, res));
+router.get("/:type/", validatePetType, (req: Request, res: Response) => petController.getPetsByType(req, res));
+router.get("/:type/random-pet", validatePetType, (req: Request, res: Response) => petController.getRandomPetByType(req, res));
+router.post("/:type/add", validatePetType, (req: Request, res: Response) => petController.addPetToType(req, res));
 
 export default router;

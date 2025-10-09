@@ -1,25 +1,33 @@
 import { test, expect } from '@playwright/test';
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
+import { Pet, PetType } from '../../../src/domain/pet';
 
-// Configuration for the TEST database.
+// Define a generic type for our API responses to make tests type-safe.
+interface ApiResponse<T> {
+  status: 'OK' | 'ERROR';
+  data: T;
+  message?: string;
+}
+
+// Configuration for the TEST database, connecting from within the Docker network.
 const pool = new Pool({
-  host: 'localhost',
-  port: 5433, // IMPORTANT: This is the port mapped in docker-compose.test.yaml
+  host: 'hauspet_test_db', // The service name from docker-compose.test.yaml
+  port: 5432,             // The internal port of the PostgreSQL container
   user: 'user',
   password: 'password',
   database: 'hauspet_test_db',
 });
 
-// Our data fixture for the tests.
-const testPets = [
-  { breed: 'Test Siamese', type: 'cat' },
-  { breed: 'Test Golden Retriever', type: 'dog' },
-  { breed: 'Test Persian', type: 'cat' },
+// Our data fixture for the tests, typed using our domain model.
+const testPets: Omit<Pet, 'id'>[] = [
+  { breed: 'Test Siamese', type: PetType.Cat },
+  { breed: 'Test Golden Retriever', type: PetType.Dog },
+  { breed: 'Test Persian', type: PetType.Cat },
 ];
 
 // This block runs before each test to set up the database.
 test.beforeEach(async () => {
-  const client = await pool.connect();
+  const client: PoolClient = await pool.connect();
   try {
     // 1. Clean the table to ensure a fresh start.
     await client.query('TRUNCATE TABLE pet RESTART IDENTITY');
@@ -45,7 +53,7 @@ test.describe('Pet API Endpoints', () => {
 
     // Assert: Check the response.
     expect(response.ok()).toBeTruthy();
-    const body = await response.json();
+    const body = await response.json() as ApiResponse<Pet[]>;
 
     // Verify that the data matches our fixture, ignoring the generated 'id'.
     expect(body.data).toHaveLength(testPets.length);
@@ -54,14 +62,14 @@ test.describe('Pet API Endpoints', () => {
 
   test('GET /api/pets/cat/ should return only cats', async ({ request }) => {
     // Arrange: Figure out how many cats are in our fixture.
-    const expectedCats = testPets.filter(p => p.type === 'cat');
+    const expectedCats = testPets.filter(p => p.type === PetType.Cat);
 
     // Act: Make the API request.
     const response = await request.get('/api/pets/cat/');
 
     // Assert: Check the response.
     expect(response.ok()).toBeTruthy();
-    const body = await response.json();
+    const body = await response.json() as ApiResponse<Pet[]>;
 
     // Verify that we only got the cats.
     expect(body.data).toHaveLength(expectedCats.length);
@@ -80,14 +88,14 @@ test.describe('Pet API Endpoints', () => {
 
     // Assert: Check the response from the POST request.
     expect(response.ok()).toBeTruthy();
-    const body = await response.json();
+    const body = await response.json() as ApiResponse<{ message: string; pet: Pet }>;
     expect(body.data.pet.breed).toBe(newDog.breed);
-    expect(body.data.pet.type).toBe('dog');
+    expect(body.data.pet.type).toBe(PetType.Dog);
 
     // Act & Assert: Verify that the new dog is now in the database by fetching all dogs.
     const getResponse = await request.get('/api/pets/dog/');
-    const getBody = await getResponse.json();
-    const dogsInDb = getBody.data.map(p => p.breed);
+    const getBody = await getResponse.json() as ApiResponse<Pet[]>;
+    const dogsInDb = getBody.data.map((p: Pet) => p.breed);
     expect(dogsInDb).toContain(newDog.breed);
   });
 });

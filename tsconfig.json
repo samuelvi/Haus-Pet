@@ -4,11 +4,13 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "strict": true,
+    "outDir": "./dist"
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "tests/**/*.ts",
+    "playwright.config.ts"
   ],
   "exclude": [
     "node_modules"

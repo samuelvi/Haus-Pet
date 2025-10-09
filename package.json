@@ -9,7 +9,7 @@
     "start:worker": "ts-node src/worker.ts",
     "list-routes": "ts-node src/scripts/list-routes.ts",
     "commit-msg:suggest": "ts-node src/scripts/suggest-commit-msg.ts",
-    "test:e2e": "make test"
+    "test:functional": "make test"
   },
   "keywords": [],
   "author": "",

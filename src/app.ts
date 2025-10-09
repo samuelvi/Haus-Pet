@@ -15,7 +15,7 @@ app.use(mainRouter);
 
 // A simple health-check or root endpoint can remain here
 app.get("/", (_req: Request, res: Response) => {
-  res.send("ApiCat is running!");
+  res.send("HausPet is running!");
 });
 
 export default app;

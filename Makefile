@@ -6,8 +6,9 @@ MONGO_SHELL_CMD = mongosh -u audit_user -p audit_pass --authenticationDatabase a
 # --- Test Environment ---
 TEST_COMPOSE_FILE = docker/docker-compose.test.yaml
 TEST_COMPOSE = docker compose -f $(TEST_COMPOSE_FILE)
+TEST_API_SERVICE = hauspet_api
 
-.PHONY: up down logs restart install shell list-routes prune mongo-shell test test-up test-down test-run
+.PHONY: up down logs restart install shell list-routes prune mongo-shell test test-up test-down test-run test-prune
 
 # --- Development Environment ---
 up:
@@ -46,13 +47,37 @@ test-up:
 
 test-down:
 	@echo "Stopping test environment..."
+	@$(TEST_COMPOSE) down
+
+test-prune:
+	@echo "Stopping test environment and pruning volumes..."
 	@$(TEST_COMPOSE) down -v
 
 test-run:
-	@echo "Running Playwright tests inside the container..."
-	@$(TEST_COMPOSE) run --rm hauspet_api sh -c "npm install > /dev/null && npx playwright test"
+	@echo "Running Playwright tests inside the running API container..."
+	# The container installs its own dependencies, so we just run the tests.
+	@$(TEST_COMPOSE) exec $(TEST_API_SERVICE) sh -c "npx playwright test"
 
 test:
 	@make test-up
-	@make test-run
-	@make test-down
+	@echo "Waiting for API to be ready..."
+	@attempts=0; \
+	max_attempts=20; \
+	until curl -s -f -o /dev/null http://localhost:3000/api/pets/; do \
+		attempts=$$(($$attempts + 1)); \
+		if [ "$$attempts" -ge "$$max_attempts" ]; then \
+			echo "API failed to start after $$(($$max_attempts * 2)) seconds."; \
+			echo "Dumping container logs for debugging..."; \
+			$(TEST_COMPOSE) logs $(TEST_API_SERVICE); \
+			make test-down; \
+			exit 1; \
+		fi; \
+		echo "API not ready, waiting 2 seconds... (Attempt $$attempts/$$max_attempts)"; \
+		sleep 2; \
+	done
+	@echo "API is ready! Running tests..."
+	@# Run tests and capture the exit code to ensure cleanup always happens.
+	@make test-run ; EXIT_CODE=$$? ; \
+		echo "Cleaning up test environment..." ; \
+		make test-down ; \
+		exit $$EXIT_CODE

@@ -1,3 +1,37 @@
+# HausPet Project AI-Rules
+
+## 1. Project Overview
+- **Project Name**: HausPet
+- **Objective**: This project is a web service built following Domain-Driven Design (DDD) principles. It manages pet-related data and operations.
+- **Architecture**: The service is composed of a main API (`index.ts`) and a background worker (`worker.ts`) for processing jobs, likely using a message queue. It connects to multiple databases (PostgreSQL and MongoDB), suggesting different data storage needs (e.g., relational for core domain, document-based for auditing or other purposes).
+
+## 2. Technology Stack
+- **Primary Language**: TypeScript
+- **Web Framework**: Express.js
+- **Databases**: PostgreSQL, MongoDB
+- **Job Queue**: BullMQ (with Redis)
+- **Testing**:
+  - **Functional/E2E**: Playwright
+  - **Unit/Integration**: Jest (as per testing examples below)
+- **Containerization**: Docker and Docker Compose
+
+## 3. Getting Started
+
+### Running the Application (Development)
+- **Using Docker (Recommended)**:
+  - Start all services: `make up`
+  - Stop all services: `make down`
+- **Locally**:
+  - Start the API server: `npm run dev`
+  - Start the background worker: `npm run start:worker`
+
+### Running Tests
+- **Functional Tests**:
+  - Run the entire test suite (starts services, runs tests, stops services): `make test`
+  - This command uses Docker to build a clean test environment and runs Playwright tests against the API.
+
+---
+
 # TypeScript DDD Project Guidelines for AI Agents
 
 ## General Principles
@@ -10,34 +44,39 @@
 
 ## Architecture Overview
 
-### Layer Structure
+### Project Structure Overview
 ```
-src/
-├── domain/              # Domain Layer (Business Logic)
-│   ├── entities/        # Domain entities
-│   ├── value-objects/   # Value objects (immutable)
-│   ├── repositories/    # Repository interfaces
-│   ├── services/        # Domain services
-│   ├── events/          # Domain events
-│   └── exceptions/      # Domain exceptions
-├── application/         # Application Layer (Use Cases)
-│   ├── use-cases/       # Application use cases
-│   ├── dto/             # Data Transfer Objects
-│   ├── mappers/         # Entity <-> DTO mappers
-│   └── services/        # Application services
-├── infrastructure/      # Infrastructure Layer (Technical Details)
-│   ├── persistence/     # Database implementations
-│   │   ├── repositories/
-│   │   └── models/      # ORM models
-│   ├── http/           # HTTP/REST implementations
-│   │   ├── controllers/
-│   │   ├── middlewares/
-│   │   └── routes/
-│   ├── messaging/      # Message queue implementations
-│   └── external/       # External service integrations
-└── shared/             # Shared Kernel
-    ├── types/          # Shared types
-    └── utils/          # Shared utilities
+.
+├── src/                  # Main source code following DDD layers
+│   ├── domain/           # Domain Layer (Business Logic, no framework dependencies)
+│   │   ├── entities/
+│   │   ├── value-objects/
+│   │   ├── repositories/   # Repository interfaces
+│   │   ├── services/
+│   │   ├── events/
+│   │   └── exceptions/
+│   ├── application/      # Application Layer (Use Cases, orchestrates domain)
+│   │   ├── use-cases/
+│   │   ├── dto/
+│   │   ├── mappers/
+│   │   └── services/
+│   ├── infrastructure/   # Infrastructure Layer (Technical Details)
+│   │   ├── persistence/    # Database implementations (e.g., Postgres, Mongo)
+│   │   ├── http/           # HTTP/REST implementations (e.g., Express controllers)
+│   │   ├── messaging/      # Message queue implementations (e.g., BullMQ)
+│   │   └── external/       # External service integrations
+│   └── shared/           # Shared Kernel (e.g., Result type, shared utilities)
+│
+├── tests/                # Automated tests
+│   ├── functional/       # Functional/E2E tests (Playwright)
+│   └── unit/             # Unit tests (often co-located with source files, e.g., *.spec.ts)
+│
+├── docker/               # Docker and Docker Compose files for all environments
+├── routes/               # Top-level Express route definitions
+├── public/               # Static assets served by the web server
+├── docs/                 # Project documentation
+├── .husky/               # Git hooks configuration
+└── ...                   # Root configuration files (.gitignore, tsconfig.json, etc.)
 ```
 
 ## Type Safety Rules
@@ -61,7 +100,7 @@ function calculateTotal(price: number, quantity: number): number {
   return price * quantity;
 }
 
-async function fetchUser(id: string): Promise {
+async function fetchUser(id: string): Promise<User> {
   const response = await fetch(`/api/users/${id}`);
   return response.json();
 }
@@ -91,7 +130,7 @@ export class Email {
    * @param value - The email string to validate and create
    * @returns Result containing Email or Error
    */
-  public static create(value: string): Result {
+  public static create(value: string): Result<Email, Error> {
     if (!this.isValid(value)) {
       return Result.fail(new Error('Invalid email format'));
     }
@@ -126,14 +165,14 @@ export class Money {
     this.currency = currency;
   }
 
-  public static create(amount: number, currency: Currency): Result {
+  public static create(amount: number, currency: Currency): Result<Money, Error> {
     if (amount < 0) {
       return Result.fail(new Error('Amount cannot be negative'));
     }
     return Result.ok(new Money(amount, currency));
   }
 
-  public add(other: Money): Result {
+  public add(other: Money): Result<Money, Error> {
     if (!this.currency.equals(other.currency)) {
       return Result.fail(new Error('Cannot add money with different currencies'));
     }
@@ -166,7 +205,7 @@ export class UserId {
     return new UserId(value ?? crypto.randomUUID());
   }
 
-  public static fromString(value: string): Result {
+  public static fromString(value: string): Result<UserId, Error> {
     if (!value || value.trim().length === 0) {
       return Result.fail(new Error('UserId cannot be empty'));
     }
@@ -220,7 +259,7 @@ export class User {
    * @param props - User properties
    * @returns Result containing User or Error
    */
-  public static create(props: Omit): User {
+  public static create(props: Omit<UserProps, 'id' | 'createdAt' | 'updatedAt'>): User {
     const now = new Date();
     return new User({
       id: UserId.create(),
@@ -257,7 +296,7 @@ export class User {
     this.updatedAt = new Date();
   }
 
-  public changeName(newName: string): Result {
+  public changeName(newName: string): Result<void, Error> {
     if (!newName || newName.trim().length === 0) {
       return Result.fail(new Error('Name cannot be empty'));
     }
@@ -277,28 +316,28 @@ export interface UserRepository {
    * @param id - User identifier
    * @returns Promise with optional User
    */
-  findById(id: UserId): Promise;
+  findById(id: UserId): Promise<User | null>;
 
   /**
    * Finds a user by their email
    * @param email - User email
    * @returns Promise with optional User
    */
-  findByEmail(email: Email): Promise;
+  findByEmail(email: Email): Promise<User | null>;
 
   /**
    * Saves a user (create or update)
    * @param user - User entity to save
    * @returns Promise with saved User
    */
-  save(user: User): Promise;
+  save(user: User): Promise<User>;
 
   /**
    * Deletes a user by their ID
    * @param id - User identifier
    * @returns Promise with deletion result
    */
-  delete(id: UserId): Promise;
+  delete(id: UserId): Promise<void>;
 
   /**
    * Finds all users with pagination
@@ -306,7 +345,7 @@ export interface UserRepository {
    * @param offset - Number of results to skip
    * @returns Promise with array of Users
    */
-  findAll(limit: number, offset: number): Promise;
+  findAll(limit: number, offset: number): Promise<User[]>;
 }
 ```
 
@@ -319,7 +358,7 @@ export class UserDomainService {
    * @param user - User to check
    * @returns Result indicating if deletion is allowed
    */
-  public canDelete(user: User): Result {
+  public canDelete(user: User): Result<void, Error> {
     // Business rules for deletion
     if (this.hasActiveSubscription(user)) {
       return Result.fail(new Error('Cannot delete user with active subscription'));
@@ -409,7 +448,7 @@ export class CreateUserUseCase {
    * @param dto - Data transfer object with user data
    * @returns Promise with Result containing user response or error
    */
-  public async execute(dto: CreateUserDTO): Promise<Result> {
+  public async execute(dto: CreateUserDTO): Promise<Result<CreateUserResponse, Error>> {
     // Validate email
     const emailOrError = Email.create(dto.email);
     if (emailOrError.isFailure()) {
@@ -473,7 +512,7 @@ export interface UpdateUserRequestDTO {
   email?: string;
 }
 
-export interface PaginatedResponseDTO {
+export interface PaginatedResponseDTO<T> {
   data: T[];
   total: number;
   page: number;
@@ -505,7 +544,7 @@ export class UserMapper {
    * @param data - Raw persistence data
    * @returns Result with User entity or Error
    */
-  public static toDomain(data: PersistenceUser): Result {
+  public static toDomain(data: PersistenceUser): Result<User, Error> {
     const emailOrError = Email.create(data.email);
     if (emailOrError.isFailure()) {
       return Result.fail(emailOrError.error);
@@ -540,7 +579,7 @@ export class PostgresUserRepository implements UserRepository {
   /**
    * Finds a user by their ID
    */
-  public async findById(id: UserId): Promise {
+  public async findById(id: UserId): Promise<User | null> {
     const row: PersistenceUser | undefined = await this.db
       .selectFrom('users')
       .where('id', '=', id.getValue())
@@ -551,7 +590,7 @@ export class PostgresUserRepository implements UserRepository {
       return null;
     }
 
-    const userOrError: Result = UserMapper.toDomain(row);
+    const userOrError: Result<User, Error> = UserMapper.toDomain(row);
     if (userOrError.isFailure()) {
       throw userOrError.error;
     }
@@ -562,7 +601,7 @@ export class PostgresUserRepository implements UserRepository {
   /**
    * Saves a user to the database
    */
-  public async save(user: User): Promise {
+  public async save(user: User): Promise<User> {
     const data: PersistenceUser = {
       id: user.getId().getValue(),
       email: user.getEmail().getValue(),
@@ -580,14 +619,14 @@ export class PostgresUserRepository implements UserRepository {
     return user;
   }
 
-  public async delete(id: UserId): Promise {
+  public async delete(id: UserId): Promise<void> {
     await this.db
       .deleteFrom('users')
       .where('id', '=', id.getValue())
       .execute();
   }
 
-  public async findByEmail(email: Email): Promise {
+  public async findByEmail(email: Email): Promise<User | null> {
     const row: PersistenceUser | undefined = await this.db
       .selectFrom('users')
       .where('email', '=', email.getValue())
@@ -598,7 +637,7 @@ export class PostgresUserRepository implements UserRepository {
       return null;
     }
 
-    const userOrError: Result = UserMapper.toDomain(row);
+    const userOrError: Result<User, Error> = UserMapper.toDomain(row);
     if (userOrError.isFailure()) {
       throw userOrError.error;
     }
@@ -606,7 +645,7 @@ export class PostgresUserRepository implements UserRepository {
     return userOrError.value;
   }
 
-  public async findAll(limit: number, offset: number): Promise {
+  public async findAll(limit: number, offset: number): Promise<User[]> {
     const rows: PersistenceUser[] = await this.db
       .selectFrom('users')
       .selectAll()
@@ -616,7 +655,7 @@ export class PostgresUserRepository implements UserRepository {
 
     const users: User[] = [];
     for (const row of rows) {
-      const userOrError: Result = UserMapper.toDomain(row);
+      const userOrError: Result<User, Error> = UserMapper.toDomain(row);
       if (userOrError.isSuccess()) {
         users.push(userOrError.value);
       }
@@ -641,11 +680,11 @@ export class UserController {
    * @param req - Express request
    * @param res - Express response
    */
-  public async create(req: Request, res: Response): Promise {
+  public async create(req: Request, res: Response): Promise<void> {
     try {
       const dto: CreateUserRequestDTO = req.body;
 
-      const result: Result =
+      const result: Result<CreateUserResponse, Error> =
         await this.createUserUseCase.execute(dto);
 
       if (result.isFailure()) {
@@ -667,11 +706,11 @@ export class UserController {
   /**
    * Gets a user by ID
    */
-  public async getById(req: Request, res: Response): Promise {
+  public async getById(req: Request, res: Response): Promise<void> {
     try {
       const userId: string = req.params.id;
 
-      const result: Result =
+      const result: Result<UserDTO, Error> =
         await this.getUserUseCase.execute(userId);
 
       if (result.isFailure()) {
@@ -697,7 +736,7 @@ export class UserController {
 ### Result Type (Functional Error Handling)
 ```typescript
 // ✅ GOOD: Result type for error handling
-export class Result {
+export class Result<T, E extends Error> {
   private readonly _isSuccess: boolean;
   private readonly _value?: T;
   private readonly _error?: E;
@@ -708,19 +747,19 @@ export class Result {
     this._error = error;
   }
 
-  public static ok(value: T): Result {
+  public static ok<U>(value: U): Result<U, never> {
     return new Result(true, value);
   }
 
-  public static fail(error: E): Result {
+  public static fail<U extends Error>(error: U): Result<never, U> {
     return new Result(false, undefined, error);
   }
 
-  public isSuccess(): boolean {
+  public isSuccess(): this is Result<T, never> {
     return this._isSuccess;
   }
 
-  public isFailure(): boolean {
+  public isFailure(): this is Result<never, E> {
     return !this._isSuccess;
   }
 
@@ -757,7 +796,7 @@ export class Pagination {
     this.pageSize = pageSize;
   }
 
-  public static create(page: number, pageSize: number): Result {
+  public static create(page: number, pageSize: number): Result<Pagination, Error> {
     if (page < 1) {
       return Result.fail(new Error('Page must be greater than 0'));
     }
@@ -786,19 +825,19 @@ export class Pagination {
 ```typescript
 // ✅ GOOD: Dependency injection container
 export class Container {
-  private readonly services: Map = new Map();
+  private readonly services: Map<string, unknown> = new Map();
 
   /**
    * Registers a service in the container
    */
-  public register(key: string, service: T): void {
+  public register<T>(key: string, service: T): void {
     this.services.set(key, service);
   }
 
   /**
    * Resolves a service from the container
    */
-  public resolve(key: string): T {
+  public resolve<T>(key: string): T {
     const service = this.services.get(key);
     if (!service) {
       throw new Error(`Service ${key} not found in container`);
@@ -808,7 +847,7 @@ export class Container {
 }
 
 // ✅ GOOD: Service registration
-export function setupContainer(db: Database): Container {
+export function setupContainer(db: Database, eventBus: EventBus): Container {
   const container: Container = new Container();
 
   // Repositories
@@ -858,14 +897,14 @@ export class Email {
    * @returns Result containing Email or Error
    * @throws Never throws, returns Result instead
    */
-  public static create(value: string): Result {
+  public static create(value: string): Result<Email, Error> {
     // Validation logic here
   }
 }
 
 // ❌ BAD: Spanish comments
 // Crea un nuevo Email
-public static create(value: string): Result {
+public static create(value: string): Result<Email, Error> {
   // ...
 }
 ```
@@ -896,14 +935,14 @@ import { PostgresUserRepository } from '@/infrastructure/persistence/repositorie
 // ✅ GOOD: Domain unit tests
 describe('Email Value Object', () => {
   it('should create a valid email', () => {
-    const result: Result = Email.create('test@example.com');
+    const result: Result<Email, Error> = Email.create('test@example.com');
 
     expect(result.isSuccess()).toBe(true);
     expect(result.value.getValue()).toBe('test@example.com');
   });
 
   it('should reject invalid email format', () => {
-    const result: Result = Email.create('invalid-email');
+    const result: Result<Email, Error> = Email.create('invalid-email');
 
     expect(result.isFailure()).toBe(true);
     expect(result.error.message).toContain('Invalid email');
@@ -912,7 +951,7 @@ describe('Email Value Object', () => {
 
 describe('User Entity', () => {
   it('should create a new user', () => {
-    const emailResult: Result = Email.create('john@example.com');
+    const emailResult: Result<Email, Error> = Email.create('john@example.com');
     const email: Email = emailResult.value;
 
     const user: User = User.create({
@@ -931,18 +970,18 @@ describe('User Entity', () => {
 // ✅ GOOD: Use case integration tests
 describe('CreateUserUseCase', () => {
   let useCase: CreateUserUseCase;
-  let mockRepository: jest.Mocked;
-  let mockEventBus: jest.Mocked;
+  let mockRepository: jest.Mocked<UserRepository>;
+  let mockEventBus: jest.Mocked<EventBus>;
 
   beforeEach(() => {
     mockRepository = {
       findByEmail: jest.fn(),
       save: jest.fn()
-    } as unknown as jest.Mocked;
+    } as unknown as jest.Mocked<UserRepository>;
 
     mockEventBus = {
       publish: jest.fn()
-    } as unknown as jest.Mocked;
+    } as unknown as jest.Mocked<EventBus>;
 
     useCase = new CreateUserUseCase(mockRepository, mockEventBus);
   });
@@ -956,7 +995,7 @@ describe('CreateUserUseCase', () => {
       name: 'John Doe'
     };
 
-    const result: Result = await useCase.execute(dto);
+    const result: Result<CreateUserResponse, Error> = await useCase.execute(dto);
 
     expect(result.isSuccess()).toBe(true);
     expect(result.value.email).toBe('john@example.com');

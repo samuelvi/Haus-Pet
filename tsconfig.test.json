@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Allow importing JSON modules, which is common in tests.
+    "resolveJsonModule": true,
+    // Allow default imports from modules with no default export.
+    "allowSyntheticDefaultImports": true
+  },
+  // Tell TypeScript to include our test files and Playwright's type definitions.
+  "include": [
+    "tests/**/*.ts",
+    "node_modules/@playwright/test/types/test.d.ts"
+  ]
+}
