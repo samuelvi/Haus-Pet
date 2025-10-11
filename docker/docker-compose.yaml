@@ -14,11 +14,8 @@ services:
       - NODE_ENV=development
       - PORT=3000
       - PERSISTENCE_TYPE=postgres
-      - DB_HOST=hauspet_db
-      - DB_USER=user
-      - DB_PASSWORD=password
-      - DB_NAME=hauspet_db
-      - DB_PORT=5432
+      # The DATABASE_URL for the container, using the service name as the host.
+      - DATABASE_URL=postgresql://user:password@hauspet_db:5432/hauspet_db
       - REDIS_HOST=hauspet_redis
       - REDIS_PORT=6379
       - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db:27017/audit_log_db?authSource=admin
@@ -27,7 +24,8 @@ services:
     volumes:
       - ..:/app
       - /app/node_modules
-    command: sh -c "npm install && ./node_modules/.bin/ts-node-dev src/index.ts"
+    # The command now also seeds the database on startup.
+    command: sh -c "npm install && npx prisma migrate deploy && npx prisma db seed && ./node_modules/.bin/ts-node-dev src/index.ts"
     restart: unless-stopped
     networks:
       - hauspet-dev-network
@@ -67,7 +65,8 @@ services:
       - "5432:5432"
     volumes:
       - ./data/postgres_dev:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d
+      # The following line is commented out to make Prisma the single source of truth for the schema.
+      # - ./db/init:/docker-entrypoint-initdb.d
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d hauspet_db"]

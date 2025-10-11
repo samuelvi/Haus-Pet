@@ -1,0 +1,16 @@
+# Windows-specific overrides for docker-compose
+# Usage: docker-compose -f docker-compose.yaml -f docker-compose.windows.yaml up
+
+services:
+  hauspet_api:
+    environment:
+      # Windows Docker Desktop sometimes needs explicit path handling
+      - COMPOSE_CONVERT_WINDOWS_PATHS=1
+    # Optional: Use absolute paths if relative paths cause issues
+    # volumes:
+    #   - ${PWD}:/app
+    #   - /app/node_modules
+
+  hauspet_worker:
+    environment:
+      - COMPOSE_CONVERT_WINDOWS_PATHS=1

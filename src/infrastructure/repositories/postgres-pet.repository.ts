@@ -1,54 +1,53 @@
-import { Pool } from "pg";
+import { PrismaClient, Pet as PrismaPet, PetType as PrismaPetType } from "@prisma/client";
 import { PetReadRepository } from "../../domain/pet-read.repository";
 import { PetWriteRepository } from "../../domain/pet-write.repository";
-import { Pet, PetType } from "../../domain/pet";
+import { Pet as DomainPet, PetType as DomainPetType } from "../../domain/pet";
 
 export class PostgresPetRepository implements PetReadRepository, PetWriteRepository {
-  constructor(private readonly pool: Pool) {}
+  constructor(private readonly prisma: PrismaClient) {}
 
-  public async findAll(): Promise<Pet[]> {
-    const client = await this.pool.connect();
-    try {
-      const result = await client.query('SELECT id, breed, type FROM pet');
-      return result.rows;
-    } finally {
-      client.release();
-    }
+  // Mapper from Prisma model to Domain model
+  private toDomain(prismaPet: PrismaPet): DomainPet {
+    return {
+      id: prismaPet.id,
+      breed: prismaPet.breed,
+      // Cast the string value from Prisma's enum to the domain's enum
+      type: prismaPet.type as DomainPetType,
+    };
   }
 
-  public async findByBreed(breed: string): Promise<Pet | null> {
-    const client = await this.pool.connect();
-    try {
-      const result = await client.query('SELECT id, breed, type FROM pet WHERE breed = $1', [breed]);
-      if (result.rows.length === 0) {
-        return null;
-      }
-      return result.rows[0];
-    } finally {
-      client.release();
-    }
+  public async findAll(): Promise<DomainPet[]> {
+    const prismaPets = await this.prisma.pet.findMany();
+    return prismaPets.map(this.toDomain);
   }
 
-  public async findByType(type: PetType): Promise<Pet[]> {
-    const client = await this.pool.connect();
-    try {
-      const result = await client.query('SELECT id, breed, type FROM pet WHERE type = $1', [type]);
-      return result.rows;
-    } finally {
-      client.release();
-    }
+  public async findByBreed(breed: string): Promise<DomainPet | null> {
+    const prismaPet = await this.prisma.pet.findFirst({
+      where: { breed },
+    });
+    return prismaPet ? this.toDomain(prismaPet) : null;
   }
 
-  public async save(pet: Pet): Promise<Pet> {
-    const client = await this.pool.connect();
-    try {
-      const result = await client.query(
-        'INSERT INTO pet (breed, type) VALUES ($1, $2) RETURNING id, breed, type',
-        [pet.breed, pet.type]
-      );
-      return result.rows[0];
-    } finally {
-      client.release();
-    }
+  public async findByType(type: DomainPetType): Promise<DomainPet[]> {
+    const prismaPets = await this.prisma.pet.findMany({
+      // Cast the domain enum to the Prisma enum for the query
+      where: { type: type as PrismaPetType },
+    });
+    return prismaPets.map(this.toDomain);
+  }
+
+  public async save(pet: DomainPet): Promise<DomainPet> {
+    // The `id` is optional in the domain, but Prisma expects it to be undefined for creation.
+    const { id, ...petData } = pet;
+
+    const createdPrismaPet = await this.prisma.pet.create({
+      data: {
+        ...petData,
+        // Cast the domain enum to the Prisma enum for writing
+        type: pet.type as PrismaPetType,
+      },
+    });
+
+    return this.toDomain(createdPrismaPet);
   }
 }
