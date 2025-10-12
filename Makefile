@@ -6,7 +6,7 @@ MONGO_SHELL_CMD = mongosh -u audit_user -p audit_pass --authenticationDatabase a
 # --- Test Environment ---
 TEST_COMPOSE_FILE = docker/docker-compose.test.yaml
 TEST_COMPOSE = docker compose -f $(TEST_COMPOSE_FILE)
-TEST_API_SERVICE = hauspet_api
+TEST_API_SERVICE = hauspet_api_test
 
 .PHONY: up down logs restart install shell list-routes prune mongo-shell test test-up test-down test-run test-prune
 
@@ -57,6 +57,11 @@ test-run:
 	@echo "Running Playwright tests inside the running API container..."
 	# The container installs its own dependencies, so we just run the tests.
 	@$(TEST_COMPOSE) exec $(TEST_API_SERVICE) sh -c "npx playwright test"
+
+test-list-routes:
+	@echo "Installing dependencies and listing routes..."
+	@$(TEST_COMPOSE) run --rm $(TEST_API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node src/scripts/list-routes.ts"
+
 
 test:
 	@make test-up
