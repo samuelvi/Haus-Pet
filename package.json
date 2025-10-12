@@ -20,7 +20,7 @@
     "bullmq": "^5.8.2",
     "express": "^4.19.2",
     "ioredis": "^5.4.1",
-    "mongodb": "^6.7.0"
+    "mongoose": "^8.4.1"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

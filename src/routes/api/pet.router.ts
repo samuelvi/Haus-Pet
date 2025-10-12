@@ -5,7 +5,6 @@ import { createPetRepository } from "../../infrastructure/repositories/repositor
 import { AuditService } from "../../application/audit.service";
 import { MongoAuditRepository } from "../../infrastructure/repositories/mongo-audit.repository";
 import { AuditLoggingPetServiceDecorator } from "../../application/audit-logging-pet.service.decorator";
-import mongoClient from "../../infrastructure/database/mongo-client";
 import { QueueService } from "../../infrastructure/queue/queue.service";
 import { RedisHealthService } from "../../infrastructure/queue/redis-health.service";
 import redisConnection from "../../infrastructure/queue/redis-connection";
@@ -17,7 +16,8 @@ const router = Router();
 
 const petRepository = createPetRepository();
 const realPetService = new PetService(petRepository, petRepository);
-const auditRepository = new MongoAuditRepository(mongoClient);
+// The MongoAuditRepository no longer needs a client passed to its constructor.
+const auditRepository = new MongoAuditRepository();
 const auditService = new AuditService(auditRepository);
 const queueService = new QueueService();
 const redisHealthService = new RedisHealthService(redisConnection);

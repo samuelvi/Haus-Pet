@@ -1,21 +1,20 @@
-import { MongoClient } from "mongodb";
 import { AuditRepository } from "../../domain/audit.repository";
 import { AuditLog } from "../../domain/audit";
-
-const AUDIT_COLLECTION = "logs";
+import { AuditLogModel } from "../database/mongoose";
 
 export class MongoAuditRepository implements AuditRepository {
-  constructor(private readonly client: MongoClient) {}
+  // The constructor is now empty as Mongoose handles the connection singleton.
+  constructor() {}
 
   public async save(log: AuditLog): Promise<void> {
     try {
-      await this.client.connect();
-      const db = this.client.db(); // Get the default database from the connection string
-      const collection = db.collection<AuditLog>(AUDIT_COLLECTION);
-      await collection.insertOne(log);
-    } finally {
-      // Ensures that the client will close when you finish/error
-      await this.client.close();
+      // Use the Mongoose model to create a new document. Mongoose handles the connection.
+      await AuditLogModel.create(log);
+    } catch (error) {
+      console.error("Error saving audit log with Mongoose:", error);
+      // Depending on the desired behavior, you might want to re-throw the error
+      // to let the calling service know that the audit failed.
+      throw error;
     }
   }
 }

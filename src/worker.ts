@@ -2,14 +2,14 @@ import { Worker, Job } from "bullmq";
 import connection from "./infrastructure/queue/redis-connection";
 import { AuditService } from "./application/audit.service";
 import { MongoAuditRepository } from "./infrastructure/repositories/mongo-audit.repository";
-import mongoClient from "./infrastructure/database/mongo-client";
 
 const AUDIT_QUEUE_NAME = "audit-log";
 
 console.log("Worker process started.");
 
 // --- Composition Root for the Worker ---
-const auditRepository = new MongoAuditRepository(mongoClient);
+// The MongoAuditRepository now uses Mongoose and doesn't need a client passed in.
+const auditRepository = new MongoAuditRepository();
 const auditService = new AuditService(auditRepository);
 // ---
 
