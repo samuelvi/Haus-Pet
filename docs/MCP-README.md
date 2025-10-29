@@ -28,6 +28,9 @@ Edita el archivo de configuración de Claude Desktop:
 
 **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
+Puedes usar el archivo de ejemplo incluido en este proyecto como referencia:
+[`docs/claude-desktop-config.example.json`](./claude-desktop-config.example.json)
+
 Agrega la siguiente configuración (ajusta la ruta según tu sistema):
 
 ```json
@@ -45,6 +48,9 @@ Agrega la siguiente configuración (ajusta la ruta según tu sistema):
   }
 }
 ```
+
+**Nota:** Reemplaza `/ruta/completa/a/HausPet` con la ruta absoluta donde
+clonaste este repositorio.
 
 ### 3. Iniciar los servicios
 
