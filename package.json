@@ -10,17 +10,21 @@
     "list-routes": "ts-node src/scripts/list-routes.ts",
     "commit-msg:suggest": "ts-node src/scripts/suggest-commit-msg.ts",
     "test:functional": "make test",
-    "db:seed": "npx prisma db seed"
+    "db:seed": "npx prisma db seed",
+    "build": "tsc",
+    "mcp": "node dist/mcp-server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.2",
     "@prisma/client": "^6.17.1",
     "bullmq": "^5.8.2",
     "express": "^4.19.2",
     "ioredis": "^5.4.1",
-    "mongoose": "^8.4.1"
+    "mongoose": "^8.4.1",
+    "zod": "^3.25.76"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "hauspet": {
+      "command": "node",
+      "args": [
+        "/Users/work/Projects/Personal/HausPet/dist/mcp-server.js"
+      ],
+      "env": {
+        "HAUSPET_API_URL": "http://localhost:3000"
+      }
+    }
+  }
+}

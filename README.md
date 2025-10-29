@@ -175,6 +175,12 @@ npm run test:functional
 
 For a more detailed explanation of the testing philosophy, environment, and available commands, please see the **[Testing Guide](./docs/TESTING.md)**.
 
+## MCP Server
+
+This project includes an MCP (Model Context Protocol) server that allows you to interact with the HausPet API directly from Claude Desktop.
+
+For setup instructions and usage details, see the **[MCP Guide](./docs/MCP-README.md)**.
+
 ## API Endpoints
 
 The API is divided into generic routes and type-specific routes.
