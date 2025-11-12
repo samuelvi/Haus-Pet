@@ -9,3 +9,5 @@ CREATE TABLE "Pet" (
 
     CONSTRAINT "Pet_pkey" PRIMARY KEY ("id")
 );
+
+CREATE UNIQUE INDEX "Pet_breed_key" ON "Pet"("breed");
