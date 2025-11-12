@@ -26,8 +26,36 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      - name: Start test services
+        run: make test-up
+
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API to be ready..."
+          for i in {1..20}; do
+            if curl -s -f -o /dev/null http://localhost:3000/api/pets/; then
+              echo "API is ready!"
+              exit 0
+            fi
+            echo "API not ready, waiting... (Attempt $i/20)"
+            sleep 2
+          done
+          echo "API failed to start"
+          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+          exit 1
+
       - name: Run functional tests
-        run: make test
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5433
+          DB_USER: user
+          DB_PASSWORD: password
+          DB_NAME: hauspet_test_db
+        run: npx playwright test
+
+      - name: Stop test services
+        if: always()
+        run: make test-down
 
       - name: Upload test results
         if: always()

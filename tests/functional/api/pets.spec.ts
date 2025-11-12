@@ -9,13 +9,15 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-// Configuration for the TEST database, connecting from within the Docker network.
+// Configuration for the TEST database.
+// When running inside Docker (via make test-run), use service name.
+// When running from host (via GitHub Actions), use localhost with exposed port.
 const pool = new Pool({
-  host: 'hauspet_test_db', // The service name from docker-compose.test.yaml
-  port: 5432,             // The internal port of the PostgreSQL container
-  user: 'user',
-  password: 'password',
-  database: 'hauspet_test_db',
+  host: process.env.DB_HOST || 'hauspet_test_db',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  user: process.env.DB_USER || 'user',
+  password: process.env.DB_PASSWORD || 'password',
+  database: process.env.DB_NAME || 'hauspet_test_db',
 });
 
 // Our data fixture for the tests, typed using our domain model.
