@@ -16,20 +16,21 @@ services:
       - NODE_ENV=test
       - PORT=3000
       - PERSISTENCE_TYPE=postgres
+      - DATABASE_URL=postgresql://user:password@hauspet_db_test:5432/hauspet_test_db
       - DB_HOST=hauspet_db_test
       - DB_USER=user
       - DB_PASSWORD=password
-      - DB_NAME=hauspet_db_test
+      - DB_NAME=hauspet_test_db
       - DB_PORT=5432
       - REDIS_HOST=hauspet_redis_test
       - REDIS_PORT=6379
-      - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db:27017/audit_log_db?authSource=admin
+      - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db_test:27017/audit_log_db?authSource=admin
     ports:
       - "3000:3000"
     volumes:
       - ..:/app
       - /app/node_modules
-    command: sh -c "npm install --silent && ./node_modules/.bin/ts-node src/index.ts"
+    command: sh -c "npm install --silent && npx prisma migrate deploy && npx prisma db seed && ./node_modules/.bin/ts-node src/index.ts"
     restart: unless-stopped
     networks:
       - hauspet-test-network
