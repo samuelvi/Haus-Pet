@@ -30,7 +30,7 @@ services:
     volumes:
       - ..:/app
       - /app/node_modules
-    command: sh -c "npm install --silent && npx prisma migrate deploy && npx prisma db seed && ./node_modules/.bin/ts-node src/index.ts"
+    command: sh -c "npm install --silent && ./node_modules/.bin/ts-node src/index.ts"
     restart: unless-stopped
     networks:
       - hauspet-test-network

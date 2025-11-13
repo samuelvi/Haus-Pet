@@ -26,10 +26,11 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Start test services
-        run: make test-up
+      - name: Start database services only
+        run: |
+          docker compose -f docker/docker-compose.test.yaml up -d hauspet_db_test hauspet_redis_test hauspet_audit_db_test
 
-      - name: Wait for services and run migrations
+      - name: Wait for database to be healthy
         run: |
           echo "Waiting for database to be healthy..."
           for i in {1..30}; do
@@ -37,22 +38,44 @@ jobs:
               echo "Database is healthy!"
               break
             fi
+            if [ $i -eq 30 ]; then
+              echo "Database failed to become healthy"
+              docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test
+              exit 1
+            fi
             echo "Database not ready, waiting... (Attempt $i/30)"
             sleep 2
           done
 
+      - name: Run Prisma migrations
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5433/hauspet_test_db
+        run: |
+          echo "Running Prisma migrations..."
+          npx prisma migrate deploy
+          echo "Seeding database..."
+          npx prisma db seed
+
+      - name: Start API service
+        run: |
+          docker compose -f docker/docker-compose.test.yaml up -d hauspet_api_test
+
+      - name: Wait for API to be ready
+        run: |
           echo "Waiting for API to be ready..."
           for i in {1..30}; do
             if curl -s -f -o /dev/null http://localhost:3000/api/pets/; then
               echo "API is ready!"
               exit 0
             fi
+            if [ $i -eq 30 ]; then
+              echo "API failed to start"
+              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+              exit 1
+            fi
             echo "API not ready, waiting... (Attempt $i/30)"
-            sleep 3
+            sleep 2
           done
-          echo "API failed to start"
-          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
-          exit 1
 
       - name: Run functional tests
         env:
