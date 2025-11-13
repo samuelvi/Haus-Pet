@@ -29,16 +29,26 @@ jobs:
       - name: Start test services
         run: make test-up
 
-      - name: Wait for API to be ready
+      - name: Wait for services and run migrations
         run: |
+          echo "Waiting for database to be healthy..."
+          for i in {1..30}; do
+            if docker compose -f docker/docker-compose.test.yaml ps | grep -q "hauspet_db_test.*healthy"; then
+              echo "Database is healthy!"
+              break
+            fi
+            echo "Database not ready, waiting... (Attempt $i/30)"
+            sleep 2
+          done
+
           echo "Waiting for API to be ready..."
-          for i in {1..20}; do
+          for i in {1..30}; do
             if curl -s -f -o /dev/null http://localhost:3000/api/pets/; then
               echo "API is ready!"
               exit 0
             fi
-            echo "API not ready, waiting... (Attempt $i/20)"
-            sleep 2
+            echo "API not ready, waiting... (Attempt $i/30)"
+            sleep 3
           done
           echo "API failed to start"
           docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
