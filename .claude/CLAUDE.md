@@ -6,6 +6,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 HausPet is a REST API for managing pet breeds built with Node.js, Express, and TypeScript. The project follows **Domain-Driven Design (DDD)** principles with a clear separation between Domain, Application, and Infrastructure layers.
 
+## 🚧 ACTIVE WORK IN PROGRESS
+
+**Current Project**: Building Admin Panel with Authentication
+
+**Status**: Backend authentication foundation completed (4/21 tasks)
+- ✅ User model in Prisma schema
+- ✅ Domain entities (User, Email, Password value objects)
+- ✅ Password hashing service (bcrypt)
+- ✅ JWT service
+- ⏳ NEXT: Design screens in Figma
+- ⏳ PENDING: Complete backend (use cases, controllers, routes, middleware)
+- ⏳ PENDING: Build React frontend
+- ⏳ PENDING: Integration
+
+**Plan**: Backend → Figma Design → React Frontend → Integration
+
+See conversation history or ask "What's the status of the admin panel project?"
+
 The system consists of:
 - **Main API**: Express.js REST API server
 - **Background Worker**: BullMQ-based worker for async audit logging
