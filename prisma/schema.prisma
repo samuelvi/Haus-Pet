@@ -12,8 +12,10 @@ datasource db {
 
 model Pet {
   id    Int     @id @default(autoincrement())
-  breed String  @unique // <-- This is the fix
+  breed String  @unique
   type  PetType
+
+  @@map("pet")
 }
 
 enum PetType {
