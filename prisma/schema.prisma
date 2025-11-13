@@ -18,8 +18,26 @@ model Pet {
   @@map("pet")
 }
 
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  role         Role     @default(ADMIN)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
 enum PetType {
   cat
   dog
   bird
+}
+
+enum Role {
+  ADMIN
+  USER
 }
