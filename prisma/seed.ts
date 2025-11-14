@@ -1,4 +1,5 @@
-import { PrismaClient, PetType } from '@prisma/client';
+import { PrismaClient, PetType, Role } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -26,6 +27,26 @@ const petsToCreate = [
 async function main() {
   console.log(`Start seeding ...`);
 
+  // Seed admin user
+  const adminEmail: string = 'admin@hauspet.com';
+  const adminPassword: string = 'Admin123'; // Change this in production!
+  const hashedPassword: string = await bcrypt.hash(adminPassword, 10);
+
+  const adminUser = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {}, // Don't update if exists
+    create: {
+      email: adminEmail,
+      passwordHash: hashedPassword,
+      name: 'Admin User',
+      role: Role.ADMIN,
+      isActive: true,
+    },
+  });
+  console.log(`Created or found admin user: ${adminUser.email} (ID: ${adminUser.id})`);
+  console.log(`  Login credentials: ${adminEmail} / ${adminPassword}`);
+
+  // Seed pets
   for (const p of petsToCreate) {
     const pet = await prisma.pet.upsert({
       where: { breed: p.breed }, // Unique identifier
