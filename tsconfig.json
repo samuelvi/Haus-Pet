@@ -5,10 +5,11 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "strict": true,
+    "rootDir": "./src",
     "outDir": "./dist"
   },
   "include": [
-    "src/**/*.ts"
+    "src/api/**/*.ts"
   ],
   "exclude": [
     "node_modules",

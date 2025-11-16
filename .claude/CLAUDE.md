@@ -139,7 +139,7 @@ npm run commit-msg:suggest
 ### DDD Layer Structure
 
 ```
-src/
+src/api/
 ├── domain/                  # Business logic, no framework dependencies
 │   ├── pet.ts              # Pet entity
 │   ├── audit.ts            # Audit entity
@@ -240,7 +240,7 @@ src/
 - Husky pre-commit hook will reject non-conforming messages
 
 ### Error Handling
-- Domain errors in `src/domain/errors/`
+- Domain errors in `src/api/domain/errors/`
 - Custom error classes extend base `Error`
 - Example: `PetBreedAlreadyExistsError`, `CatBreedAlreadyExistsError`
 
@@ -299,10 +299,10 @@ The project includes an MCP server for Claude Desktop integration:
 
 ### Adding a New Pet Endpoint
 
-1. Add route in `src/routes/api/pet.router.ts`
-2. Add handler in `src/infrastructure/http/controllers/pet.controller.ts`
-3. Add business logic in `src/application/pet.service.ts` if needed
-4. Add domain logic in `src/domain/` if it involves business rules
+1. Add route in `src/api/routes/api/pet.router.ts`
+2. Add handler in `src/api/infrastructure/http/controllers/pet.controller.ts`
+3. Add business logic in `src/api/application/pet.service.ts` if needed
+4. Add domain logic in `src/api/domain/` if it involves business rules
 5. Add test in `tests/functional/`
 6. Run tests: `make test`
 
@@ -323,10 +323,10 @@ Audit logs are async:
 
 ## Key Files
 
-- `src/app.ts`: Express app configuration (middleware, routes)
-- `src/index.ts`: API server entry (starts HTTP server)
-- `src/worker.ts`: Background worker (processes audit queue)
-- `src/infrastructure/repositories/repository.factory.ts`: Repository creation logic
+- `src/api/app.ts`: Express app configuration (middleware, routes)
+- `src/api/index.ts`: API server entry (starts HTTP server)
+- `src/api/worker.ts`: Background worker (processes audit queue)
+- `src/api/infrastructure/repositories/repository.factory.ts`: Repository creation logic
 - `prisma/schema.prisma`: Database schema
 - `Makefile`: Common development commands
 - `docker/docker-compose.yaml`: Development environment

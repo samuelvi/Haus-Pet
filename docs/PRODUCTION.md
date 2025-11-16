@@ -18,6 +18,58 @@ This guide covers strategies for deploying HausPet from development (Docker Comp
 
 ## Architecture Overview
 
+HausPet now consists of 3 frontend applications + 6 backend services:
+
+### Frontend Applications
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                  Nginx Reverse Proxy                      │
+│               (yourdomain.com:80/443)                     │
+└───────────┬──────────────┬──────────────┬────────────────┘
+            │              │              │
+            ▼              ▼              ▼
+     /            /backend         /api
+┌──────────┐  ┌──────────┐  ┌──────────────┐
+│ Security │  │ Backend  │  │  API Server  │
+│   App    │  │   App    │  │  (Express)   │
+│ (Login)  │  │  (CRUD)  │  │  + Worker    │
+│ Port 80  │  │ Port 80  │  │  Port 3000   │
+└──────────┘  └──────────┘  └──┬───────────┘
+   React         React           │
+   Vite          Vite            │
+                                 │
+              ┌──────────────────┼─────────────────┐
+              ▼                  ▼                 ▼
+         PostgreSQL           MongoDB          Redis
+         (port 5432)        (port 27017)    (port 6379)
+```
+
+**Application Structure:**
+
+1. **Security App** (`src/security/`)
+   - Login page
+   - Authentication flow
+   - JWT token management
+   - Served at: `/` (root path)
+
+2. **Backend App** (`src/backend/`)
+   - Admin dashboard
+   - Pet CRUD management
+   - Protected routes (requires authentication)
+   - Served at: `/backend/*`
+
+3. **API Server** (`src/api/`)
+   - REST API endpoints
+   - Authentication endpoints
+   - Business logic (DDD)
+   - Background worker
+   - Served at: `/api/*`
+
+### Backend Services
+
+## Architecture Overview
+
 HausPet consists of 6 services:
 
 ```

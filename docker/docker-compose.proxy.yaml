@@ -1,0 +1,18 @@
+services:
+  nginx_proxy:
+    image: nginx:alpine
+    container_name: hauspet_proxy_dev
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/logs:/var/log/nginx
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - hauspet-proxy-network
+
+networks:
+  hauspet-proxy-network:
+    driver: bridge

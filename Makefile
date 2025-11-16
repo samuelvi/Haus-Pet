@@ -8,7 +8,7 @@ TEST_COMPOSE_FILE = docker/docker-compose.test.yaml
 TEST_COMPOSE = docker compose -f $(TEST_COMPOSE_FILE)
 TEST_API_SERVICE = hauspet_api_test
 
-.PHONY: up down logs restart install shell list-routes prune mongo-shell test test-up test-down test-run test-prune
+.PHONY: up down logs restart install shell list-routes prune mongo-shell test test-up test-down test-run test-prune proxy-up proxy-down proxy-logs proxy-restart
 
 # --- Development Environment ---
 up:
@@ -35,7 +35,7 @@ shell:
 
 list-routes:
 	@echo "Installing dependencies and listing routes..."
-	@$(COMPOSE) run --rm $(API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node src/scripts/list-routes.ts"
+	@$(COMPOSE) run --rm $(API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node src/api/scripts/list-routes.ts"
 
 mongo-shell:
 	$(COMPOSE) exec hauspet_audit_db $(MONGO_SHELL_CMD)
@@ -60,7 +60,7 @@ test-run:
 
 test-list-routes:
 	@echo "Installing dependencies and listing routes..."
-	@$(TEST_COMPOSE) run --rm $(TEST_API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node src/scripts/list-routes.ts"
+	@$(TEST_COMPOSE) run --rm $(TEST_API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node src/api/scripts/list-routes.ts"
 
 
 test:
@@ -86,3 +86,21 @@ test:
 		echo "Cleaning up test environment..." ; \
 		make test-down ; \
 		exit $$EXIT_CODE
+
+# --- Proxy (Local Development) ---
+PROXY_COMPOSE_FILE = docker/docker-compose.proxy.yaml
+PROXY_COMPOSE = docker compose -f $(PROXY_COMPOSE_FILE)
+
+proxy-up:
+	@echo "Starting nginx proxy..."
+	@$(PROXY_COMPOSE) up -d
+
+proxy-down:
+	@echo "Stopping nginx proxy..."
+	@$(PROXY_COMPOSE) down
+
+proxy-logs:
+	@$(PROXY_COMPOSE) logs -f
+
+proxy-restart:
+	@$(PROXY_COMPOSE) restart

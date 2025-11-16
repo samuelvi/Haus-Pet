@@ -5,14 +5,14 @@
   "main": "index.js",
   "scripts": {
     "prepare": "husky install",
-    "dev": "ts-node-dev src/index.ts",
-    "start:worker": "ts-node src/worker.ts",
-    "list-routes": "ts-node src/scripts/list-routes.ts",
-    "commit-msg:suggest": "ts-node src/scripts/suggest-commit-msg.ts",
+    "dev": "ts-node-dev src/api/index.ts",
+    "start:worker": "ts-node src/api/worker.ts",
+    "list-routes": "ts-node src/api/scripts/list-routes.ts",
+    "commit-msg:suggest": "ts-node src/api/scripts/suggest-commit-msg.ts",
     "test:functional": "make test",
     "db:seed": "npx prisma db seed",
     "build": "tsc",
-    "mcp": "node dist/mcp-server.js"
+    "mcp": "node dist/api/mcp-server.js"
   },
   "keywords": [],
   "author": "",

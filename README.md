@@ -111,6 +111,183 @@ The frontend will be available at `http://localhost:5173`.
 - ✅ Session persistence (localStorage)
 - 🚧 Pet breeds CRUD (planned)
 
+## Reverse Proxy Setup (Development & Production)
+
+The project now supports a unified access pattern through an Nginx reverse proxy. This provides:
+
+- **Single entry point** for all services
+- **Clean URLs** without port numbers
+- **Production-ready** SSL/TLS termination
+- **Rate limiting** and security headers
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Nginx Reverse Proxy                      │
+│                      localhost:8080 (dev)                    │
+│                    yourdomain.com (prod)                     │
+└──────────────┬──────────────┬──────────────┬────────────────┘
+               │              │              │
+               ▼              ▼              ▼
+        /              /backend        /api
+   Security App     Backend App      API Server
+   (Login)          (Admin CRUD)     (Express)
+   Port 5174        Port 5175        Port 3000
+```
+
+### URL Routing
+
+| URL Pattern | Target | Description |
+|-------------|--------|-------------|
+| `/` | Security App (5174) | Login page |
+| `/login` | Security App (5174) | Authentication |
+| `/backend/*` | Backend App (5175) | Admin dashboard & CRUD (protected) |
+| `/api/*` | API Server (3000) | REST API endpoints |
+| `/health` | API Server (3000) | Health check |
+
+### Local Development Setup
+
+#### Option 1: With Proxy (Recommended)
+
+Start all services including the proxy:
+
+```bash
+# Terminal 1: Start API backend
+npm run dev
+
+# Terminal 2: Start Security app
+cd src/security
+npm run dev    # → http://localhost:5174
+
+# Terminal 3: Start Backend app
+cd src/backend
+npm run dev    # → http://localhost:5175
+
+# Terminal 4: Start proxy
+make proxy-up  # → http://localhost:8080
+```
+
+**Access the application:**
+- **Login:** http://localhost:8080/
+- **Admin Panel:** http://localhost:8080/backend/
+- **API:** http://localhost:8080/api/
+
+#### Option 2: Without Proxy (Direct Access)
+
+If you prefer accessing services directly on their respective ports:
+
+```bash
+# Start API
+npm run dev    # → http://localhost:3000
+
+# Start Security app
+cd src/security
+npm run dev    # → http://localhost:5174
+
+# Start Backend app
+cd src/backend
+npm run dev    # → http://localhost:5175
+```
+
+**Access directly:**
+- **Login:** http://localhost:5174/
+- **Admin Panel:** http://localhost:5175/
+- **API:** http://localhost:3000/api/
+
+### Proxy Management Commands
+
+```bash
+# Start proxy
+make proxy-up
+
+# Stop proxy
+make proxy-down
+
+# View proxy logs
+make proxy-logs
+
+# Restart proxy
+make proxy-restart
+```
+
+### Production Setup
+
+For production deployment, use the production Nginx configuration:
+
+```bash
+# 1. Update domain in nginx.prod.conf
+sed -i 's/yourdomain.com/your-actual-domain.com/g' docker/nginx/nginx.prod.conf
+
+# 2. Build frontend apps for production
+cd src/security && npm run build
+cd ../backend && npm run build
+
+# 3. Start production stack (see docs/PRODUCTION.md for details)
+docker compose -f docker/docker-compose.prod.yaml up -d
+
+# 4. Obtain SSL certificate
+sudo certbot --nginx -d your-actual-domain.com
+```
+
+Detailed production instructions are available in **[docs/PRODUCTION.md](docs/PRODUCTION.md)**.
+
+### Security Features (Production Proxy)
+
+The production Nginx configuration includes:
+
+- **SSL/TLS termination** with automatic HTTP→HTTPS redirect
+- **Rate limiting:**
+  - General API: 10 req/s
+  - Authentication endpoints: 3 req/s
+  - Backend admin: 20 req/s
+- **Security headers:**
+  - HSTS (Strict-Transport-Security)
+  - X-Frame-Options
+  - Content-Security-Policy
+  - X-Content-Type-Options
+- **Gzip compression** for static assets
+- **Long-term caching** for immutable assets
+
+### Environment Variables for Proxy
+
+For the frontend apps to work correctly through the proxy, ensure:
+
+**Development** (`.env`):
+```bash
+VITE_API_URL=http://localhost:8080/api
+```
+
+**Production** (`.env.production`):
+```bash
+VITE_API_URL=https://yourdomain.com/api
+```
+
+### Troubleshooting Proxy
+
+**Proxy won't start:**
+```bash
+# Check if ports are already in use
+lsof -ti:8080 | xargs kill -9
+
+# Check nginx logs
+tail -f docker/nginx/logs/error.log
+```
+
+**403 Forbidden errors:**
+```bash
+# Check file permissions in docker/nginx/
+ls -la docker/nginx/
+
+# Restart proxy
+make proxy-restart
+```
+
+**CORS issues:**
+- Development proxy includes permissive CORS headers
+- Production requires proper `ALLOWED_ORIGINS` configuration
+- Check `src/api/app.ts` for CORS settings
+
 ## Getting Started
 
 ### Version Management
@@ -555,7 +732,7 @@ curl -X POST \
 The backend follows Domain-Driven Design with three distinct layers:
 
 ```
-src/
+src/api/
 ├── domain/              # Business logic (entities, value objects, interfaces)
 │   ├── auth/           # User, Email, Password, errors
 │   └── pet.ts
