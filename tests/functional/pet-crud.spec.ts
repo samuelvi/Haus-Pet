@@ -195,7 +195,7 @@ test.describe('Pet CRUD Integration Tests', () => {
 
       const data = await response.json();
       expect(data.status).toBe('ERROR');
-      expect(data.message).toContain('letters, spaces, and hyphens');
+      expect(data.message).toContain('letters, numbers, spaces, and hyphens');
     });
 
     test('should return 400 for invalid type', async ({ request }) => {
@@ -262,7 +262,7 @@ test.describe('Pet CRUD Integration Tests', () => {
 
     test('should trim whitespace from breed', async ({ request }) => {
       const newPet = {
-        breed: '  Trimmed Breed  ',
+        breed: '  Trimmed Breed ' + Date.now() + '  ',
         type: 'bird',
       };
 
@@ -278,7 +278,7 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(response.status()).toBe(201);
 
       const data = await response.json();
-      expect(data.data.pet.breed).toBe('Trimmed Breed'); // Should be trimmed
+      expect(data.data.pet.breed).toBe(newPet.breed.trim()); // Should be trimmed
     });
 
     test('should return 409 for duplicate breed', async ({ request }) => {

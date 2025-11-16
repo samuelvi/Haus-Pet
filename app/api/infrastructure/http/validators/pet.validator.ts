@@ -10,7 +10,7 @@ export const petSchema = z.object({
     .trim()
     .min(2, 'Breed must be at least 2 characters long')
     .max(50, 'Breed must not exceed 50 characters')
-    .regex(/^[a-zA-Z\s-]+$/, 'Breed can only contain letters, spaces, and hyphens'),
+    .regex(/^[a-zA-Z0-9\s-]+$/, 'Breed can only contain letters, numbers, spaces, and hyphens'),
   type: z.nativeEnum(PetType, {
     errorMap: () => ({ message: `Type must be one of: ${Object.values(PetType).join(', ')}` }),
   }),

@@ -35,7 +35,7 @@ shell:
 
 list-routes:
 	@echo "Installing dependencies and listing routes..."
-	@$(COMPOSE) run --rm $(API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node src/api/scripts/list-routes.ts"
+	@$(COMPOSE) run --rm $(API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node app/api/scripts/list-routes.ts"
 
 mongo-shell:
 	$(COMPOSE) exec hauspet_audit_db $(MONGO_SHELL_CMD)
@@ -60,7 +60,7 @@ test-run:
 
 test-list-routes:
 	@echo "Installing dependencies and listing routes..."
-	@$(TEST_COMPOSE) run --rm $(TEST_API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node src/api/scripts/list-routes.ts"
+	@$(TEST_COMPOSE) run --rm $(TEST_API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node app/api/scripts/list-routes.ts"
 
 
 test:

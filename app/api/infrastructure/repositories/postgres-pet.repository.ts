@@ -42,7 +42,12 @@ export class PostgresPetRepository implements PetReadRepository, PetWriteReposit
 
   public async findByBreed(breed: string): Promise<DomainPet | null> {
     const prismaPet = await this.prisma.pet.findFirst({
-      where: { breed },
+      where: {
+        breed: {
+          equals: breed,
+          mode: 'insensitive',
+        },
+      },
     });
     return prismaPet ? this.toDomain(prismaPet) : null;
   }
