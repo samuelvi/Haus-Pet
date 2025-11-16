@@ -1,4 +1,5 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
+import type { StringValue } from 'ms';
 
 export interface TokenPayload {
   userId: string;
@@ -36,18 +37,20 @@ export class JwtService {
    * Generates an access token
    */
   public generateAccessToken(payload: TokenPayload): string {
-    return jwt.sign(payload, this.jwtSecret, {
-      expiresIn: this.jwtExpiresIn,
-    });
+    const options: SignOptions = {
+      expiresIn: this.jwtExpiresIn as StringValue,
+    };
+    return jwt.sign(payload, this.jwtSecret, options);
   }
 
   /**
    * Generates a refresh token
    */
   public generateRefreshToken(payload: TokenPayload): string {
-    return jwt.sign(payload, this.refreshSecret, {
-      expiresIn: this.refreshExpiresIn,
-    });
+    const options: SignOptions = {
+      expiresIn: this.refreshExpiresIn as StringValue,
+    };
+    return jwt.sign(payload, this.refreshSecret, options);
   }
 
   /**

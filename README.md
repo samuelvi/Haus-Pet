@@ -1,6 +1,15 @@
 # HausPet
 
-A simple REST API for managing pet breeds, built with Node.js, Express, and TypeScript, following Domain-Driven Design (DDD) principles.
+A full-stack pet breeds management system with authentication, built with Node.js, Express, TypeScript, and React, following Domain-Driven Design (DDD) principles.
+
+## Features
+
+- **Backend REST API** - Express + TypeScript with DDD architecture
+- **Authentication System** - JWT tokens + Redis sessions
+- **Frontend Admin Panel** - React + TypeScript + Vite (wireframe)
+- **Async Audit Logging** - BullMQ + MongoDB
+- **Database** - PostgreSQL (Prisma ORM) + MongoDB (Audit logs)
+- **Message Queue** - Redis + BullMQ
 
 ## Database Initialization and First-Time Setup
 
@@ -13,7 +22,7 @@ This project uses Prisma to manage the database schema. If you are cloning this 
 This command stops all running containers and, most importantly, **deletes the database data volume**. This ensures you start with a completely clean slate.
 
 ```sh
-docker-compose down -v
+make prune
 ```
 
 ### Step 2: Start the Database Service
@@ -21,7 +30,7 @@ docker-compose down -v
 Start *only* the database container. This provides a running, empty PostgreSQL instance for Prisma to connect to.
 
 ```sh
-docker-compose up -d hauspet_db
+docker compose -f docker/docker-compose.yaml up -d hauspet_db
 ```
 
 ### Step 3: Create Initial Migration
@@ -40,7 +49,67 @@ Now that the migration files exist, you can start the entire application stack.
 make up
 ```
 
-The application will now start correctly, apply the migrations, and seed the database with initial data.
+The application will now start correctly, apply the migrations, and seed the database with initial data (including the default admin user).
+
+## Authentication
+
+The system includes a complete authentication system with the following features:
+
+- **User registration and login** with email/password
+- **JWT tokens** (access + refresh) for stateless authentication
+- **Redis sessions** (database 1, separate from BullMQ)
+- **Protected routes** with middleware validation
+- **Role-based access** (ADMIN, USER)
+
+### Default Admin Credentials
+
+The seed script creates a default admin user:
+
+- **Email:** `admin@hauspet.com`
+- **Password:** `Admin123`
+
+**⚠️ Important:** Change these credentials in production!
+
+### Authentication Endpoints
+
+All auth endpoints are under `/api/auth`:
+
+- `POST /api/auth/signup` - Register a new user
+- `POST /api/auth/login` - Login and get tokens
+- `POST /api/auth/logout` - Logout (requires auth)
+- `POST /api/auth/refresh` - Refresh access token
+- `GET /api/auth/me` - Get current user (requires auth)
+
+See the **[Authentication API](#authentication-api)** section for detailed examples.
+
+## Frontend (Admin Panel)
+
+The project includes a React-based admin panel in the `gui/` directory:
+
+- **Technology:** React + TypeScript + Vite
+- **Styling:** Inline styles (wireframe/minimalist design)
+- **Routing:** React Router DOM
+- **State Management:** Context API (AuthContext)
+
+### Running the Frontend
+
+The frontend is **automatically started** with the Docker Compose stack:
+
+```sh
+make up
+```
+
+The frontend will be available at `http://localhost:5173`.
+
+**Note:** The GUI service is included in the Docker setup, so you don't need to run it separately. All services (API, Worker, GUI, and databases) start with a single command.
+
+### Frontend Features
+
+- ✅ Login page with form validation
+- ✅ Protected dashboard with user info
+- ✅ Automatic token refresh
+- ✅ Session persistence (localStorage)
+- 🚧 Pet breeds CRUD (planned)
 
 ## Getting Started
 
@@ -63,7 +132,11 @@ This project uses Docker to run. Make sure you have Docker and Docker Compose in
     make up
     ```
 
-    This command will start the full stack (API, Worker, PostgreSQL, MongoDB, Redis), which will be accessible at `http://localhost:3000`.
+    This command will start the full stack:
+    - **API Server** - `http://localhost:3000`
+    - **Frontend (GUI)** - `http://localhost:5173`
+    - **Worker** - Background process for audit logging
+    - **Databases** - PostgreSQL (5432), MongoDB (27017), Redis (6379)
 
 ## Development
 
@@ -286,4 +359,238 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -d '{"breed": "Beagle"}' \
   http://localhost:3000/api/pets/dog/add
+```
+
+## Authentication API
+
+### 1. Signup (Register New User)
+
+Creates a new user account and returns authentication tokens.
+
+-   **Method:** `POST`
+-   **URL:** `/api/auth/signup`
+-   **Body:** `json`
+
+**Request Body:**
+
+-   `email` (string, required): User email address
+-   `password` (string, required): Password (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
+-   `name` (string, required): User's full name
+-   `role` (string, optional): Either `ADMIN` or `USER` (defaults to `ADMIN`)
+
+**Example with `curl`:**
+
+```sh
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePass123",
+    "name": "John Doe"
+  }' \
+  http://localhost:3000/api/auth/signup
+```
+
+**Response:**
+
+```json
+{
+  "status": "OK",
+  "data": {
+    "user": {
+      "id": "uuid",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "role": "ADMIN",
+      "isActive": true,
+      "createdAt": "2025-11-14T...",
+      "updatedAt": "2025-11-14T..."
+    },
+    "tokens": {
+      "accessToken": "eyJhbGci...",
+      "refreshToken": "eyJhbGci..."
+    },
+    "sessionId": "uuid"
+  }
+}
+```
+
+### 2. Login
+
+Authenticates a user and returns tokens + session ID.
+
+-   **Method:** `POST`
+-   **URL:** `/api/auth/login`
+-   **Body:** `json`
+
+**Request Body:**
+
+-   `email` (string, required): User email
+-   `password` (string, required): User password
+
+**Example with `curl`:**
+
+```sh
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@hauspet.com",
+    "password": "Admin123"
+  }' \
+  http://localhost:3000/api/auth/login
+```
+
+**Response:** Same as signup response.
+
+### 3. Get Current User
+
+Retrieves the authenticated user's information.
+
+-   **Method:** `GET`
+-   **URL:** `/api/auth/me`
+-   **Headers:**
+    -   `Authorization: Bearer <accessToken>`
+    -   `x-session-id: <sessionId>`
+
+**Example with `curl`:**
+
+```sh
+curl -X GET \
+  -H "Authorization: Bearer eyJhbGci..." \
+  -H "x-session-id: uuid" \
+  http://localhost:3000/api/auth/me
+```
+
+**Response:**
+
+```json
+{
+  "status": "OK",
+  "data": {
+    "id": "uuid",
+    "email": "admin@hauspet.com",
+    "name": "Admin User",
+    "role": "ADMIN",
+    "isActive": true,
+    "createdAt": "2025-11-14T...",
+    "updatedAt": "2025-11-14T..."
+  }
+}
+```
+
+### 4. Refresh Token
+
+Refreshes the access token using a refresh token.
+
+-   **Method:** `POST`
+-   **URL:** `/api/auth/refresh`
+-   **Headers:**
+    -   `x-session-id: <sessionId>`
+-   **Body:** `json`
+
+**Request Body:**
+
+-   `refreshToken` (string, required): The refresh token
+
+**Example with `curl`:**
+
+```sh
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "x-session-id: uuid" \
+  -d '{
+    "refreshToken": "eyJhbGci..."
+  }' \
+  http://localhost:3000/api/auth/refresh
+```
+
+**Response:**
+
+```json
+{
+  "status": "OK",
+  "data": {
+    "tokens": {
+      "accessToken": "eyJhbGci...",
+      "refreshToken": "eyJhbGci..."
+    }
+  }
+}
+```
+
+### 5. Logout
+
+Destroys the user's session and invalidates tokens.
+
+-   **Method:** `POST`
+-   **URL:** `/api/auth/logout`
+-   **Headers:**
+    -   `Authorization: Bearer <accessToken>`
+    -   `x-session-id: <sessionId>`
+
+**Example with `curl`:**
+
+```sh
+curl -X POST \
+  -H "Authorization: Bearer eyJhbGci..." \
+  -H "x-session-id: uuid" \
+  http://localhost:3000/api/auth/logout
+```
+
+**Response:**
+
+```json
+{
+  "status": "OK",
+  "data": {
+    "message": "Logged out successfully"
+  }
+}
+```
+
+## Architecture
+
+### Backend (DDD)
+
+The backend follows Domain-Driven Design with three distinct layers:
+
+```
+src/
+├── domain/              # Business logic (entities, value objects, interfaces)
+│   ├── auth/           # User, Email, Password, errors
+│   └── pet.ts
+├── application/        # Use cases and orchestration
+│   ├── auth/          # AuthService
+│   └── pet.service.ts
+└── infrastructure/     # Technical implementations
+    ├── auth/
+    │   ├── repositories/  # PostgresUserRepository
+    │   └── services/      # SessionService, JwtService, PasswordHasher
+    ├── http/
+    │   ├── controllers/   # AuthController, PetController
+    │   └── middleware/    # authMiddleware
+    └── queue/             # BullMQ + Redis
+```
+
+### Data Storage
+
+- **PostgreSQL (port 5432)** - Users and Pet breeds (Prisma ORM)
+- **MongoDB (port 27017)** - Audit logs (Mongoose)
+- **Redis (port 6379)**
+  - Database 0: BullMQ message queue
+  - Database 1: User sessions
+
+### Frontend Architecture
+
+```
+gui/src/
+├── components/         # React components
+│   ├── Login.tsx
+│   ├── Dashboard.tsx
+│   └── ProtectedRoute.tsx
+├── contexts/          # React Context providers
+│   └── AuthContext.tsx
+├── services/          # API communication
+│   └── api.service.ts
+└── App.tsx           # Routes and providers
 ```

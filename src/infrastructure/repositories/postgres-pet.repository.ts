@@ -1,5 +1,5 @@
 import { PrismaClient, Pet as PrismaPet, PetType as PrismaPetType } from "@prisma/client";
-import { PetReadRepository } from "../../domain/pet-read.repository";
+import { PetReadRepository, PetFilters } from "../../domain/pet-read.repository";
 import { PetWriteRepository } from "../../domain/pet-write.repository";
 import { Pet as DomainPet, PetType as DomainPetType } from "../../domain/pet";
 
@@ -16,9 +16,28 @@ export class PostgresPetRepository implements PetReadRepository, PetWriteReposit
     };
   }
 
-  public async findAll(): Promise<DomainPet[]> {
-    const prismaPets = await this.prisma.pet.findMany();
+  public async findAll(filters?: PetFilters): Promise<DomainPet[]> {
+    const where: any = {};
+
+    // Only filter by type at database level
+    // Search/fuzzy matching is done at application level for database agnosticism
+    if (filters?.type) {
+      where.type = filters.type as PrismaPetType;
+    }
+
+    const prismaPets = await this.prisma.pet.findMany({
+      where,
+      orderBy: { breed: 'asc' },
+    });
+
     return prismaPets.map(this.toDomain);
+  }
+
+  public async findById(id: number): Promise<DomainPet | null> {
+    const prismaPet = await this.prisma.pet.findUnique({
+      where: { id },
+    });
+    return prismaPet ? this.toDomain(prismaPet) : null;
   }
 
   public async findByBreed(breed: string): Promise<DomainPet | null> {
@@ -49,5 +68,29 @@ export class PostgresPetRepository implements PetReadRepository, PetWriteReposit
     });
 
     return this.toDomain(createdPrismaPet);
+  }
+
+  public async update(id: number, petData: Partial<DomainPet>): Promise<DomainPet> {
+    const updateData: any = {};
+
+    if (petData.breed !== undefined) {
+      updateData.breed = petData.breed;
+    }
+    if (petData.type !== undefined) {
+      updateData.type = petData.type as PrismaPetType;
+    }
+
+    const updatedPrismaPet = await this.prisma.pet.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return this.toDomain(updatedPrismaPet);
+  }
+
+  public async delete(id: number): Promise<void> {
+    await this.prisma.pet.delete({
+      where: { id },
+    });
   }
 }

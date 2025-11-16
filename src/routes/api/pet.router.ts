@@ -9,6 +9,9 @@ import { QueueService } from "../../infrastructure/queue/queue.service";
 import { RedisHealthService } from "../../infrastructure/queue/redis-health.service";
 import redisConnection from "../../infrastructure/queue/redis-connection";
 import { PetType } from "../../domain/pet";
+import { JwtService } from "../../infrastructure/auth/services/jwt.service";
+import { SessionService } from "../../infrastructure/auth/services/session.service";
+import { createAuthMiddleware } from "../../infrastructure/http/middleware/auth.middleware";
 
 const router = Router();
 
@@ -29,6 +32,11 @@ const decoratedPetService = new AuditLoggingPetServiceDecorator(
 );
 const petController = new PetController(decoratedPetService);
 
+// Authentication middleware
+const jwtService = new JwtService();
+const sessionService = new SessionService();
+const authMiddleware = createAuthMiddleware(jwtService, sessionService);
+
 // --- Middleware to validate pet type ---
 const validatePetType = (req: Request, res: Response, next: NextFunction) => {
   const type = req.params.type;
@@ -41,11 +49,14 @@ const validatePetType = (req: Request, res: Response, next: NextFunction) => {
 // --- Generic Routes ---
 router.get("/", (req: Request, res: Response) => petController.getAllPets(req, res));
 router.get("/random-pet", (req: Request, res: Response) => petController.getRandomPet(req, res));
-router.post("/add", (req: Request, res: Response) => petController.addPet(req, res));
+router.post("/add", authMiddleware, (req: Request, res: Response) => petController.addPet(req, res));
+router.get("/:id", (req: Request, res: Response) => petController.getPetById(req, res));
+router.put("/:id", authMiddleware, (req: Request, res: Response) => petController.updatePet(req, res));
+router.delete("/:id", authMiddleware, (req: Request, res: Response) => petController.deletePet(req, res));
 
 // --- Type-Specific Routes ---
 router.get("/:type/", validatePetType, (req: Request, res: Response) => petController.getPetsByType(req, res));
 router.get("/:type/random-pet", validatePetType, (req: Request, res: Response) => petController.getRandomPetByType(req, res));
-router.post("/:type/add", validatePetType, (req: Request, res: Response) => petController.addPetToType(req, res));
+router.post("/:type/add", authMiddleware, validatePetType, (req: Request, res: Response) => petController.addPetToType(req, res));
 
 export default router;

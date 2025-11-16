@@ -54,6 +54,24 @@ services:
     networks:
       - hauspet-dev-network
 
+  hauspet_gui:
+    build:
+      context: ../gui
+      dockerfile: Dockerfile.dev
+    container_name: hauspet_gui
+    working_dir: /app
+    environment:
+      - VITE_API_URL=http://localhost:3000
+      - VITE_DISABLE_CLIENT_VALIDATION=false
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../gui:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - hauspet-dev-network
+
   hauspet_db:
     image: postgres:14-alpine
     container_name: hauspet_db

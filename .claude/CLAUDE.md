@@ -75,10 +75,10 @@ npm run build && npm run mcp
 
 ```bash
 # 1. Destroy old environment
-docker-compose down -v
+make prune
 
 # 2. Start only the database
-docker-compose up -d hauspet_db
+docker compose -f docker/docker-compose.yaml up -d hauspet_db
 
 # 3. Create initial migration (run locally)
 npx prisma migrate dev --name init

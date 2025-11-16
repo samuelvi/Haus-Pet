@@ -1,16 +1,35 @@
-import { PetReadRepository } from "../domain/pet-read.repository";
+import { PetReadRepository, PetFilters } from "../domain/pet-read.repository";
 import { PetWriteRepository } from "../domain/pet-write.repository";
 import { Pet, PetType } from "../domain/pet";
 import { PetBreedAlreadyExistsError } from "../domain/errors/pet-breed-already-exists.error";
+import { FuzzySearchService } from "./fuzzy-search.service";
 
 export class PetService {
+  private fuzzySearchService: FuzzySearchService;
+
   constructor(
     private readonly petReadRepository: PetReadRepository,
     private readonly petWriteRepository: PetWriteRepository
-  ) {}
+  ) {
+    this.fuzzySearchService = new FuzzySearchService();
+  }
 
-  public async getAllPets(): Promise<Pet[]> {
-    return this.petReadRepository.findAll();
+  public async getAllPets(filters?: PetFilters): Promise<Pet[]> {
+    // Separate fuzzy search from database filters
+    const dbFilters: PetFilters = {};
+    if (filters?.type) {
+      dbFilters.type = filters.type;
+    }
+
+    // Get pets from database (filtered by type if specified)
+    let pets = await this.petReadRepository.findAll(dbFilters);
+
+    // Apply fuzzy search at application level if search term provided
+    if (filters?.search) {
+      pets = this.fuzzySearchService.searchPets(pets, filters.search);
+    }
+
+    return pets;
   }
 
   public async getPetsByType(type: PetType): Promise<Pet[]> {
@@ -45,5 +64,35 @@ export class PetService {
 
     const savedPet = await this.petWriteRepository.save(newPet);
     return savedPet;
+  }
+
+  public async getPetById(id: number): Promise<Pet | null> {
+    return this.petReadRepository.findById(id);
+  }
+
+  public async updatePet(id: number, breed: string, type: PetType): Promise<Pet> {
+    const existingPet = await this.petReadRepository.findById(id);
+    if (!existingPet) {
+      throw new Error("Pet not found");
+    }
+
+    // Check if breed is being changed to one that already exists
+    if (breed !== existingPet.breed) {
+      const petWithSameBreed = await this.petReadRepository.findByBreed(breed);
+      if (petWithSameBreed && petWithSameBreed.id !== id) {
+        throw new PetBreedAlreadyExistsError("Pet breed already exists");
+      }
+    }
+
+    return this.petWriteRepository.update(id, { breed, type });
+  }
+
+  public async deletePet(id: number): Promise<void> {
+    const existingPet = await this.petReadRepository.findById(id);
+    if (!existingPet) {
+      throw new Error("Pet not found");
+    }
+
+    await this.petWriteRepository.delete(id);
   }
 }
