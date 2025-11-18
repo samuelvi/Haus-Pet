@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { RoleProtectedRoute } from './components/RoleProtectedRoute';
 import { Login } from './components/Login';
 import { Dashboard } from './components/Dashboard';
 import { PetList } from './components/PetList';
@@ -12,43 +12,55 @@ const App: React.FC = () => {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Redirect root to dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Redirect root to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
 
-          {/* Protected routes */}
+          {/* Admin routes - protected by ADMIN role */}
           <Route
-            path="/dashboard"
+            path="/admin"
+            element={<Navigate to="/admin/dashboard" replace />}
+          />
+          <Route
+            path="/admin/dashboard"
             element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['ADMIN']}>
                 <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Pet management routes (public listing, protected create/edit) */}
-          <Route path="/pets" element={<PetList />} />
-          <Route
-            path="/pets/new"
-            element={
-              <ProtectedRoute>
-                <PetForm />
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             }
           />
           <Route
-            path="/pets/edit/:id"
+            path="/admin/pets"
             element={
-              <ProtectedRoute>
+              <RoleProtectedRoute allowedRoles={['ADMIN']}>
+                <PetList />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/pets/new"
+            element={
+              <RoleProtectedRoute allowedRoles={['ADMIN']}>
                 <PetForm />
-              </ProtectedRoute>
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/pets/edit/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={['ADMIN']}>
+                <PetForm />
+              </RoleProtectedRoute>
             }
           />
 
-          {/* Catch all - redirect to dashboard */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Legacy public route - redirect to admin */}
+          <Route path="/pets" element={<Navigate to="/admin/pets" replace />} />
+
+          {/* Catch all - redirect to login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

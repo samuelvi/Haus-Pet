@@ -47,16 +47,22 @@ const validatePetType = (req: Request, res: Response, next: NextFunction) => {
 };
 
 // --- Generic Routes ---
+// GET routes are PUBLIC (read-only access for everyone)
 router.get("/", (req: Request, res: Response) => petController.getAllPets(req, res));
 router.get("/random-pet", (req: Request, res: Response) => petController.getRandomPet(req, res));
-router.post("/add", authMiddleware, (req: Request, res: Response) => petController.addPet(req, res));
 router.get("/:id", (req: Request, res: Response) => petController.getPetById(req, res));
+
+// POST/PUT/DELETE routes are PROTECTED (admin only)
+router.post("/add", authMiddleware, (req: Request, res: Response) => petController.addPet(req, res));
 router.put("/:id", authMiddleware, (req: Request, res: Response) => petController.updatePet(req, res));
 router.delete("/:id", authMiddleware, (req: Request, res: Response) => petController.deletePet(req, res));
 
 // --- Type-Specific Routes ---
+// GET routes are PUBLIC
 router.get("/:type/", validatePetType, (req: Request, res: Response) => petController.getPetsByType(req, res));
 router.get("/:type/random-pet", validatePetType, (req: Request, res: Response) => petController.getRandomPetByType(req, res));
+
+// POST routes are PROTECTED
 router.post("/:type/add", authMiddleware, validatePetType, (req: Request, res: Response) => petController.addPetToType(req, res));
 
 export default router;

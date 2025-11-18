@@ -8,7 +8,11 @@ const app: Express = express();
 // CORS configuration for frontend integration
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173", // Vite default port
+    origin: [
+      process.env.FRONTEND_URL || "http://localhost:5173", // Vite default port
+      "http://localhost", // Nginx proxy
+      "http://localhost:80", // Nginx proxy explicit
+    ],
     credentials: true, // Allow cookies and authorization headers
     exposedHeaders: ["x-session-id"], // Expose custom headers to frontend
   })

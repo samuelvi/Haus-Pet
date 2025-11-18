@@ -7,7 +7,7 @@ export const petSchema = z.object({
     .min(2, 'Breed must be at least 2 characters')
     .max(50, 'Breed must not exceed 50 characters'),
   type: z.enum(['cat', 'dog', 'bird'], {
-    errorMap: () => ({ message: 'Please select a valid pet type' }),
+    message: 'Please select a valid pet type',
   }),
 });
 

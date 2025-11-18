@@ -90,13 +90,15 @@ make up
 **Schema changes:**
 
 ```bash
-# After modifying prisma/schema.prisma
+# After modifying app/api/prisma/schema.prisma
+cd app/api
 npx prisma migrate dev --name description_of_change
 ```
 
 **Seed database:**
 
 ```bash
+cd app/api
 npm run db:seed
 ```
 
@@ -209,7 +211,7 @@ src/api/
 
 **PostgreSQL (Prisma)**:
 - Primary data store for Pet entities
-- Schema defined in `prisma/schema.prisma`
+- Schema defined in `app/api/prisma/schema.prisma`
 - Single model: `Pet` with `id`, `breed`, `type` (enum: cat/dog/bird)
 
 **MongoDB (Mongoose)**:
@@ -308,9 +310,9 @@ The project includes an MCP server for Claude Desktop integration:
 
 ### Modifying Database Schema
 
-1. Edit `prisma/schema.prisma`
-2. Create migration: `npx prisma migrate dev --name your_change_name`
-3. Commit migration files in `prisma/migrations/`
+1. Edit `app/api/prisma/schema.prisma`
+2. Create migration: `cd app/api && npx prisma migrate dev --name your_change_name`
+3. Commit migration files in `app/api/prisma/migrations/`
 4. Migration auto-applies on Docker startup via `prisma migrate deploy`
 
 ### Working with Audit Logs
@@ -323,11 +325,11 @@ Audit logs are async:
 
 ## Key Files
 
-- `src/api/app.ts`: Express app configuration (middleware, routes)
-- `src/api/index.ts`: API server entry (starts HTTP server)
-- `src/api/worker.ts`: Background worker (processes audit queue)
-- `src/api/infrastructure/repositories/repository.factory.ts`: Repository creation logic
-- `prisma/schema.prisma`: Database schema
+- `app/api/src/api/app.ts`: Express app configuration (middleware, routes)
+- `app/api/index.ts`: API server entry (starts HTTP server)
+- `app/api/worker.ts`: Background worker (processes audit queue)
+- `app/api/src/api/infrastructure/repositories/repository.factory.ts`: Repository creation logic
+- `app/api/prisma/schema.prisma`: Database schema
 - `Makefile`: Common development commands
 - `docker/docker-compose.yaml`: Development environment
 - `docker/docker-compose.test.yaml`: Test environment

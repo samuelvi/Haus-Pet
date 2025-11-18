@@ -35,7 +35,7 @@ shell:
 
 list-routes:
 	@echo "Installing dependencies and listing routes..."
-	@$(COMPOSE) run --rm $(API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node app/api/scripts/list-routes.ts"
+	@$(COMPOSE) run --rm $(API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node scripts/list-routes.ts"
 
 mongo-shell:
 	$(COMPOSE) exec hauspet_audit_db $(MONGO_SHELL_CMD)
@@ -56,11 +56,11 @@ test-prune:
 test-run:
 	@echo "Running Playwright tests inside the running API container..."
 	# The container installs its own dependencies, so we just run the tests.
-	@$(TEST_COMPOSE) exec $(TEST_API_SERVICE) sh -c "npx playwright test"
+	@$(TEST_COMPOSE) exec -w /app $(TEST_API_SERVICE) sh -c "npx playwright test"
 
 test-list-routes:
 	@echo "Installing dependencies and listing routes..."
-	@$(TEST_COMPOSE) run --rm $(TEST_API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node app/api/scripts/list-routes.ts"
+	@$(TEST_COMPOSE) run --rm $(TEST_API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node scripts/list-routes.ts"
 
 
 test:

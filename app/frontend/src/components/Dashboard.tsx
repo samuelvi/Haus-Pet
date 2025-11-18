@@ -53,10 +53,10 @@ export const Dashboard: React.FC = () => {
               Manage pet breeds database
             </p>
             <button
-              onClick={() => navigate('/pets')}
+              onClick={() => navigate('/admin/pets')}
               style={styles.petManagementButton}
             >
-              Go to Pet Management
+              Manage Pets
             </button>
           </div>
         </div>

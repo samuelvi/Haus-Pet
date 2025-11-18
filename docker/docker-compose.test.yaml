@@ -1,8 +1,8 @@
 services:
   hauspet_api_test:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: ../app/api
+      dockerfile: ../../docker/Dockerfile
     depends_on:
       hauspet_db_test:
         condition: service_healthy
@@ -11,7 +11,7 @@ services:
       hauspet_audit_db_test:
         condition: service_healthy
     container_name: hauspet_api_test
-    working_dir: /app
+    working_dir: /app/api
     environment:
       - NODE_ENV=test
       - PORT=3000
@@ -28,9 +28,14 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ..:/app
+      - ../app/api:/app/api
+      - ../tests:/app/tests
+      - ../playwright.config.ts:/app/playwright.config.ts
+      - ../package.json:/app/package.json
+      - ../package-lock.json:/app/package-lock.json
+      - /app/api/node_modules
       - /app/node_modules
-    command: sh -c "npm install --silent && npx prisma generate && npx prisma migrate deploy && npx prisma db seed && ./node_modules/.bin/ts-node app/api/index.ts"
+    command: sh -c "cd /app/api && npm install --silent && npx prisma generate && npx prisma migrate deploy && npx prisma db seed && cd /app && npm install --silent && cd /app/api && ./node_modules/.bin/ts-node index.ts"
     restart: unless-stopped
     networks:
       - hauspet-test-network

@@ -15,7 +15,10 @@ export const PetForm: React.FC = () => {
   const navigate = useNavigate();
 
   // Check if client validation should be disabled (for testing server validation)
-  const disableClientValidation: boolean = import.meta.env.VITE_DISABLE_CLIENT_VALIDATION === 'true';
+  // SECURITY: Only allow disabling validation in development mode
+  const disableClientValidation: boolean =
+    import.meta.env.MODE === 'development' &&
+    import.meta.env.VITE_DISABLE_CLIENT_VALIDATION === 'true';
 
   const {
     register,
@@ -69,7 +72,7 @@ export const PetForm: React.FC = () => {
       } else {
         await apiService.createPet(data, tokens.accessToken, sessionId);
       }
-      navigate('/pets');
+      navigate('/admin/pets');
     } catch (err: any) {
       setError(err.message || 'Failed to save pet');
       console.error(err);

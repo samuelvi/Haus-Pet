@@ -10,8 +10,9 @@ export const PetList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<PetType | ''>('');
   const [searchText, setSearchText] = useState<string>('');
-  const { tokens, sessionId, isAuthenticated } = useAuth();
+  const { tokens, sessionId, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const isAdmin: boolean = user?.role === 'ADMIN';
 
   const loadPets = async (): Promise<void> => {
     try {
@@ -84,21 +85,68 @@ export const PetList: React.FC = () => {
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2>Pet Breeds</h2>
-        {isAuthenticated && (
-          <button
-            onClick={() => navigate('/pets/new')}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            Add New Pet
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {isAuthenticated && !isAdmin && (
+            <button
+              onClick={() => navigate('/login')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#6c757d',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Admin Login
+            </button>
+          )}
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => navigate('/admin/dashboard')}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => navigate('/admin/pets/new')}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                Add New Pet
+              </button>
+            </>
+          )}
+          {!isAuthenticated && (
+            <button
+              onClick={() => navigate('/login')}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Admin Login
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -198,7 +246,7 @@ export const PetList: React.FC = () => {
             <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>ID</th>
             <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Breed</th>
             <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Type</th>
-            {isAuthenticated && (
+            {isAdmin && (
               <th style={{ padding: '12px', textAlign: 'center', borderBottom: '2px solid #ddd' }}>Actions</th>
             )}
           </tr>
@@ -218,10 +266,10 @@ export const PetList: React.FC = () => {
                   {pet.type}
                 </span>
               </td>
-              {isAuthenticated && (
+              {isAdmin && (
                 <td style={{ padding: '12px', textAlign: 'center' }}>
                   <button
-                    onClick={() => navigate(`/pets/edit/${pet.id}`)}
+                    onClick={() => navigate(`/admin/pets/edit/${pet.id}`)}
                     style={{
                       padding: '6px 12px',
                       backgroundColor: '#ffc107',

@@ -11,6 +11,41 @@ A full-stack pet breeds management system with authentication, built with Node.j
 - **Database** - PostgreSQL (Prisma ORM) + MongoDB (Audit logs)
 - **Message Queue** - Redis + BullMQ
 
+## Project Structure
+
+This is a monorepo containing separate frontend and backend applications:
+
+```
+HausPet/
+├── app/
+│   ├── api/                    # Backend API (Node.js + Express + TypeScript)
+│   │   ├── src/api/           # Source code (DDD architecture)
+│   │   ├── prisma/            # Database schema and migrations
+│   │   ├── scripts/           # Utility scripts
+│   │   ├── package.json       # Backend dependencies
+│   │   ├── tsconfig.json      # Backend TypeScript config
+│   │   ├── index.ts           # API server entry point
+│   │   └── worker.ts          # Background worker entry point
+│   └── frontend/              # Frontend GUI (React + Vite + TypeScript)
+│       ├── src/               # React components and pages
+│       ├── package.json       # Frontend dependencies
+│       └── tsconfig.json      # Frontend TypeScript config
+├── docker/                     # Docker configurations
+│   ├── docker-compose.yaml    # Development environment
+│   ├── docker-compose.test.yaml # Test environment
+│   └── nginx/                 # Nginx reverse proxy config
+├── tests/                      # Integration tests (Playwright)
+├── docs/                       # Documentation
+├── Makefile                    # Development commands
+└── package.json               # Root package (tooling only)
+```
+
+**Key Points:**
+- Each app (`api` and `frontend`) has its own `package.json` and `node_modules`
+- Root `package.json` contains only development tooling (husky, commitlint, playwright)
+- Database schema managed by Prisma in `app/api/prisma/`
+- Docker Compose orchestrates all services
+
 ## Database Initialization and First-Time Setup
 
 This project uses Prisma to manage the database schema. If you are cloning this repository for the first time, or if you need to reset your database completely, you must follow these steps to initialize the database schema correctly.
@@ -35,9 +70,10 @@ docker compose -f docker/docker-compose.yaml up -d hauspet_db
 
 ### Step 3: Create Initial Migration
 
-Run this command on your **local machine**. It will connect to the new database, inspect your `prisma/schema.prisma` file, and generate the necessary SQL migration files inside the `prisma/migrations` directory.
+Run this command on your **local machine** from the `app/api` directory. It will connect to the new database, inspect your `prisma/schema.prisma` file, and generate the necessary SQL migration files inside the `prisma/migrations` directory.
 
 ```sh
+cd app/api
 npx prisma migrate dev --name init
 ```
 
@@ -84,12 +120,13 @@ See the **[Authentication API](#authentication-api)** section for detailed examp
 
 ## Frontend (Admin Panel)
 
-The project includes a React-based admin panel in the `gui/` directory:
+The project includes a React-based admin panel with **role-based access control**:
 
 - **Technology:** React + TypeScript + Vite
 - **Styling:** Inline styles (wireframe/minimalist design)
-- **Routing:** React Router DOM
+- **Routing:** React Router DOM with protected routes
 - **State Management:** Context API (AuthContext)
+- **Security:** Role-based authentication (ADMIN only)
 
 ### Running the Frontend
 
@@ -103,190 +140,70 @@ The frontend will be available at `http://localhost:5173`.
 
 **Note:** The GUI service is included in the Docker setup, so you don't need to run it separately. All services (API, Worker, GUI, and databases) start with a single command.
 
+### Accessing the Application
+
+After starting the services:
+
+1. **Navigate to:** `http://localhost:5173`
+2. **Login with default admin credentials:**
+   - Email: `admin@hauspet.com`
+   - Password: `Admin123`
+3. **You'll be redirected to:** `/admin/dashboard`
+
+### Frontend Routes
+
+#### Public Routes (No Authentication Required)
+- `/login` - Authentication page
+
+#### Protected Routes (ADMIN Role Required)
+- `/admin/dashboard` - Admin dashboard with user info
+- `/admin/pets` - Pet breeds management (list, search, filter)
+- `/admin/pets/new` - Create new pet breed
+- `/admin/pets/edit/:id` - Edit existing pet breed
+
+**Security Note:** All routes except `/login` require authentication and ADMIN role. Attempting to access protected routes will redirect to login or show a 403 Forbidden page.
+
 ### Frontend Features
 
 - ✅ Login page with form validation
+- ✅ Role-based protected routes (ADMIN only)
 - ✅ Protected dashboard with user info
+- ✅ Complete Pet breeds CRUD operations
+- ✅ Fuzzy search and filtering (by type, breed name)
 - ✅ Automatic token refresh
 - ✅ Session persistence (localStorage)
-- 🚧 Pet breeds CRUD (planned)
+- ✅ 403 Forbidden page for unauthorized access
 
-## Reverse Proxy Setup (Development & Production)
+## Nginx Reverse Proxy
 
-The project now supports a unified access pattern through an Nginx reverse proxy. This provides:
+The project includes an optional Nginx reverse proxy for unified access to all services. The proxy is configured but **not required** for development.
 
-- **Single entry point** for all services
-- **Clean URLs** without port numbers
-- **Production-ready** SSL/TLS termination
-- **Rate limiting** and security headers
+### Running with Nginx (Optional)
 
-### Architecture Overview
+The Nginx service is included in the Docker Compose stack and starts automatically:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Nginx Reverse Proxy                      │
-│                      localhost:8080 (dev)                    │
-│                    yourdomain.com (prod)                     │
-└──────────────┬──────────────┬──────────────┬────────────────┘
-               │              │              │
-               ▼              ▼              ▼
-        /              /backend        /api
-   Security App     Backend App      API Server
-   (Login)          (Admin CRUD)     (Express)
-   Port 5174        Port 5175        Port 3000
+```sh
+make up
 ```
 
-### URL Routing
+**Access through Nginx (port 80):**
+- **Frontend:** http://localhost/
+- **API:** http://localhost/api/
 
-| URL Pattern | Target | Description |
-|-------------|--------|-------------|
-| `/` | Security App (5174) | Login page |
-| `/login` | Security App (5174) | Authentication |
-| `/backend/*` | Backend App (5175) | Admin dashboard & CRUD (protected) |
-| `/api/*` | API Server (3000) | REST API endpoints |
-| `/health` | API Server (3000) | Health check |
+**Direct access (without proxy):**
+- **Frontend:** http://localhost:5173
+- **API:** http://localhost:3000
 
-### Local Development Setup
+### Nginx Configuration
 
-#### Option 1: With Proxy (Recommended)
+Located in `docker/nginx/nginx.dev.conf`:
 
-Start all services including the proxy:
+- Routes `/` to frontend (port 5173)
+- Routes `/api/*` to backend API (port 3000)
+- Supports WebSocket for Vite HMR
+- Includes CORS headers for development
 
-```bash
-# Terminal 1: Start API backend
-npm run dev
-
-# Terminal 2: Start Security app
-cd src/security
-npm run dev    # → http://localhost:5174
-
-# Terminal 3: Start Backend app
-cd src/backend
-npm run dev    # → http://localhost:5175
-
-# Terminal 4: Start proxy
-make proxy-up  # → http://localhost:8080
-```
-
-**Access the application:**
-- **Login:** http://localhost:8080/
-- **Admin Panel:** http://localhost:8080/backend/
-- **API:** http://localhost:8080/api/
-
-#### Option 2: Without Proxy (Direct Access)
-
-If you prefer accessing services directly on their respective ports:
-
-```bash
-# Start API
-npm run dev    # → http://localhost:3000
-
-# Start Security app
-cd src/security
-npm run dev    # → http://localhost:5174
-
-# Start Backend app
-cd src/backend
-npm run dev    # → http://localhost:5175
-```
-
-**Access directly:**
-- **Login:** http://localhost:5174/
-- **Admin Panel:** http://localhost:5175/
-- **API:** http://localhost:3000/api/
-
-### Proxy Management Commands
-
-```bash
-# Start proxy
-make proxy-up
-
-# Stop proxy
-make proxy-down
-
-# View proxy logs
-make proxy-logs
-
-# Restart proxy
-make proxy-restart
-```
-
-### Production Setup
-
-For production deployment, use the production Nginx configuration:
-
-```bash
-# 1. Update domain in nginx.prod.conf
-sed -i 's/yourdomain.com/your-actual-domain.com/g' docker/nginx/nginx.prod.conf
-
-# 2. Build frontend apps for production
-cd src/security && npm run build
-cd ../backend && npm run build
-
-# 3. Start production stack (see docs/PRODUCTION.md for details)
-docker compose -f docker/docker-compose.prod.yaml up -d
-
-# 4. Obtain SSL certificate
-sudo certbot --nginx -d your-actual-domain.com
-```
-
-Detailed production instructions are available in **[docs/PRODUCTION.md](docs/PRODUCTION.md)**.
-
-### Security Features (Production Proxy)
-
-The production Nginx configuration includes:
-
-- **SSL/TLS termination** with automatic HTTP→HTTPS redirect
-- **Rate limiting:**
-  - General API: 10 req/s
-  - Authentication endpoints: 3 req/s
-  - Backend admin: 20 req/s
-- **Security headers:**
-  - HSTS (Strict-Transport-Security)
-  - X-Frame-Options
-  - Content-Security-Policy
-  - X-Content-Type-Options
-- **Gzip compression** for static assets
-- **Long-term caching** for immutable assets
-
-### Environment Variables for Proxy
-
-For the frontend apps to work correctly through the proxy, ensure:
-
-**Development** (`.env`):
-```bash
-VITE_API_URL=http://localhost:8080/api
-```
-
-**Production** (`.env.production`):
-```bash
-VITE_API_URL=https://yourdomain.com/api
-```
-
-### Troubleshooting Proxy
-
-**Proxy won't start:**
-```bash
-# Check if ports are already in use
-lsof -ti:8080 | xargs kill -9
-
-# Check nginx logs
-tail -f docker/nginx/logs/error.log
-```
-
-**403 Forbidden errors:**
-```bash
-# Check file permissions in docker/nginx/
-ls -la docker/nginx/
-
-# Restart proxy
-make proxy-restart
-```
-
-**CORS issues:**
-- Development proxy includes permissive CORS headers
-- Production requires proper `ALLOWED_ORIGINS` configuration
-- Check `src/api/app.ts` for CORS settings
+**Note:** The proxy configuration uses `host.docker.internal` to connect to services, allowing you to access services both directly and through the proxy simultaneously.
 
 ## Getting Started
 
@@ -383,14 +300,14 @@ This project is configured to automatically handle database migrations when runn
 The project uses `prisma migrate` to manage the database schema. The workflow is divided into two main commands:
 
 1.  **`npx prisma migrate dev` (for Development):**
-  *   This is an **interactive** command meant to be run on your **local development machine**.
-  *   It compares your `prisma/schema.prisma` file with the database state.
-  *   It automatically generates new SQL migration files in the `prisma/migrations` directory.
+  *   This is an **interactive** command meant to be run on your **local development machine** from the `app/api` directory.
+  *   It compares your `app/api/prisma/schema.prisma` file with the database state.
+  *   It automatically generates new SQL migration files in the `app/api/prisma/migrations` directory.
   *   **You should run this command locally whenever you change your Prisma schema.**
 
 2.  **`npx prisma migrate deploy` (for Production/Staging):**
   *   This is a **non-interactive** command meant for automated environments like Docker, CI/CD, or production servers.
-  *   It simply applies all **existing** migration files from the `prisma/migrations` directory to the database.
+  *   It simply applies all **existing** migration files from the `app/api/prisma/migrations` directory to the database.
   *   It does **not** generate new files or ask for confirmation.
 
 ### Manual Deployment Steps
@@ -398,12 +315,13 @@ The project uses `prisma migrate` to manage the database schema. The workflow is
 If you were to deploy this application manually (e.g., on a cloud server without Docker Compose), the steps would be:
 
 1.  **Generate Migration Files (Locally):**
-    Before deploying, make sure you have committed all necessary migration files. If you've made changes to `schema.prisma`, create a new migration:
+    Before deploying, make sure you have committed all necessary migration files. If you've made changes to `app/api/prisma/schema.prisma`, create a new migration:
     ```sh
     # Run on your local machine, while Docker containers are running
+    cd app/api
     npx prisma migrate dev --name "your-migration-name"
     ```
-    Commit the newly created files inside `prisma/migrations` to your Git repository.
+    Commit the newly created files inside `app/api/prisma/migrations` to your Git repository.
 
 2.  **Deploy the Application:**
     On your production server, after pulling the latest code, you need to:
@@ -433,31 +351,63 @@ For setup instructions and usage details, see the **[MCP Guide](./docs/MCP-READM
 
 ## API Endpoints
 
-The API is divided into generic routes and type-specific routes.
+The API is divided into **public routes** (read-only) and **protected routes** (write operations requiring authentication).
+
+### Security Model
+
+- 🌐 **Public Routes (GET):** Anyone can read pet data
+- 🔒 **Protected Routes (POST/PUT/DELETE):** Require authentication with JWT token
 
 ### Generic Routes
 
 These endpoints operate on all pet types.
 
-#### 1. Get All Pets
+#### 1. Get All Pets 🌐
 
-Retrieves a list of all pets of all types.
+Retrieves a list of all pets of all types. Supports optional filtering by type and search by breed name.
 
 -   **Method:** `GET`
 -   **URL:** `/api/pets/`
+-   **Authentication:** Not required
+
+**Query Parameters (optional):**
+-   `type` - Filter by pet type (`cat`, `dog`, `bird`)
+-   `search` - Search by breed name (partial match)
 
 **Example with `curl`:**
 
 ```sh
+# Get all pets
 curl http://localhost:3000/api/pets/
+
+# Filter by type
+curl http://localhost:3000/api/pets/?type=dog
+
+# Search by breed
+curl http://localhost:3000/api/pets/?search=retriever
 ```
 
-#### 2. Get a Random Pet
+#### 2. Get Pet by ID 🌐
+
+Retrieves a specific pet by its ID.
+
+-   **Method:** `GET`
+-   **URL:** `/api/pets/:id`
+-   **Authentication:** Not required
+
+**Example with `curl`:**
+
+```sh
+curl http://localhost:3000/api/pets/1
+```
+
+#### 3. Get a Random Pet 🌐
 
 Retrieves a random pet from the entire collection.
 
 -   **Method:** `GET`
 -   **URL:** `/api/pets/random-pet`
+-   **Authentication:** Not required
 
 **Example with `curl`:**
 
@@ -465,12 +415,13 @@ Retrieves a random pet from the entire collection.
 curl http://localhost:3000/api/pets/random-pet
 ```
 
-#### 3. Add a New Pet (Generic)
+#### 4. Add a New Pet 🔒
 
-Adds a new pet to the list. This generic endpoint requires specifying the `type` in the request body.
+Adds a new pet to the list. **Requires authentication.**
 
 -   **Method:** `POST`
 -   **URL:** `/api/pets/add`
+-   **Authentication:** Required (JWT token + session ID)
 -   **Body:** `json`
 
 **Request Body:**
@@ -483,20 +434,65 @@ Adds a new pet to the list. This generic endpoint requires specifying the `type`
 ```sh
 curl -X POST \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "x-session-id: YOUR_SESSION_ID" \
   -d '{"breed": "Parakeet", "type": "bird"}' \
   http://localhost:3000/api/pets/add
+```
+
+#### 5. Update a Pet 🔒
+
+Updates an existing pet. **Requires authentication.**
+
+-   **Method:** `PUT`
+-   **URL:** `/api/pets/:id`
+-   **Authentication:** Required (JWT token + session ID)
+-   **Body:** `json`
+
+**Request Body:**
+
+-   `breed` (string, required): The new name of the breed.
+-   `type` (string, required): The type of animal.
+
+**Example with `curl`:**
+
+```sh
+curl -X PUT \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "x-session-id: YOUR_SESSION_ID" \
+  -d '{"breed": "Golden Retriever", "type": "dog"}' \
+  http://localhost:3000/api/pets/1
+```
+
+#### 6. Delete a Pet 🔒
+
+Deletes a pet. **Requires authentication.**
+
+-   **Method:** `DELETE`
+-   **URL:** `/api/pets/:id`
+-   **Authentication:** Required (JWT token + session ID)
+
+**Example with `curl`:**
+
+```sh
+curl -X DELETE \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "x-session-id: YOUR_SESSION_ID" \
+  http://localhost:3000/api/pets/1
 ```
 
 ### Type-Specific Routes
 
 These endpoints allow you to work with a specific type of pet (`cat`, `dog`, or `bird`).
 
-#### 1. Get Pets by Type
+#### 1. Get Pets by Type 🌐
 
 Retrieves a list of all pets of a specific type.
 
 -   **Method:** `GET`
 -   **URL:** `/api/pets/:type/`
+-   **Authentication:** Not required
 
 **Example with `curl` (for dogs):**
 
@@ -504,12 +500,13 @@ Retrieves a list of all pets of a specific type.
 curl http://localhost:3000/api/pets/dog/
 ```
 
-#### 2. Get a Random Pet by Type
+#### 2. Get a Random Pet by Type 🌐
 
 Retrieves a random pet of a specific type.
 
 -   **Method:** `GET`
 -   **URL:** `/api/pets/:type/random-pet`
+-   **Authentication:** Not required
 
 **Example with `curl` (for cats):**
 
@@ -517,12 +514,13 @@ Retrieves a random pet of a specific type.
 curl http://localhost:3000/api/pets/cat/random-pet
 ```
 
-#### 3. Add a New Pet by Type
+#### 3. Add a New Pet by Type 🔒
 
-Adds a new pet breed to the specified type. The `type` is taken from the URL, so you only need to provide the `breed`.
+Adds a new pet breed to the specified type. **Requires authentication.**
 
 -   **Method:** `POST`
 -   **URL:** `/api/pets/:type/add`
+-   **Authentication:** Required (JWT token + session ID)
 -   **Body:** `json`
 
 **Request Body:**
@@ -534,6 +532,8 @@ Adds a new pet breed to the specified type. The `type` is taken from the URL, so
 ```sh
 curl -X POST \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "x-session-id: YOUR_SESSION_ID" \
   -d '{"breed": "Beagle"}' \
   http://localhost:3000/api/pets/dog/add
 ```
@@ -760,14 +760,28 @@ src/api/
 ### Frontend Architecture
 
 ```
-gui/src/
-├── components/         # React components
-│   ├── Login.tsx
-│   ├── Dashboard.tsx
-│   └── ProtectedRoute.tsx
-├── contexts/          # React Context providers
-│   └── AuthContext.tsx
-├── services/          # API communication
-│   └── api.service.ts
-└── App.tsx           # Routes and providers
+app/frontend/src/
+├── components/              # React components
+│   ├── Login.tsx           # Login form
+│   ├── Dashboard.tsx       # Admin dashboard
+│   ├── PetList.tsx         # Pet breeds list with CRUD
+│   ├── PetForm.tsx         # Create/Edit pet form
+│   ├── ProtectedRoute.tsx  # Auth-only route wrapper
+│   └── RoleProtectedRoute.tsx  # Role-based route wrapper (ADMIN)
+├── contexts/               # React Context providers
+│   └── AuthContext.tsx     # Authentication state management
+├── services/               # API communication
+│   └── api.service.ts      # HTTP client for backend API
+├── types/                  # TypeScript type definitions
+│   └── api.types.ts        # User, Pet, Auth types
+├── schemas/                # Zod validation schemas
+│   └── pet.schema.ts       # Client-side validation
+└── App.tsx                # Routes and providers
 ```
+
+**Security Features:**
+- `RoleProtectedRoute` - Enforces ADMIN role requirement
+- `ProtectedRoute` - Basic authentication check
+- JWT token validation on all protected API calls
+- Automatic token refresh
+- Session management with Redis

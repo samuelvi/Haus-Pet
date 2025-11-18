@@ -39,7 +39,7 @@ Agrega la siguiente configuración (ajusta la ruta según tu sistema):
     "hauspet": {
       "command": "node",
       "args": [
-        "/ruta/completa/a/HausPet/dist/mcp-server.js"
+        "/ruta/completa/a/HausPet/tmp/dist/api/mcp-server.js"
       ],
       "env": {
         "HAUSPET_API_URL": "http://localhost:3000"
