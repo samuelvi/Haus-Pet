@@ -3,10 +3,11 @@
     "hauspet": {
       "command": "node",
       "args": [
-        "/Users/work/Projects/Personal/HausPet/tmp/dist/api/mcp-server.js"
+        "/absolute/path/to/HausPet/app/api/dist/mcp-server.js"
       ],
       "env": {
-        "HAUSPET_API_URL": "http://localhost:3000"
+        "HAUSPET_API_URL": "http://localhost:3000",
+        "MCP_API_TOKEN": "mcp-dev-token-admin-hauspet-2024"
       }
     }
   }

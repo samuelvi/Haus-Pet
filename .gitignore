@@ -3,7 +3,6 @@
 
 # Temporary files (builds, cache, etc.)
 # The tmp/ directory has its own .gitignore that excludes everything
-# This includes compiled TypeScript from 'npm run build'
 
 # Logs
 npm-debug.log*

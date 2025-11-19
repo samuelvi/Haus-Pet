@@ -23,7 +23,7 @@ declare global {
 
 /**
  * Authentication middleware factory
- * Creates a middleware that validates JWT tokens and sessions
+ * Creates a middleware that validates JWT tokens, sessions, and static API tokens
  */
 export function createAuthMiddleware(
   jwtService: JwtService,
@@ -46,12 +46,28 @@ export function createAuthMiddleware(
       // Extract token
       const token: string = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-      // Extract session ID from custom header
+      // Check if this is the MCP static API token
+      const mcpApiToken: string | undefined = process.env.MCP_API_TOKEN;
+      if (mcpApiToken && token === mcpApiToken) {
+        // Static token authentication for MCP server
+        // Grant admin privileges for MCP operations
+        req.authContext = {
+          userId: "mcp-server",
+          email: "mcp@hauspet.local",
+          role: "ADMIN",
+          sessionId: "mcp-static-session",
+        };
+        next();
+        return;
+      }
+
+      // Otherwise, proceed with JWT + session validation
+      // Extract session ID from custom header (only required for JWT auth)
       const sessionId: string | undefined = req.headers[
         "x-session-id"
       ] as string;
       if (!sessionId) {
-        throw new UnauthorizedError("Missing x-session-id header");
+        throw new UnauthorizedError("Missing x-session-id header (required for JWT authentication)");
       }
 
       // Verify JWT token

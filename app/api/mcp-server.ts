@@ -8,6 +8,11 @@ import {
 import { z } from "zod";
 
 const API_BASE_URL = process.env.HAUSPET_API_URL || "http://localhost:3000";
+const MCP_API_TOKEN = process.env.MCP_API_TOKEN;
+
+if (!MCP_API_TOKEN) {
+  console.error("WARNING: MCP_API_TOKEN not set. Protected endpoints (like add_pet) will fail.");
+}
 
 // Tool schemas
 const ListPetsSchema = z.object({});
@@ -27,7 +32,20 @@ const AddPetSchema = z.object({
 
 // Helper function to make API requests
 async function fetchFromAPI(endpoint: string, options?: RequestInit): Promise<any> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+  const headers: HeadersInit = {
+    ...((options?.headers as Record<string, string>) || {}),
+  };
+
+  // Add authentication token if available
+  if (MCP_API_TOKEN) {
+    headers['Authorization'] = `Bearer ${MCP_API_TOKEN}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(`API request failed (${response.status}): ${errorText}`);

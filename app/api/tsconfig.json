@@ -7,14 +7,14 @@
     "strict": true,
     "baseUrl": ".",
     "rootDir": ".",
-    "outDir": "../../tmp/dist/api"
+    "outDir": "./dist"
   },
   "include": [
     "**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "../../tests",
-    "../../tmp"
+    "dist",
+    "../../tests"
   ]
 }

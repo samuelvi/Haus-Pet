@@ -19,6 +19,7 @@ services:
       - REDIS_HOST=hauspet_redis
       - REDIS_PORT=6379
       - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db:27017/audit_log_db?authSource=admin
+      - MCP_API_TOKEN=mcp-dev-token-admin-hauspet-2024
     ports:
       - "3000:3000"
     volumes:

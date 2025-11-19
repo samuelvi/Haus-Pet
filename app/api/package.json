@@ -13,7 +13,7 @@
     "db:migrate:deploy": "npx prisma migrate deploy",
     "db:generate": "npx prisma generate",
     "build": "tsc",
-    "mcp": "node ../../tmp/dist/api/mcp-server.js"
+    "mcp": "node dist/mcp-server.js"
   },
   "keywords": ["api", "rest", "ddd", "typescript", "express"],
   "author": "",

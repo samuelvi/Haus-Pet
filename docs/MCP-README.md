@@ -1,37 +1,40 @@
 # HausPet MCP Server
 
-Un servidor MCP (Model Context Protocol) para interactuar con la API de HausPet desde Claude Desktop.
+An MCP (Model Context Protocol) server to interact with the HausPet API from Claude Desktop.
 
-## Características
+## Features
 
-El MCP expone 4 herramientas para interactuar con mascotas:
+The MCP exposes 4 tools to interact with pets:
 
-- **list_all_pets**: Lista todas las razas de mascotas disponibles
-- **list_pets_by_type**: Lista mascotas filtradas por tipo (cat, dog, bird)
-- **get_random_pet**: Obtiene una mascota aleatoria (opcionalmente por tipo)
-- **add_pet**: Agrega una nueva raza de mascota a la base de datos
+- **list_all_pets**: List all available pet breeds
+- **list_pets_by_type**: List pets filtered by type (cat, dog, bird)
+- **get_random_pet**: Get a random pet (optionally by type)
+- **add_pet**: Add a new pet breed to the database
 
-## Instalación
+## Installation
 
-### 1. Construir el proyecto
+### 1. Build the project
 
 ```bash
+cd app/api
 npm install
 npm run build
 ```
 
-### 2. Configurar Claude Desktop
+This will compile TypeScript to `app/api/dist/`.
 
-Edita el archivo de configuración de Claude Desktop:
+### 2. Configure Claude Desktop
+
+Edit the Claude Desktop configuration file:
 
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
-Puedes usar el archivo de ejemplo incluido en este proyecto como referencia:
+You can use the example file included in this project as a reference:
 [`docs/claude-desktop-config.example.json`](./claude-desktop-config.example.json)
 
-Agrega la siguiente configuración (ajusta la ruta según tu sistema):
+Add the following configuration (adjust the path for your system):
 
 ```json
 {
@@ -39,80 +42,151 @@ Agrega la siguiente configuración (ajusta la ruta según tu sistema):
     "hauspet": {
       "command": "node",
       "args": [
-        "/ruta/completa/a/HausPet/tmp/dist/api/mcp-server.js"
+        "/absolute/path/to/HausPet/app/api/dist/mcp-server.js"
       ],
       "env": {
-        "HAUSPET_API_URL": "http://localhost:3000"
+        "HAUSPET_API_URL": "http://localhost:3000",
+        "MCP_API_TOKEN": "mcp-dev-token-admin-hauspet-2024"
       }
     }
   }
 }
 ```
 
-**Nota:** Reemplaza `/ruta/completa/a/HausPet` con la ruta absoluta donde
-clonaste este repositorio.
+**Note:** Replace `/absolute/path/to/HausPet` with the absolute path where you cloned this repository.
 
-### 3. Iniciar los servicios
+### 3. Start the services
 
-Antes de usar el MCP, asegúrate de que la API de HausPet esté corriendo:
+Before using the MCP, ensure the HausPet API is running:
 
 ```bash
-# Terminal 1: Iniciar servicios con Docker
+# Start all services with Docker
 make up
-
-# Terminal 2: Iniciar el servidor API
-npm run dev
-
-# Terminal 3: Iniciar el worker de auditoría
-npm run start:worker
 ```
 
-### 4. Reiniciar Claude Desktop
+The API, worker, and all dependencies will start automatically.
 
-Cierra y vuelve a abrir Claude Desktop para que cargue el MCP.
+### 4. Restart Claude Desktop
 
-## Uso
+Close and reopen Claude Desktop to load the MCP configuration.
 
-Una vez configurado, puedes hacer preguntas a Claude como:
+## Usage
 
-### Consultas (Read)
-- "¿Puedes listarme todas las mascotas disponibles?"
-- "Muéstrame todos los perros"
-- "Dame una mascota aleatoria"
-- "¿Qué gatos tienes en la base de datos?"
-- "Dame un pájaro aleatorio"
+Once configured, you can ask Claude questions like:
 
-### Operaciones de escritura (Write)
-- "Agrega un Beagle a la base de datos"
-- "Añade un gato de raza Siamese"
-- "Crea una nueva mascota: Golden Retriever, tipo perro"
+### Read Operations
+- "Can you list all available pets?"
+- "Show me all dogs"
+- "Give me a random pet"
+- "What cats do you have in the database?"
+- "Give me a random bird"
 
-Claude automáticamente usará las herramientas del MCP para interactuar con tu API local.
+### Write Operations
+- "Add a Beagle to the database"
+- "Add a Siamese cat"
+- "Create a new pet: Golden Retriever, type dog"
 
-## Verificación
+Claude will automatically use the MCP tools to interact with your local API.
 
-Para verificar que el MCP está funcionando correctamente:
+## Verification
 
-1. Abre Claude Desktop
-2. Busca el ícono de herramientas (🔧) o plugins
-3. Deberías ver "hauspet" listado con 4 herramientas disponibles
+To verify that the MCP is working correctly:
 
-## Variables de entorno
+1. Open Claude Desktop
+2. Look for the tools icon (🔧) or plugins section
+3. You should see "hauspet" listed with 4 available tools
 
-- `HAUSPET_API_URL`: URL base de la API (default: `http://localhost:3000`)
+## Environment Variables
+
+- `HAUSPET_API_URL`: Base API URL (default: `http://localhost:3000`)
+- `MCP_API_TOKEN`: Static authentication token for protected operations (required for `add_pet`)
+
+### ⚠️ Authentication for Write Operations
+
+**Write operations** like `add_pet` require authentication. The MCP server uses a static API token that must be configured:
+
+1. **In the project's `.env` file** (already configured):
+   ```bash
+   MCP_API_TOKEN=mcp-dev-token-admin-hauspet-2024
+   ```
+
+2. **In Claude Desktop configuration** (see example above):
+   ```json
+   "env": {
+     "HAUSPET_API_URL": "http://localhost:3000",
+     "MCP_API_TOKEN": "mcp-dev-token-admin-hauspet-2024"
+   }
+   ```
+
+**Important**: The token must match in both files. In production, use a secure token and keep it secret.
+
+## Testing the API Manually (Simulating MCP Calls)
+
+You can test the API endpoints that the MCP uses with curl:
+
+### Read Operations (Public - No Auth Required)
+
+**List all pets:**
+```bash
+curl http://localhost:3000/api/pets
+```
+
+**List pets by type:**
+```bash
+curl http://localhost:3000/api/pets/dog
+curl http://localhost:3000/api/pets/cat
+curl http://localhost:3000/api/pets/bird
+```
+
+**Get random pet:**
+```bash
+curl http://localhost:3000/api/pets/random-pet
+```
+
+**Get random pet by type:**
+```bash
+curl http://localhost:3000/api/pets/dog/random-pet
+```
+
+### Write Operations (Protected - Auth Required)
+
+**Add a new pet (requires MCP_API_TOKEN):**
+```bash
+curl -X POST http://localhost:3000/api/pets/add \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer mcp-dev-token-admin-hauspet-2024" \
+  -d '{"breed":"Bulldog","type":"dog"}'
+```
+
+**Add pet to specific type:**
+```bash
+curl -X POST http://localhost:3000/api/pets/cat/add \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer mcp-dev-token-admin-hauspet-2024" \
+  -d '{"breed":"Persian"}'
+```
+
+These are the same endpoints the MCP server calls when you interact with Claude Desktop.
 
 ## Troubleshooting
 
-**El MCP no aparece en Claude Desktop:**
-- Verifica que la ruta en `claude_desktop_config.json` sea absoluta y correcta
-- Revisa los logs de Claude Desktop en la sección de desarrollador
-- Asegúrate de haber reiniciado Claude Desktop después de editar la config
+**MCP doesn't appear in Claude Desktop:**
+- Verify that the path in `claude_desktop_config.json` is absolute and correct
+- Make sure the path points to `app/api/dist/mcp-server.js` (not `tmp/dist/api/mcp-server.js`)
+- Check Claude Desktop logs in the developer section
+- Make sure you've restarted Claude Desktop after editing the config
 
-**Error de conexión al hacer consultas:**
-- Verifica que la API esté corriendo en `http://localhost:3000`
-- Comprueba que los servicios de Docker (Postgres, MongoDB, Redis) estén activos: `docker ps`
-- Revisa los logs del servidor: `npm run dev`
+**Connection error when making queries:**
+- Verify that the API is running on `http://localhost:3000`
+- Check that Docker services (Postgres, MongoDB, Redis) are active: `docker ps`
+- Review server logs: `docker logs hauspet_api`
 
-**El build falla:**
-- Asegúrate de tener todas las dependencias: `npm install`
-- Verifica la versión de Node.js (requiere >= 22)
+**Build fails:**
+- Make sure you have all dependencies: `npm install`
+- Verify Node.js version (requires >= 22)
+- Check that you're in the correct directory: `cd app/api`
+
+**Authentication errors on write operations:**
+- Verify `MCP_API_TOKEN` is set in both `.env` and Claude Desktop config
+- Ensure the token matches in both locations
+- Check API logs for authentication errors: `docker logs hauspet_api`

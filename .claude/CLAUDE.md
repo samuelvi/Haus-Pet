@@ -65,8 +65,9 @@ npm run start:worker
 # Build TypeScript to dist/
 npm run build
 
-# Build the MCP server (creates dist/mcp-server.js)
-npm run build && npm run mcp
+# Build the MCP server (creates app/api/dist/mcp-server.js)
+cd app/api
+npm run build
 ```
 
 ### Database Management
@@ -338,5 +339,5 @@ Audit logs are async:
 ## Additional Documentation
 
 - `docs/TESTING.md`: Detailed testing guide
-- `docs/MCP-README.md`: MCP server setup (Spanish)
+- `docs/MCP-README.md`: MCP server setup and API testing examples
 - `README.md`: General project overview and getting started
