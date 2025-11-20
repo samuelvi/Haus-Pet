@@ -57,7 +57,7 @@ jobs:
           for i in {1..30}; do
             if curl -s -f -o /dev/null http://localhost:3000/api/pets/; then
               echo "API is ready!"
-              exit 0
+              break
             fi
             if [ $i -eq 30 ]; then
               echo "API failed to start"
@@ -67,6 +67,9 @@ jobs:
             echo "API not ready, waiting... (Attempt $i/30)"
             sleep 2
           done
+          echo "Waiting additional 5 seconds for database seeding to complete..."
+          sleep 5
+          echo "Ready to run tests!"
 
       - name: Run functional tests
         env:
