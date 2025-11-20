@@ -46,6 +46,19 @@ const validatePetType = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
+// --- Middleware to validate pet ID ---
+const validatePetId = (req: Request, res: Response, next: NextFunction) => {
+  const id = req.params.id;
+  const numId = Number(id);
+
+  // Check if it's not a number or is not a positive integer
+  if (isNaN(numId) || !Number.isInteger(numId) || numId <= 0) {
+    return res.status(400).json({ status: "ERROR", message: "Invalid pet ID" });
+  }
+
+  next();
+};
+
 // --- Generic Routes ---
 // GET routes are PUBLIC (read-only access for everyone)
 router.get("/", (req: Request, res: Response) => petController.getAllPets(req, res));
@@ -62,14 +75,30 @@ router.get("/:type/random-pet", validatePetType, (req: Request, res: Response) =
 router.post("/:type/add", authMiddleware, validatePetType, (req: Request, res: Response) => petController.addPetToType(req, res));
 
 // --- ID-Based Routes (MUST come last due to /:id param) ---
-// GET route is PUBLIC
-router.get("/:id(\\d+)", (req: Request, res: Response) => petController.getPetById(req, res));
+// GET by type or ID: if it's a valid type, handle as type; otherwise validate as ID
+router.get("/:idOrType", (req: Request, res: Response, next: NextFunction) => {
+  const param = req.params.idOrType;
 
-// GET by type (MUST come after /:id with regex to avoid conflicts)
-router.get("/:type", validatePetType, (req: Request, res: Response) => petController.getPetsByType(req, res));
+  // Check if it's a valid pet type
+  if (Object.values(PetType).includes(param as PetType)) {
+    // Remap parameter for controller
+    req.params.type = param;
+    return petController.getPetsByType(req, res);
+  }
+
+  // Otherwise, validate as ID
+  const numId = Number(param);
+  if (isNaN(numId) || !Number.isInteger(numId) || numId <= 0) {
+    return res.status(400).json({ status: "ERROR", message: "Invalid pet ID" });
+  }
+
+  // Remap parameter for controller
+  req.params.id = param;
+  return petController.getPetById(req, res);
+});
 
 // PUT/DELETE routes are PROTECTED (admin only)
-router.put("/:id", authMiddleware, (req: Request, res: Response) => petController.updatePet(req, res));
-router.delete("/:id", authMiddleware, (req: Request, res: Response) => petController.deletePet(req, res));
+router.put("/:id", authMiddleware, validatePetId, (req: Request, res: Response) => petController.updatePet(req, res));
+router.delete("/:id", authMiddleware, validatePetId, (req: Request, res: Response) => petController.deletePet(req, res));
 
 export default router;
