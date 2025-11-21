@@ -1,10 +1,10 @@
 import type { Animal, Sponsorship, CreateSponsorshipDto, PetType } from '../types/animal.types';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const animalService = {
   async getAllAnimals(): Promise<Animal[]> {
-    const response = await fetch(`${API_URL}/animals`);
+    const response = await fetch(`${API_URL}/api/animals`);
     if (!response.ok) {
       throw new Error('Failed to fetch animals');
     }
@@ -12,7 +12,7 @@ export const animalService = {
   },
 
   async getAnimalsByType(type: PetType): Promise<Animal[]> {
-    const response = await fetch(`${API_URL}/animals/type/${type}`);
+    const response = await fetch(`${API_URL}/api/animals/type/${type}`);
     if (!response.ok) {
       throw new Error('Failed to fetch animals');
     }
@@ -20,7 +20,7 @@ export const animalService = {
   },
 
   async getAnimalById(id: string): Promise<Animal> {
-    const response = await fetch(`${API_URL}/animals/${id}`);
+    const response = await fetch(`${API_URL}/api/animals/${id}`);
     if (!response.ok) {
       throw new Error('Animal not found');
     }
@@ -28,7 +28,7 @@ export const animalService = {
   },
 
   async createSponsorship(data: CreateSponsorshipDto): Promise<Sponsorship> {
-    const response = await fetch(`${API_URL}/sponsorships`, {
+    const response = await fetch(`${API_URL}/api/sponsorships`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ export const animalService = {
   },
 
   async getSponsorshipsForAnimal(animalId: string): Promise<Sponsorship[]> {
-    const response = await fetch(`${API_URL}/sponsorships/animal/${animalId}`);
+    const response = await fetch(`${API_URL}/api/sponsorships/animal/${animalId}`);
     if (!response.ok) {
       throw new Error('Failed to fetch sponsorships');
     }
@@ -51,7 +51,7 @@ export const animalService = {
   },
 
   async getRecentSponsorships(limit: number = 10): Promise<Sponsorship[]> {
-    const response = await fetch(`${API_URL}/sponsorships/recent?limit=${limit}`);
+    const response = await fetch(`${API_URL}/api/sponsorships/recent?limit=${limit}`);
     if (!response.ok) {
       throw new Error('Failed to fetch sponsorships');
     }
