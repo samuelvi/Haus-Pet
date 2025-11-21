@@ -120,10 +120,14 @@ export class AuthService {
       throw new InactiveUserError("User account is deactivated");
     }
 
-    // Verify password
+    // Verify password (users without password cannot login)
+    const userPassword = user.getPassword();
+    if (!userPassword) {
+      throw new InvalidCredentialsError("Invalid email or password");
+    }
     const isPasswordValid: boolean = await this.passwordHasher.verify(
       dto.password,
-      user.getPassword()
+      userPassword
     );
     if (!isPasswordValid) {
       throw new InvalidCredentialsError("Invalid email or password");

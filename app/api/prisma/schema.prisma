@@ -19,14 +19,15 @@ model Pet {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String   @map("password_hash")
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String?       @map("password_hash") // Optional for sponsor users
   name         String
-  role         Role     @default(ADMIN)
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  role         Role          @default(USER)
+  isActive     Boolean       @default(true) @map("is_active")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+  sponsorships Sponsorship[] // Relation to sponsorships
 
   @@map("users")
 }
@@ -40,4 +41,54 @@ enum PetType {
 enum Role {
   ADMIN
   USER
+}
+
+// Event Sourcing: Event Store table
+model Event {
+  id            String   @id @default(uuid())
+  aggregateId   String   @map("aggregate_id")
+  aggregateType String   @map("aggregate_type") // "Animal" or "Sponsorship"
+  eventType     String   @map("event_type")     // "AnimalCreated", "SponsorshipMade", etc.
+  eventData     Json     @map("event_data")     // Event payload as JSON
+  metadata      Json?                           // Additional metadata (userId, ip, etc.)
+  version       Int                             // Optimistic locking
+  timestamp     DateTime @default(now())
+
+  @@index([aggregateId, version])
+  @@index([aggregateType])
+  @@index([eventType])
+  @@map("events")
+}
+
+// Read Model: Animals (projected from events)
+model Animal {
+  id             String        @id @default(uuid())
+  name           String
+  type           PetType
+  breed          String
+  photoUrl       String        @map("photo_url")
+  totalSponsored Decimal       @default(0) @map("total_sponsored") @db.Decimal(10, 2)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  sponsorships   Sponsorship[] // Relation to sponsorships
+
+  @@map("animals")
+}
+
+// Read Model: Sponsorships (projected from events)
+model Sponsorship {
+  id        String   @id @default(uuid())
+  animalId  String   @map("animal_id")
+  userId    String   @map("user_id")
+  amount    Decimal  @db.Decimal(10, 2)
+  currency  String   @default("USD")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  animal Animal @relation(fields: [animalId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([animalId])
+  @@index([userId])
+  @@map("sponsorships")
 }

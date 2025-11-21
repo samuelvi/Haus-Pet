@@ -5,6 +5,8 @@ import { ProtectedRoute } from '../../security/src/components/ProtectedRoute';
 import { Dashboard } from './components/Dashboard';
 import { PetList } from './components/PetList';
 import { PetForm } from './components/PetForm';
+import { AnimalList } from './components/AnimalList';
+import { AnimalForm } from './components/AnimalForm';
 
 /**
  * Backend Management App
@@ -51,6 +53,34 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <PetForm />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Animal routes for sponsorship management */}
+          <Route
+            path="/animals"
+            element={
+              <ProtectedRoute>
+                <AnimalList />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/animals/new"
+            element={
+              <ProtectedRoute>
+                <AnimalForm />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/animals/edit/:id"
+            element={
+              <ProtectedRoute>
+                <AnimalForm />
               </ProtectedRoute>
             }
           />

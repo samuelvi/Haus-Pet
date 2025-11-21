@@ -9,7 +9,7 @@ export enum Role {
 export interface UserProps {
   id: string;
   email: Email;
-  password: Password;
+  password?: Password; // Optional for sponsor users (no login)
   name: string;
   role: Role;
   isActive: boolean;
@@ -24,7 +24,7 @@ export interface UserProps {
 export class User {
   private readonly id: string;
   private email: Email;
-  private password: Password;
+  private password?: Password;
   private name: string;
   private role: Role;
   private isActive: boolean;
@@ -82,7 +82,7 @@ export class User {
     return this.email;
   }
 
-  public getPassword(): Password {
+  public getPassword(): Password | undefined {
     return this.password;
   }
 

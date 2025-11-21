@@ -23,7 +23,7 @@ export class PostgresUserRepository implements UserRepository {
     return User.fromPersistence({
       id: prismaUser.id,
       email: Email.create(prismaUser.email),
-      password: Password.fromHash(prismaUser.passwordHash),
+      password: prismaUser.passwordHash ? Password.fromHash(prismaUser.passwordHash) : undefined,
       name: prismaUser.name,
       role: prismaUser.role as Role,
       isActive: prismaUser.isActive,
@@ -48,7 +48,7 @@ export class PostgresUserRepository implements UserRepository {
     return {
       id: user.getId(),
       email: user.getEmail().getValue(),
-      passwordHash: user.getPassword().getHash(),
+      passwordHash: user.getPassword()?.getHash() ?? '',
       name: user.getName(),
       role: user.getRole() as PrismaRole,
       isActive: user.getIsActive(),
