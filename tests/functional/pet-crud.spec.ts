@@ -8,6 +8,7 @@ const AUTH_CREDENTIALS = {
 
 let authTokens: { accessToken: string; refreshToken: string };
 let sessionId: string;
+let validPetId: string; // Store a valid UUID from the database
 
 /**
  * Helper: Login and get auth tokens
@@ -28,6 +29,13 @@ test.describe('Pet CRUD Integration Tests', () => {
   test.beforeAll(async () => {
     // Login once for all tests that need authentication
     await login();
+
+    // Get a valid pet ID from the database for UUID-based tests
+    const response = await fetch(`${API_BASE}/api/pets`);
+    const data = await response.json();
+    if (data.data && data.data.length > 0) {
+      validPetId = data.data[0].id;
+    }
   });
 
   test.describe('GET /api/pets - List all pets', () => {
@@ -52,19 +60,22 @@ test.describe('Pet CRUD Integration Tests', () => {
 
   test.describe('GET /api/pets/:id - Get pet by ID', () => {
     test('should return pet with valid ID', async ({ request }) => {
-      const response = await request.get(`${API_BASE}/api/pets/1`);
+      const response = await request.get(`${API_BASE}/api/pets/${validPetId}`);
 
       expect(response.status()).toBe(200);
 
       const data = await response.json();
       expect(data.status).toBe('OK');
-      expect(data.data).toHaveProperty('id', 1);
+      expect(data.data).toHaveProperty('id');
+      expect(data.data.id).toBe(validPetId);
       expect(data.data).toHaveProperty('breed');
       expect(data.data).toHaveProperty('type');
     });
 
     test('should return 404 for non-existent pet', async ({ request }) => {
-      const response = await request.get(`${API_BASE}/api/pets/99999`);
+      // Use a valid UUID format but non-existent ID
+      const fakeUuid = '019aa791-0000-0000-0000-000000000000';
+      const response = await request.get(`${API_BASE}/api/pets/${fakeUuid}`);
 
       expect(response.status()).toBe(404);
 
@@ -305,7 +316,7 @@ test.describe('Pet CRUD Integration Tests', () => {
   });
 
   test.describe('PUT /api/pets/:id - Update pet', () => {
-    let testPetId: number;
+    let testPetId: string;
 
     test.beforeAll(async ({ request }) => {
       // Create a pet for update tests
@@ -371,7 +382,9 @@ test.describe('Pet CRUD Integration Tests', () => {
         type: 'dog',
       };
 
-      const response = await request.put(`${API_BASE}/api/pets/99999`, {
+      // Use a valid UUID format but non-existent ID
+      const fakeUuid = '019aa791-0000-0000-0000-000000000000';
+      const response = await request.put(`${API_BASE}/api/pets/${fakeUuid}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
@@ -431,7 +444,7 @@ test.describe('Pet CRUD Integration Tests', () => {
   });
 
   test.describe('DELETE /api/pets/:id - Delete pet', () => {
-    let testPetId: number;
+    let testPetId: string;
 
     test.beforeEach(async ({ request }) => {
       // Create a pet for each delete test
@@ -479,7 +492,9 @@ test.describe('Pet CRUD Integration Tests', () => {
     });
 
     test('should return 404 for non-existent pet', async ({ request }) => {
-      const response = await request.delete(`${API_BASE}/api/pets/99999`, {
+      // Use a valid UUID format but non-existent ID
+      const fakeUuid = '019aa791-0000-0000-0000-000000000000';
+      const response = await request.delete(`${API_BASE}/api/pets/${fakeUuid}`, {
         headers: {
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
