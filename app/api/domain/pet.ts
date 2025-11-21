@@ -5,7 +5,7 @@ export enum PetType {
 }
 
 export interface Pet {
-  id?: number;
+  id?: string;
   breed: string;
   type: PetType;
 }

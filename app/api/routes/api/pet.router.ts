@@ -46,14 +46,15 @@ const validatePetType = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-// --- Middleware to validate pet ID ---
+// --- Middleware to validate pet ID (UUID) ---
 const validatePetId = (req: Request, res: Response, next: NextFunction) => {
   const id = req.params.id;
-  const numId = Number(id);
 
-  // Check if it's not a number or is not a positive integer
-  if (isNaN(numId) || !Number.isInteger(numId) || numId <= 0) {
-    return res.status(400).json({ status: "ERROR", message: "Invalid pet ID" });
+  // UUID regex pattern (UUIDv4/v7 format)
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  if (!uuidPattern.test(id)) {
+    return res.status(400).json({ status: "ERROR", message: "Invalid pet ID: must be a valid UUID" });
   }
 
   next();
@@ -86,10 +87,10 @@ router.get("/:idOrType", (req: Request, res: Response, next: NextFunction) => {
     return petController.getPetsByType(req, res);
   }
 
-  // Otherwise, validate as ID
-  const numId = Number(param);
-  if (isNaN(numId) || !Number.isInteger(numId) || numId <= 0) {
-    return res.status(400).json({ status: "ERROR", message: "Invalid pet ID" });
+  // Otherwise, validate as UUID
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidPattern.test(param)) {
+    return res.status(400).json({ status: "ERROR", message: "Invalid pet ID: must be a valid UUID" });
   }
 
   // Remap parameter for controller

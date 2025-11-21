@@ -33,7 +33,7 @@ export class PostgresPetRepository implements PetReadRepository, PetWriteReposit
     return prismaPets.map(this.toDomain);
   }
 
-  public async findById(id: number): Promise<DomainPet | null> {
+  public async findById(id: string): Promise<DomainPet | null> {
     const prismaPet = await this.prisma.pet.findUnique({
       where: { id },
     });
@@ -61,13 +61,14 @@ export class PostgresPetRepository implements PetReadRepository, PetWriteReposit
   }
 
   public async save(pet: DomainPet): Promise<DomainPet> {
-    // The `id` is optional in the domain, but Prisma expects it to be undefined for creation.
-    const { id, ...petData } = pet;
+    if (!pet.id) {
+      throw new Error("Pet ID is required for saving");
+    }
 
     const createdPrismaPet = await this.prisma.pet.create({
       data: {
-        ...petData,
-        // Cast the domain enum to the Prisma enum for writing
+        id: pet.id, // UUIDv7 must be provided
+        breed: pet.breed,
         type: pet.type as PrismaPetType,
       },
     });
@@ -75,7 +76,7 @@ export class PostgresPetRepository implements PetReadRepository, PetWriteReposit
     return this.toDomain(createdPrismaPet);
   }
 
-  public async update(id: number, petData: Partial<DomainPet>): Promise<DomainPet> {
+  public async update(id: string, petData: Partial<DomainPet>): Promise<DomainPet> {
     const updateData: any = {};
 
     if (petData.breed !== undefined) {
@@ -93,7 +94,7 @@ export class PostgresPetRepository implements PetReadRepository, PetWriteReposit
     return this.toDomain(updatedPrismaPet);
   }
 
-  public async delete(id: number): Promise<void> {
+  public async delete(id: string): Promise<void> {
     await this.prisma.pet.delete({
       where: { id },
     });

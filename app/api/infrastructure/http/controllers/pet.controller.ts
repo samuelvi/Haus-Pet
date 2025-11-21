@@ -116,7 +116,7 @@ export class PetController {
       // Validate ID parameter
       const validation = petIdSchema.safeParse(req.params);
       if (!validation.success) {
-        res.status(400).json({ status: "ERROR", message: "Invalid pet ID: must be a positive integer" });
+        res.status(400).json({ status: "ERROR", message: "Invalid pet ID: must be a valid UUID" });
         return;
       }
 
@@ -137,7 +137,7 @@ export class PetController {
       // Validate ID parameter
       const idValidation = petIdSchema.safeParse(req.params);
       if (!idValidation.success) {
-        res.status(400).json({ status: "ERROR", message: "Invalid pet ID: must be a positive integer" });
+        res.status(400).json({ status: "ERROR", message: "Invalid pet ID: must be a valid UUID" });
         return;
       }
 
@@ -170,7 +170,7 @@ export class PetController {
       // Validate ID parameter
       const validation = petIdSchema.safeParse(req.params);
       if (!validation.success) {
-        res.status(400).json({ status: "ERROR", message: "Invalid pet ID: must be a positive integer" });
+        res.status(400).json({ status: "ERROR", message: "Invalid pet ID: must be a valid UUID" });
         return;
       }
 

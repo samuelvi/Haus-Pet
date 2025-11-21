@@ -7,7 +7,7 @@ export interface PetFilters {
 
 export interface PetReadRepository {
   findAll(filters?: PetFilters): Promise<Pet[]>;
-  findById(id: number): Promise<Pet | null>;
+  findById(id: string): Promise<Pet | null>;
   findByBreed(breed: string): Promise<Pet | null>;
   findByType(type: PetType): Promise<Pet[]>;
 }

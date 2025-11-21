@@ -91,14 +91,14 @@ export class AuditLoggingPetServiceDecorator {
     }
   }
 
-  public async getPetById(id: number, auditContext: AuditContext): Promise<Pet | null> {
+  public async getPetById(id: string, auditContext: AuditContext): Promise<Pet | null> {
     await this.audit("getPetById", auditContext, `Attempting to get pet with ID: ${id}.`);
     const result = await this.decoratedService.getPetById(id);
     await this.audit("getPetById", auditContext, "", result ? `Successfully retrieved pet: ${result.breed}` : `Pet with ID ${id} not found.`);
     return result;
   }
 
-  public async updatePet(id: number, breed: string, type: PetType, auditContext: AuditContext): Promise<Pet> {
+  public async updatePet(id: string, breed: string, type: PetType, auditContext: AuditContext): Promise<Pet> {
     try {
       // Get current state before update
       const beforeState = await this.decoratedService.getPetById(id);
@@ -119,7 +119,7 @@ export class AuditLoggingPetServiceDecorator {
     }
   }
 
-  public async deletePet(id: number, auditContext: AuditContext): Promise<void> {
+  public async deletePet(id: string, auditContext: AuditContext): Promise<void> {
     try {
       // Get current state before deletion
       const beforeState = await this.decoratedService.getPetById(id);

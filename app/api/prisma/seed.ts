@@ -54,6 +54,7 @@ async function main() {
       where: { breed: p.breed }, // Unique identifier
       update: {}, // No updates needed if it exists
       create: {
+        id: uuidv7(),
         breed: p.breed,
         type: p.type,
       },

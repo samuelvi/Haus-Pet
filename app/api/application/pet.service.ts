@@ -3,6 +3,7 @@ import { PetWriteRepository } from "../domain/pet-write.repository";
 import { Pet, PetType } from "../domain/pet";
 import { PetBreedAlreadyExistsError } from "../domain/errors/pet-breed-already-exists.error";
 import { FuzzySearchService } from "./fuzzy-search.service";
+import { generateId } from "../infrastructure/utils/uuid";
 
 export class PetService {
   private fuzzySearchService: FuzzySearchService;
@@ -60,17 +61,21 @@ export class PetService {
       throw new PetBreedAlreadyExistsError("Pet breed already exists");
     }
 
-    const newPet: Pet = { breed, type };
+    const newPet: Pet = {
+      id: generateId(),
+      breed,
+      type
+    };
 
     const savedPet = await this.petWriteRepository.save(newPet);
     return savedPet;
   }
 
-  public async getPetById(id: number): Promise<Pet | null> {
+  public async getPetById(id: string): Promise<Pet | null> {
     return this.petReadRepository.findById(id);
   }
 
-  public async updatePet(id: number, breed: string, type: PetType): Promise<Pet> {
+  public async updatePet(id: string, breed: string, type: PetType): Promise<Pet> {
     const existingPet = await this.petReadRepository.findById(id);
     if (!existingPet) {
       throw new Error("Pet not found");
@@ -87,7 +92,7 @@ export class PetService {
     return this.petWriteRepository.update(id, { breed, type });
   }
 
-  public async deletePet(id: number): Promise<void> {
+  public async deletePet(id: string): Promise<void> {
     const existingPet = await this.petReadRepository.findById(id);
     if (!existingPet) {
       throw new Error("Pet not found");

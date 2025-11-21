@@ -18,9 +18,10 @@ export const petSchema = z.object({
 
 /**
  * Validation schema for pet ID parameter
+ * Accepts UUIDv7 format
  */
 export const petIdSchema = z.object({
-  id: z.string().regex(/^\d+$/, 'ID must be a positive integer').transform(Number),
+  id: z.string().uuid('ID must be a valid UUID'),
 });
 
 export type PetInput = z.infer<typeof petSchema>;
