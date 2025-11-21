@@ -8,6 +8,7 @@ A full-stack pet breeds management system with authentication, built with Node.j
 - **Authentication System** - JWT tokens + Redis sessions
 - **Frontend Admin Panel** - React + TypeScript + Vite (wireframe)
 - **Async Audit Logging** - BullMQ + MongoDB
+- **Animal Sponsorship System** - Event Sourcing architecture with public gallery
 - **Database** - PostgreSQL (Prisma ORM) + MongoDB (Audit logs)
 - **Message Queue** - Redis + BullMQ
 
@@ -348,6 +349,72 @@ For a more detailed explanation of the testing philosophy, environment, and avai
 This project includes an MCP (Model Context Protocol) server that allows you to interact with the HausPet API directly from Claude Desktop.
 
 For setup instructions and usage details, see the **[MCP Guide](./docs/MCP-README.md)**.
+
+## Animal Sponsorship System
+
+The project includes a complete Animal Sponsorship System built with **Event Sourcing** architecture. This allows users to browse adoptable animals and sponsor them.
+
+### Features
+
+- **Public Gallery** - Browse animals (dogs, cats, birds) with photos
+- **Sponsorship** - Users can sponsor animals with donations
+- **Event Sourcing** - All changes are stored as immutable events
+- **Admin Management** - Protected CRUD operations for animals
+
+### Seeding Animal Data
+
+To populate the database with sample animals for development/testing:
+
+```sh
+# Run from Docker container
+docker exec hauspet_api npx ts-node prisma/seed-animals.ts
+
+# Or run locally (with Docker database running)
+cd app/api
+npx ts-node prisma/seed-animals.ts
+```
+
+This creates 11 animals: 4 dogs, 4 cats, and 3 birds with photos and sample sponsorship amounts.
+
+### Animal API Endpoints
+
+#### Public Routes 🌐
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/animals` | List all animals |
+| GET | `/api/animals/type/:type` | List animals by type (cat/dog/bird) |
+| GET | `/api/animals/:id` | Get single animal by ID |
+
+#### Admin Routes 🔒 (Requires ADMIN role)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/admin/animals` | Create new animal |
+| PATCH | `/api/admin/animals/:id` | Update animal |
+| DELETE | `/api/admin/animals/:id` | Delete animal |
+
+### Sponsorship API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/sponsorships` | Create a sponsorship |
+| GET | `/api/sponsorships/animal/:animalId` | Get sponsorships for an animal |
+| GET | `/api/sponsorships/recent?limit=10` | Get recent sponsorships (max 100) |
+
+**Example - Create Sponsorship:**
+
+```sh
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "animalId": "uuid-here",
+    "email": "sponsor@example.com",
+    "name": "John Doe",
+    "amount": 25.00
+  }' \
+  http://localhost:3000/api/sponsorships
+```
 
 ## API Endpoints
 
