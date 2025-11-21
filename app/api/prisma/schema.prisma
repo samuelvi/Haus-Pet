@@ -8,6 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["public", "eventstore", "readmodels"]
 }
 
 model Pet {
@@ -16,6 +17,7 @@ model Pet {
   type  PetType
 
   @@map("pet")
+  @@schema("public")
 }
 
 model User {
@@ -30,37 +32,45 @@ model User {
   sponsorships Sponsorship[] // Relation to sponsorships
 
   @@map("users")
+  @@schema("public")
 }
 
 enum PetType {
   cat
   dog
   bird
+
+  @@schema("public")
 }
 
 enum Role {
   ADMIN
   USER
+
+  @@schema("public")
 }
 
 // Event Sourcing: Event Store table
+// Isolated in 'eventstore' schema for future scalability
 model Event {
   id            String   @id // UUIDv7 generated in application code
   aggregateId   String   @map("aggregate_id")
   aggregateType String   @map("aggregate_type") // "Animal" or "Sponsorship"
-  eventType     String   @map("event_type")     // "AnimalCreated", "SponsorshipMade", etc.
-  eventData     Json     @map("event_data")     // Event payload as JSON
-  metadata      Json?                           // Additional metadata (userId, ip, etc.)
-  version       Int                             // Optimistic locking
+  eventType     String   @map("event_type") // "AnimalCreated", "SponsorshipMade", etc.
+  eventData     Json     @map("event_data") // Event payload as JSON
+  metadata      Json? // Additional metadata (userId, ip, etc.)
+  version       Int // Optimistic locking
   timestamp     DateTime @default(now())
 
   @@index([aggregateId, version])
   @@index([aggregateType])
   @@index([eventType])
   @@map("events")
+  @@schema("eventstore")
 }
 
 // Read Model: Animals (projected from events)
+// Isolated in 'readmodels' schema for future scalability
 model Animal {
   id             String        @id // UUIDv7 generated in application code
   name           String
@@ -73,9 +83,11 @@ model Animal {
   sponsorships   Sponsorship[] // Relation to sponsorships
 
   @@map("animals")
+  @@schema("readmodels")
 }
 
 // Read Model: Sponsorships (projected from events)
+// Isolated in 'readmodels' schema for future scalability
 model Sponsorship {
   id        String   @id // UUIDv7 generated in application code
   animalId  String   @map("animal_id")
@@ -91,4 +103,5 @@ model Sponsorship {
   @@index([animalId])
   @@index([userId])
   @@map("sponsorships")
+  @@schema("readmodels")
 }
