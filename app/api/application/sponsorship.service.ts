@@ -3,6 +3,7 @@ import { SponsorshipAggregate } from '../domain/sponsorship';
 import { AnimalAggregate } from '../domain/animal';
 import { EventStoreRepository } from '../domain/eventsourcing';
 import { SponsorshipProjector, AnimalProjector } from '../infrastructure/projections';
+import { generateId } from '../infrastructure/utils/uuid';
 
 export interface CreateSponsorshipDto {
   animalId: string;
@@ -58,6 +59,7 @@ export class SponsorshipService {
       // Create user without password (sponsor user)
       user = await this.prisma.user.create({
         data: {
+          id: generateId(),
           email: dto.email,
           name: dto.name,
           role: 'USER',
@@ -66,7 +68,7 @@ export class SponsorshipService {
     }
 
     // Create sponsorship aggregate
-    const sponsorshipId = crypto.randomUUID();
+    const sponsorshipId = generateId();
     const sponsorship = SponsorshipAggregate.create(
       sponsorshipId,
       dto.animalId,

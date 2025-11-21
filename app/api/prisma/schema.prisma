@@ -19,7 +19,7 @@ model Pet {
 }
 
 model User {
-  id           String        @id @default(uuid())
+  id           String        @id // UUIDv7 generated in application code
   email        String        @unique
   passwordHash String?       @map("password_hash") // Optional for sponsor users
   name         String
@@ -45,7 +45,7 @@ enum Role {
 
 // Event Sourcing: Event Store table
 model Event {
-  id            String   @id @default(uuid())
+  id            String   @id // UUIDv7 generated in application code
   aggregateId   String   @map("aggregate_id")
   aggregateType String   @map("aggregate_type") // "Animal" or "Sponsorship"
   eventType     String   @map("event_type")     // "AnimalCreated", "SponsorshipMade", etc.
@@ -62,7 +62,7 @@ model Event {
 
 // Read Model: Animals (projected from events)
 model Animal {
-  id             String        @id @default(uuid())
+  id             String        @id // UUIDv7 generated in application code
   name           String
   type           PetType
   breed          String
@@ -77,7 +77,7 @@ model Animal {
 
 // Read Model: Sponsorships (projected from events)
 model Sponsorship {
-  id        String   @id @default(uuid())
+  id        String   @id // UUIDv7 generated in application code
   animalId  String   @map("animal_id")
   userId    String   @map("user_id")
   amount    Decimal  @db.Decimal(10, 2)

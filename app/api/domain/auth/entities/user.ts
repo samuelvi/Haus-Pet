@@ -1,3 +1,4 @@
+import { uuidv7 } from 'uuidv7';
 import { Email } from '../value-objects/email';
 import { Password } from '../value-objects/password';
 
@@ -52,7 +53,7 @@ export class User {
     role?: Role;
   }): User {
     const now = new Date();
-    const id = crypto.randomUUID();
+    const id = uuidv7();
 
     return new User({
       id,

@@ -1,11 +1,12 @@
 import { PrismaClient } from '@prisma/client';
+import { uuidv7 } from 'uuidv7';
 
 const prisma = new PrismaClient();
 
 const animals = [
   // Dogs
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Max',
     type: 'dog' as const,
     breed: 'Labrador Retriever',
@@ -13,7 +14,7 @@ const animals = [
     totalSponsored: 150.00,
   },
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Luna',
     type: 'dog' as const,
     breed: 'Golden Retriever',
@@ -21,7 +22,7 @@ const animals = [
     totalSponsored: 275.50,
   },
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Rocky',
     type: 'dog' as const,
     breed: 'German Shepherd',
@@ -29,7 +30,7 @@ const animals = [
     totalSponsored: 0,
   },
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Buddy',
     type: 'dog' as const,
     breed: 'Beagle',
@@ -38,7 +39,7 @@ const animals = [
   },
   // Cats
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Whiskers',
     type: 'cat' as const,
     breed: 'Persian',
@@ -46,7 +47,7 @@ const animals = [
     totalSponsored: 320.00,
   },
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Shadow',
     type: 'cat' as const,
     breed: 'Siamese',
@@ -54,7 +55,7 @@ const animals = [
     totalSponsored: 85.00,
   },
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Mittens',
     type: 'cat' as const,
     breed: 'Maine Coon',
@@ -62,7 +63,7 @@ const animals = [
     totalSponsored: 0,
   },
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Felix',
     type: 'cat' as const,
     breed: 'British Shorthair',
@@ -71,7 +72,7 @@ const animals = [
   },
   // Birds
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Tweety',
     type: 'bird' as const,
     breed: 'Canary',
@@ -79,7 +80,7 @@ const animals = [
     totalSponsored: 45.00,
   },
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Rio',
     type: 'bird' as const,
     breed: 'Macaw',
@@ -87,7 +88,7 @@ const animals = [
     totalSponsored: 200.00,
   },
   {
-    id: crypto.randomUUID(),
+    id: uuidv7(),
     name: 'Coco',
     type: 'bird' as const,
     breed: 'Cockatiel',
@@ -116,7 +117,7 @@ async function seedAnimals(): Promise<void> {
     // Also create the corresponding event for event sourcing consistency
     await prisma.event.create({
       data: {
-        id: crypto.randomUUID(),
+        id: uuidv7(),
         aggregateId: animal.id,
         aggregateType: 'Animal',
         eventType: 'AnimalCreated',

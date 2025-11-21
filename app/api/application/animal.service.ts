@@ -3,6 +3,7 @@ import { AnimalAggregate } from '../domain/animal';
 import { EventStoreRepository } from '../domain/eventsourcing';
 import { AnimalProjector } from '../infrastructure/projections';
 import { PhotoService } from '../infrastructure/services';
+import { generateId } from '../infrastructure/utils/uuid';
 
 export interface CreateAnimalDto {
   name: string;
@@ -37,7 +38,7 @@ export class AnimalService {
    * Creates a new animal
    */
   async create(dto: CreateAnimalDto): Promise<Animal> {
-    const id = crypto.randomUUID();
+    const id = generateId();
 
     // Fetch random photo if not provided
     const photoUrl = dto.photoUrl || (await this.photoService.getRandomPhoto(dto.type));

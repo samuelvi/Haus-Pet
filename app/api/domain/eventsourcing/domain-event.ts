@@ -1,3 +1,5 @@
+import { uuidv7 } from 'uuidv7';
+
 /**
  * Base interface for all domain events in the Event Sourcing system.
  * Every event must have these properties to be stored and replayed.
@@ -33,7 +35,7 @@ export function createDomainEvent(
   metadata?: Record<string, unknown>
 ): DomainEvent {
   return {
-    eventId: crypto.randomUUID(),
+    eventId: uuidv7(),
     eventType,
     aggregateId,
     aggregateType,

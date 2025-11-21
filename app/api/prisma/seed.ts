@@ -1,5 +1,6 @@
 import { PrismaClient, PetType, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { uuidv7 } from 'uuidv7';
 
 const prisma = new PrismaClient();
 
@@ -36,6 +37,7 @@ async function main() {
     where: { email: adminEmail },
     update: {}, // Don't update if exists
     create: {
+      id: uuidv7(),
       email: adminEmail,
       passwordHash: hashedPassword,
       name: 'Admin User',

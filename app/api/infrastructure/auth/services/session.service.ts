@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { uuidv7 } from "uuidv7";
 import sessionConnection from "../redis-session-connection";
 import { SessionNotFoundError } from "../../../domain/auth/errors";
 
@@ -28,7 +28,7 @@ export class SessionService {
    * Creates a new session in Redis and returns the session ID.
    */
   async createSession(params: CreateSessionParams): Promise<string> {
-    const sessionId: string = randomUUID();
+    const sessionId: string = uuidv7();
     const now: number = Date.now();
 
     const sessionData: SessionData = {
