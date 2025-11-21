@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { AnimalService, CreateAnimalDto, UpdateAnimalDto } from '../../../application/animal.service';
 import { PetType } from '@prisma/client';
 
-// UUID validation regex
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+// UUID validation regex (supports all UUID versions including UUIDv7)
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isValidUUID = (id: string): boolean => UUID_REGEX.test(id);
 
 /**
