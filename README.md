@@ -14,38 +14,34 @@ A full-stack pet breeds management system with authentication, built with Node.j
 
 ## Project Structure
 
-This is a monorepo containing separate frontend and backend applications:
+This is a monorepo with two apps and shared tooling:
 
 ```
 HausPet/
 ├── app/
-│   ├── api/                    # Backend API (Node.js + Express + TypeScript)
-│   │   ├── src/api/           # Source code (DDD architecture)
-│   │   ├── prisma/            # Database schema and migrations
-│   │   ├── scripts/           # Utility scripts
-│   │   ├── package.json       # Backend dependencies
-│   │   ├── tsconfig.json      # Backend TypeScript config
-│   │   ├── index.ts           # API server entry point
-│   │   └── worker.ts          # Background worker entry point
-│   └── frontend/              # Frontend GUI (React + Vite + TypeScript)
-│       ├── src/               # React components and pages
-│       ├── package.json       # Frontend dependencies
-│       └── tsconfig.json      # Frontend TypeScript config
-├── docker/                     # Docker configurations
-│   ├── docker-compose.yaml    # Development environment
-│   ├── docker-compose.test.yaml # Test environment
-│   └── nginx/                 # Nginx reverse proxy config
-├── tests/                      # Integration tests (Playwright)
-├── docs/                       # Documentation
-├── Makefile                    # Development commands
-└── package.json               # Root package (tooling only)
+│   ├── api/                     # Backend API + worker (DDD-style)
+│   │   ├── domain/              # Entities, repositories, errors, eventsourcing
+│   │   ├── application/         # Services (auth, breeds, audit, sponsorship)
+│   │   ├── infrastructure/      # Prisma, HTTP controllers, queue, auth, repos
+│   │   ├── routes/              # Express routers (auth, breed, animal, admin)
+│   │   ├── prisma/              # Schema, migrations, seed
+│   │   ├── index.ts / worker.ts # API and BullMQ worker entrypoints
+│   │   └── scripts/             # Utilities (route listing, commit msg helper)
+│   └── frontend/                # React + Vite admin UI (TypeScript)
+│       ├── src/                 # Components and pages
+│       ├── Dockerfile.dev       # Dev container used by docker-compose.yaml
+│       └── vite/ts configs
+├── docker/                      # Docker Compose (dev, test, proxy) + nginx configs
+├── tests/functional/            # Playwright API tests
+├── docs/                        # Project documentation
+├── Makefile                     # Common orchestration commands
+└── package.json                 # Root tooling (husky, commitlint, playwright)
 ```
 
 **Key Points:**
-- Each app (`api` and `frontend`) has its own `package.json` and `node_modules`
-- Root `package.json` contains only development tooling (husky, commitlint, playwright)
-- Database schema managed by Prisma in `app/api/prisma/`
-- Docker Compose orchestrates all services
+- Each app (`app/api`, `app/frontend`) keeps its own dependencies.
+- Prisma schema and migrations live in `app/api/prisma/`.
+- Docker Compose brings up API, worker, frontend, Postgres, Redis, MongoDB, and nginx for local dev. The same stack has a dedicated test variant in `docker/docker-compose.test.yaml`.
 
 ## Database Initialization and First-Time Setup
 
@@ -53,40 +49,31 @@ This project uses Prisma to manage the database schema. If you are cloning this 
 
 **This process is crucial for the application to start without errors.**
 
-### Step 1: Destroy Old Docker Environment
-
-This command stops all running containers and, most importantly, **deletes the database data volume**. This ensures you start with a completely clean slate.
+### Step 1: Start a Clean Environment
 
 ```sh
-make prune
+make prune   # optional: stops stack and clears dev volumes
+make up      # builds/starts API, worker, frontend, dbs, nginx
 ```
 
-### Step 2: Start the Database Service
+The API container installs deps, runs `prisma generate`, deploys migrations, and seeds data automatically on startup.
 
-Start *only* the database container. This provides a running, empty PostgreSQL instance for Prisma to connect to.
+### Step 2: Apply New Migrations (when schema changes)
 
-```sh
-docker compose -f docker/docker-compose.yaml up -d hauspet_db
-```
-
-### Step 3: Create Initial Migration
-
-Run this command on your **local machine** from the `app/api` directory. It will connect to the new database, inspect your `prisma/schema.prisma` file, and generate the necessary SQL migration files inside the `prisma/migrations` directory.
+From `app/api`, create and deploy migrations against the local stack:
 
 ```sh
 cd app/api
-npx prisma migrate dev --name init
+npx prisma migrate dev --name <change>
 ```
 
-### Step 4: Start the Full Application
+### Step 3: Rerun Stack
 
-Now that the migration files exist, you can start the entire application stack.
+If needed, restart the stack to pick up changes:
 
 ```sh
-make up
+make restart
 ```
-
-The application will now start correctly, apply the migrations, and seed the database with initial data (including the default admin user).
 
 ## Authentication
 

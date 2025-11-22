@@ -8,7 +8,7 @@ TEST_COMPOSE_FILE = docker/docker-compose.test.yaml
 TEST_COMPOSE = docker compose -f $(TEST_COMPOSE_FILE)
 TEST_API_SERVICE = hauspet_api_test
 
-.PHONY: up down logs restart install shell list-routes prune mongo-shell test test-up test-down test-run test-prune proxy-up proxy-down proxy-logs proxy-restart
+.PHONY: up down logs restart install shell list-routes prune mongo-shell test test-up test-down test-run test-prune proxy-up proxy-down proxy-logs proxy-restart prod-cert
 
 # --- Development Environment ---
 up:
@@ -104,3 +104,12 @@ proxy-logs:
 
 proxy-restart:
 	@$(PROXY_COMPOSE) restart
+
+# --- Production Helpers ---
+prod-cert:
+	@echo "Issuing/renewing Let's Encrypt cert via hauspet_nginx..."
+	@docker compose -f docker/docker-compose.prod.yaml run --rm hauspet_nginx \
+		certbot certonly --webroot -w /var/www/certbot \
+		-d $(DOMAIN) -d $(WWW_DOMAIN) \
+		--email $(LETSENCRYPT_EMAIL) --agree-tos --no-eff-email
+	@docker compose -f docker/docker-compose.prod.yaml exec hauspet_nginx nginx -s reload

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project implements **database-agnostic fuzzy search** using [Fuse.js](https://fusejs.io/) at the application layer. This approach works with **any database** (PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, etc.) without requiring database-specific extensions or syntax.
+This project implements **database-agnostic fuzzy search** using [Fuse.js](https://fusejs.io/) at the application layer. The search runs over breeds and works with **any database** (PostgreSQL, MySQL, MariaDB, SQL Server, Oracle, etc.) without requiring database-specific extensions or syntax.
 
 ## Why Application-Level Fuzzy Search?
 
@@ -26,36 +26,36 @@ Client Request
     ↓
 Controller extracts filters (type + search term)
     ↓
-Service Layer (pet.service.ts)
+Service Layer (`BreedService`)
     ↓
-├─→ Database filter by TYPE only ────→ PetRepository (Prisma)
-│                                           ↓
-│                                      Returns filtered pets
-│                                           ↓
-└─→ Application-level fuzzy search ─→ FuzzySearchService (Fuse.js)
+├─→ Database filter by type only ──→ BreedReadRepository (Prisma)
+│                                         ↓
+│                                    Returns filtered breeds
+│                                         ↓
+└─→ Application-level fuzzy search ─→ `FuzzySearchService` (Fuse.js)
                                            ↓
-                                      Returns fuzzy-matched pets
+                                    Returns fuzzy-matched breeds
 ```
 
 ### Code Example:
 
 ```typescript
-// src/application/pet.service.ts
-public async getAllPets(filters?: PetFilters): Promise<Pet[]> {
+// app/api/application/breed.service.ts
+public async getAllBreeds(filters?: BreedFilters): Promise<Breed[]> {
   // Step 1: Filter by type at database level (efficient)
-  const dbFilters: PetFilters = {};
+  const dbFilters: BreedFilters = {};
   if (filters?.type) {
     dbFilters.type = filters.type;
   }
 
-  let pets = await this.petReadRepository.findAll(dbFilters);
+  let breeds = await this.breedReadRepository.findAll(dbFilters);
 
   // Step 2: Apply fuzzy search at application level (tolerates typos)
   if (filters?.search) {
-    pets = this.fuzzySearchService.searchPets(pets, filters.search);
+    breeds = this.fuzzySearchService.searchBreeds(breeds, filters.search);
   }
 
-  return pets;
+  return breeds;
 }
 ```
 
@@ -65,8 +65,8 @@ The fuzzy search service uses Fuse.js with the following configuration:
 
 ```typescript
 // src/application/fuzzy-search.service.ts
-const fuse = new Fuse(pets, {
-  keys: ['breed'],           // Search in breed field
+const fuse = new Fuse(breeds, {
+  keys: ['name'],           // Search in breed field
   threshold: 0.4,            // 0.0 = exact match, 1.0 = match anything
   distance: 100,             // Maximum distance to search
   ignoreLocation: true,      // Don't consider position of match
@@ -107,10 +107,10 @@ ORDER BY similarity(breed, 'bengla') DESC;
 
 **Prisma raw query:**
 ```typescript
-const pets = await prisma.$queryRaw`
-  SELECT * FROM "Pet"
-  WHERE similarity(breed, ${searchTerm}) > 0.3
-  ORDER BY similarity(breed, ${searchTerm}) DESC
+const breeds = await prisma.$queryRaw`
+  SELECT * FROM "breed"
+  WHERE similarity(name, ${searchTerm}) > 0.3
+  ORDER BY similarity(name, ${searchTerm}) DESC
 `;
 ```
 
@@ -156,12 +156,12 @@ WHERE UTL_MATCH.EDIT_DISTANCE(breed, 'bengal') <= 2;
    ```typescript
    // Good: Reduces result set before fuzzy search
    const dbFilters = { type: 'cat' };
-   let pets = await repository.findAll(dbFilters);
-   pets = fuzzySearch.search(pets, 'bengla');
+   let breeds = await repository.findAll(dbFilters);
+   breeds = fuzzySearch.searchBreeds(breeds, 'bengla');
 
    // Bad: Loads all records into memory
-   let pets = await repository.findAll();
-   pets = fuzzySearch.search(pets, 'bengla');
+   let breeds = await repository.findAll();
+   breeds = fuzzySearch.searchBreeds(breeds, 'bengla');
    ```
 
 2. **Add Pagination**: Limit results before fuzzy search
@@ -182,21 +182,21 @@ WHERE UTL_MATCH.EDIT_DISTANCE(breed, 'bengal') <= 2;
 
 If you need to migrate to database-level fuzzy search later:
 
-1. Create a new repository implementation (e.g., `PostgresFuzzyPetRepository`)
-2. Implement database-specific fuzzy search in `findAll()`
-3. Update dependency injection to use new repository
-4. Application code remains unchanged (follows repository pattern)
+1. Create a new repository implementation (e.g., `PostgresFuzzyBreedRepository`).
+2. Implement database-specific fuzzy search in `findAll()`.
+3. Update dependency injection to use the new repository.
+4. Application code remains unchanged (repository pattern).
 
 ```typescript
 // Example: PostgreSQL with pg_trgm
-class PostgresFuzzyPetRepository implements PetReadRepository {
-  async findAll(filters?: PetFilters): Promise<Pet[]> {
+class PostgresFuzzyBreedRepository implements BreedReadRepository {
+  async findAll(filters?: BreedFilters): Promise<Breed[]> {
     if (filters?.search) {
       return this.prisma.$queryRaw`
-        SELECT * FROM "Pet"
-        WHERE (${!filters.type} OR type = ${filters.type})
-        AND similarity(breed, ${filters.search}) > 0.3
-        ORDER BY similarity(breed, ${filters.search}) DESC
+        SELECT * FROM "breed"
+        WHERE (${!filters.type} OR animal_type = ${filters.type})
+        AND similarity(name, ${filters.search}) > 0.3
+        ORDER BY similarity(name, ${filters.search}) DESC
       `;
     }
     // ... normal query
@@ -210,26 +210,26 @@ class PostgresFuzzyPetRepository implements PetReadRepository {
 
 ```bash
 # Typo: "bengla" instead of "Bengal"
-curl "http://localhost:3000/api/pets?search=bengla"
+curl "http://localhost:3000/api/breeds?search=bengla"
 # Returns: Bengal, Beagle
 
 # Typo: "siamse" instead of "Siamese"
-curl "http://localhost:3000/api/pets?search=siamse"
+curl "http://localhost:3000/api/breeds?search=siamse"
 # Returns: Siamese
 
 # Typo: "retrever" instead of "Retriever"
-curl "http://localhost:3000/api/pets?search=retrever"
+curl "http://localhost:3000/api/breeds?search=retrever"
 # Returns: Golden Retriever
 
 # Combined filters
-curl "http://localhost:3000/api/pets?type=cat&search=bengla"
+curl "http://localhost:3000/api/breeds?type=cat&search=bengla"
 # Returns: Bengal (filtered by type first)
 ```
 
 ### Frontend Testing:
 
-1. Navigate to the pets list
-2. Select a pet type (optional)
+1. Navigate to the breeds list
+2. Select an animal type (optional)
 3. Type a breed name with intentional typos
 4. Click "Listar" button
 5. Verify results include fuzzy-matched breeds
@@ -254,4 +254,4 @@ The current implementation provides:
 - ✅ Easy maintenance (single source of truth)
 - ✅ Consistent behavior across environments
 
-For most applications with < 10,000 pets, this solution is optimal. For larger scales, consider migrating to database-level fuzzy search using the migration path described above.
+For most applications with < 10,000 breeds, this solution is optimal. For larger scales, consider migrating to database-level fuzzy search using the migration path described above.

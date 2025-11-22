@@ -18,80 +18,31 @@ This guide covers strategies for deploying HausPet from development (Docker Comp
 
 ## Architecture Overview
 
-HausPet now consists of 3 frontend applications + 6 backend services:
-
-### Frontend Applications
-
-```
-┌──────────────────────────────────────────────────────────┐
-│                  Nginx Reverse Proxy                      │
-│               (yourdomain.com:80/443)                     │
-└───────────┬──────────────┬──────────────┬────────────────┘
-            │              │              │
-            ▼              ▼              ▼
-     /            /backend         /api
-┌──────────┐  ┌──────────┐  ┌──────────────┐
-│ Security │  │ Backend  │  │  API Server  │
-│   App    │  │   App    │  │  (Express)   │
-│ (Login)  │  │  (CRUD)  │  │  + Worker    │
-│ Port 80  │  │ Port 80  │  │  Port 3000   │
-└──────────┘  └──────────┘  └──┬───────────┘
-   React         React           │
-   Vite          Vite            │
-                                 │
-              ┌──────────────────┼─────────────────┐
-              ▼                  ▼                 ▼
-         PostgreSQL           MongoDB          Redis
-         (port 5432)        (port 27017)    (port 6379)
-```
-
-**Application Structure:**
-
-1. **Security App** (`src/security/`)
-   - Login page
-   - Authentication flow
-   - JWT token management
-   - Served at: `/` (root path)
-
-2. **Backend App** (`src/backend/`)
-   - Admin dashboard
-   - Pet CRUD management
-   - Protected routes (requires authentication)
-   - Served at: `/backend/*`
-
-3. **API Server** (`src/api/`)
-   - REST API endpoints
-   - Authentication endpoints
-   - Business logic (DDD)
-   - Background worker
-   - Served at: `/api/*`
-
-### Backend Services
-
-## Architecture Overview
-
-HausPet consists of 6 services:
+HausPet runs three app containers plus supporting data services. The same stack powers local dev (`docker/docker-compose.yaml`) and the test setup (`docker/docker-compose.test.yaml` with different ports/volumes).
 
 ```
 ┌─────────────────┐
-│   hauspet_gui   │  React + Vite (port 5173)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  hauspet_api    │  Express API (port 3000)
-└────────┬────────┘
-         │
-         ├─────► PostgreSQL (hauspet_db:5432)
-         ├─────► Redis (hauspet_redis:6379) ◄───┐
-         └─────► MongoDB (hauspet_audit_db:27017)│
-                                                  │
-         ┌────────────────────────────────────────┘
-         │
-┌────────▼────────┐
-│ hauspet_worker  │  BullMQ Worker
-└─────────────────┘
+│   hauspet_gui   │ React + Vite (port 5173)
+└───────┬─────────┘
+        │ proxies /api via nginx (port 80) in dev
+┌───────▼─────────┐
+│  hauspet_api    │ Express API (port 3000)
+└───────┬─────────┘
+        │
+        ├──► PostgreSQL (hauspet_db:5432) — Prisma schemas public/eventstore/readmodels
+        ├──► Redis (hauspet_redis:6379) — sessions + BullMQ
+        └──► MongoDB (hauspet_audit_db:27017) — audit logs
+                  ▲
+                  │ BullMQ jobs
+           ┌──────┴──────┐
+           │ hauspet_worker │ Background worker (event projections/audit)
+           └──────────────┘
 ```
+
+**Application layout (repo):**
+- Frontend: `app/frontend` (Vite dev server, nginx proxy in Compose).
+- API + Worker: `app/api` (DDD folders `domain/`, `application/`, `infrastructure/`, `routes/`; entrypoints `index.ts` and `worker.ts`).
+- Infra configs: `docker/` (dev/test/proxy compose + nginx), `Makefile` (helpers), `docs/` (guides), `tests/functional` (Playwright).
 
 **Key Considerations**:
 - API and Worker share Redis queue
@@ -233,6 +184,8 @@ Start with **Option 1 (VPS)** or **Option 2 (Render)** based on:
 
 ## Production-Ready Docker Setup
 
+Use the provided production templates (`docker/Dockerfile.prod`, `docker/docker-compose.prod.yaml`, `app/frontend/Dockerfile.prod`, `app/frontend/nginx.conf`) and adjust environment variables, TLS paths, and domain names before deploying. The nginx container includes certbot + cron to auto-renew certificates (see nginx section).
+
 ### 1. Production Dockerfile (Multi-Stage Build)
 
 Create `docker/Dockerfile.prod`:
@@ -341,7 +294,7 @@ services:
       - "3000:3000"
     restart: unless-stopped
     networks:
-      - hauspet-network
+      - hauspet-prod-network
     command: sh -c "npx prisma migrate deploy && node dist/index.js"
     logging:
       driver: "json-file"
@@ -366,7 +319,7 @@ services:
       - REDIS_PORT=6379
     restart: unless-stopped
     networks:
-      - hauspet-network
+      - hauspet-prod-network
     command: node dist/worker.js
     logging:
       driver: "json-file"
@@ -376,16 +329,16 @@ services:
 
   hauspet_gui:
     build:
-      context: ../gui
-      dockerfile: Dockerfile.prod
+      context: ..
+      dockerfile: app/frontend/Dockerfile.prod
     container_name: hauspet_gui
     environment:
       - VITE_API_URL=${API_URL}
     ports:
-      - "5173:80"
+      - "8080:80"
     restart: unless-stopped
     networks:
-      - hauspet-network
+      - hauspet-prod-network
     logging:
       driver: "json-file"
       options:
@@ -408,7 +361,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - hauspet-network
+      - hauspet-prod-network
     # Do NOT expose port in production unless needed for external access
 
   hauspet_audit_db:
@@ -426,7 +379,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - hauspet-network
+      - hauspet-prod-network
 
   hauspet_redis:
     image: redis:7-alpine
@@ -439,30 +392,33 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - hauspet-network
+      - hauspet-prod-network
     volumes:
       - redis_data:/data
 
   # Nginx reverse proxy (optional but recommended)
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.prod
     container_name: hauspet_nginx
     depends_on:
       - hauspet_api
       - hauspet_gui
     ports:
       - "80:80"
-      - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./nginx/logs:/var/log/nginx
+      - ./nginx/letsencrypt:/etc/letsencrypt
+      - ./nginx/letsencrypt-lib:/var/lib/letsencrypt
+      - ./nginx/www:/var/www/certbot
     restart: unless-stopped
     networks:
-      - hauspet-network
+      - hauspet-prod-network
 
 networks:
-  hauspet-network:
+  hauspet-prod-network:
     driver: bridge
 
 volumes:
@@ -473,7 +429,7 @@ volumes:
 
 ### 3. GUI Production Dockerfile
 
-Create `gui/Dockerfile.prod`:
+`app/frontend/Dockerfile.prod`:
 
 ```dockerfile
 # Stage 1: Build
@@ -501,7 +457,7 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-Create `gui/nginx.conf`:
+Create `app/frontend/nginx.conf`:
 
 ```nginx
 server {
@@ -660,7 +616,7 @@ http {
 
         # Frontend (SPA)
         location / {
-            proxy_pass http://hauspet_gui;
+        proxy_pass http://hauspet_gui;
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -705,17 +661,14 @@ http {
 
 ### 2. SSL Certificate Setup (Let's Encrypt)
 
+The `hauspet_nginx` container already has certbot + a daily cron renewal (`0 3 * * * certbot renew --webroot -w /var/www/certbot --deploy-hook "nginx -s reload"`).
+
+**Initial issuance (run once):**
 ```bash
-# Install certbot
-sudo apt install certbot python3-certbot-nginx
-
-# Obtain certificate
-sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
-
-# Auto-renewal (cron job)
-sudo crontab -e
-# Add: 0 3 * * * certbot renew --quiet --post-hook "docker exec hauspet_nginx nginx -s reload"
+make prod-cert DOMAIN=yourdomain.com WWW_DOMAIN=www.yourdomain.com LETSENCRYPT_EMAIL=you@example.com
 ```
+
+Update `docker/nginx/nginx.prod.conf` with your `server_name` and matching certificate paths in `/etc/letsencrypt/live/<domain>/`.
 
 ### 3. Firewall Configuration (UFW)
 
@@ -1117,8 +1070,8 @@ jobs:
       - name: Build and push GUI image
         uses: docker/build-push-action@v5
         with:
-          context: ./gui
-          file: ./gui/Dockerfile.prod
+          context: ./app/frontend
+          file: ./app/frontend/Dockerfile.prod
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-gui:latest
@@ -1193,6 +1146,7 @@ jobs:
 - [ ] Deployment runbook created
 - [ ] Disaster recovery plan documented
 - [ ] Team trained on deployment process
+- [ ] Certbot initial issuance run (`make prod-cert DOMAIN=<domain> WWW_DOMAIN=www.<domain> LETSENCRYPT_EMAIL=<email>`) to populate `/etc/letsencrypt`, then reloads nginx automatically
 
 ### Legal
 - [ ] Privacy policy published
