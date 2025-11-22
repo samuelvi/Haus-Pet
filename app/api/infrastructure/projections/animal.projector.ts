@@ -1,4 +1,4 @@
-import { PrismaClient, PetType } from '@prisma/client';
+import { PrismaClient, AnimalType } from '@prisma/client';
 import { DomainEvent } from '../../domain/eventsourcing';
 import {
   AnimalEventTypes,
@@ -36,7 +36,7 @@ export class AnimalProjector {
       data: {
         id: event.aggregateId,
         name: data.name,
-        type: data.type as PetType,
+        type: data.type as AnimalType,
         breed: data.breed,
         photoUrl: data.photoUrl,
         totalSponsored: 0,
@@ -49,7 +49,7 @@ export class AnimalProjector {
     const updateData: Record<string, unknown> = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.type !== undefined) updateData.type = data.type as PetType;
+    if (data.type !== undefined) updateData.type = data.type as AnimalType;
     if (data.breed !== undefined) updateData.breed = data.breed;
     if (data.photoUrl !== undefined) updateData.photoUrl = data.photoUrl;
 

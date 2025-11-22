@@ -1,4 +1,4 @@
-import { PrismaClient, Animal, PetType } from '@prisma/client';
+import { PrismaClient, Animal, AnimalType } from '@prisma/client';
 import { AnimalAggregate } from '../domain/animal';
 import { EventStoreRepository } from '../domain/eventsourcing';
 import { AnimalProjector } from '../infrastructure/projections';
@@ -125,7 +125,7 @@ export class AnimalService {
   /**
    * Gets animals by type (from read model)
    */
-  async findByType(type: PetType): Promise<Animal[]> {
+  async findByType(type: AnimalType): Promise<Animal[]> {
     return this.prisma.animal.findMany({
       where: { type },
       orderBy: { createdAt: 'desc' },

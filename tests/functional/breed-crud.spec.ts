@@ -8,7 +8,7 @@ const AUTH_CREDENTIALS = {
 
 let authTokens: { accessToken: string; refreshToken: string };
 let sessionId: string;
-let validPetId: string; // Store a valid UUID from the database
+let validBreedId: string; // Store a valid UUID from the database
 
 /**
  * Helper: Login and get auth tokens
@@ -25,22 +25,22 @@ async function login() {
   sessionId = data.data.sessionId;
 }
 
-test.describe('Pet CRUD Integration Tests', () => {
+test.describe('Breed CRUD Integration Tests', () => {
   test.beforeAll(async () => {
     // Login once for all tests that need authentication
     await login();
 
-    // Get a valid pet ID from the database for UUID-based tests
-    const response = await fetch(`${API_BASE}/api/pets`);
+    // Get a valid breed ID from the database for UUID-based tests
+    const response = await fetch(`${API_BASE}/api/breeds`);
     const data = await response.json();
     if (data.data && data.data.length > 0) {
-      validPetId = data.data[0].id;
+      validBreedId = data.data[0].id;
     }
   });
 
-  test.describe('GET /api/pets - List all pets', () => {
-    test('should return array of pets with 200 status', async ({ request }) => {
-      const response = await request.get(`${API_BASE}/api/pets`);
+  test.describe('GET /api/breeds - List all breeds', () => {
+    test('should return array of breeds with 200 status', async ({ request }) => {
+      const response = await request.get(`${API_BASE}/api/breeds`);
 
       expect(response.status()).toBe(200);
 
@@ -49,33 +49,33 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(Array.isArray(data.data)).toBe(true);
       expect(data.data.length).toBeGreaterThan(0);
 
-      // Verify pet structure
-      const pet = data.data[0];
-      expect(pet).toHaveProperty('id');
-      expect(pet).toHaveProperty('breed');
-      expect(pet).toHaveProperty('type');
-      expect(['cat', 'dog', 'bird']).toContain(pet.type);
+      // Verify breed structure
+      const breed = data.data[0];
+      expect(breed).toHaveProperty('id');
+      expect(breed).toHaveProperty('name');
+      expect(breed).toHaveProperty('animalType');
+      expect(['cat', 'dog', 'bird']).toContain(breed.animalType);
     });
   });
 
-  test.describe('GET /api/pets/:id - Get pet by ID', () => {
-    test('should return pet with valid ID', async ({ request }) => {
-      const response = await request.get(`${API_BASE}/api/pets/${validPetId}`);
+  test.describe('GET /api/breeds/:id - Get breed by ID', () => {
+    test('should return breed with valid ID', async ({ request }) => {
+      const response = await request.get(`${API_BASE}/api/breeds/${validBreedId}`);
 
       expect(response.status()).toBe(200);
 
       const data = await response.json();
       expect(data.status).toBe('OK');
       expect(data.data).toHaveProperty('id');
-      expect(data.data.id).toBe(validPetId);
-      expect(data.data).toHaveProperty('breed');
-      expect(data.data).toHaveProperty('type');
+      expect(data.data.id).toBe(validBreedId);
+      expect(data.data).toHaveProperty('name');
+      expect(data.data).toHaveProperty('animalType');
     });
 
-    test('should return 404 for non-existent pet', async ({ request }) => {
+    test('should return 404 for non-existent breed', async ({ request }) => {
       // Use a valid UUID format but non-existent ID
       const fakeUuid = '019aa791-0000-0000-0000-000000000000';
-      const response = await request.get(`${API_BASE}/api/pets/${fakeUuid}`);
+      const response = await request.get(`${API_BASE}/api/breeds/${fakeUuid}`);
 
       expect(response.status()).toBe(404);
 
@@ -85,17 +85,17 @@ test.describe('Pet CRUD Integration Tests', () => {
     });
 
     test('should return 400 for invalid ID format', async ({ request }) => {
-      const response = await request.get(`${API_BASE}/api/pets/abc`);
+      const response = await request.get(`${API_BASE}/api/breeds/abc`);
 
       expect(response.status()).toBe(400);
 
       const data = await response.json();
       expect(data.status).toBe('ERROR');
-      expect(data.message).toContain('Invalid pet ID');
+      expect(data.message).toContain('Invalid breed ID');
     });
 
     test('should return 400 for negative ID', async ({ request }) => {
-      const response = await request.get(`${API_BASE}/api/pets/-1`);
+      const response = await request.get(`${API_BASE}/api/breeds/-1`);
 
       expect(response.status()).toBe(400);
 
@@ -104,58 +104,58 @@ test.describe('Pet CRUD Integration Tests', () => {
     });
   });
 
-  test.describe('POST /api/pets/add - Create pet', () => {
-    test('should create pet with valid data and authentication', async ({ request }) => {
-      const newPet = {
-        breed: 'Test Breed ' + Date.now(),
-        type: 'dog',
+  test.describe('POST /api/breeds/add - Create breed', () => {
+    test('should create breed with valid data and authentication', async ({ request }) => {
+      const newBreed = {
+        name: 'Test Breed ' + Date.now(),
+        animalType: 'dog',
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
         },
-        data: newPet,
+        data: newBreed,
       });
 
       expect(response.status()).toBe(201);
 
       const data = await response.json();
       expect(data.status).toBe('OK');
-      expect(data.data.pet).toHaveProperty('id');
-      expect(data.data.pet.breed).toBe(newPet.breed);
-      expect(data.data.pet.type).toBe(newPet.type);
+      expect(data.data.breed).toHaveProperty('id');
+      expect(data.data.breed.name).toBe(newBreed.name);
+      expect(data.data.breed.animalType).toBe(newBreed.animalType);
     });
 
     test('should return 401 without authentication', async ({ request }) => {
-      const newPet = {
-        breed: 'Unauthorized Breed',
-        type: 'cat',
+      const newBreed = {
+        name: 'Unauthorized Breed',
+        animalType: 'cat',
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: { 'Content-Type': 'application/json' },
-        data: newPet,
+        data: newBreed,
       });
 
       expect(response.status()).toBe(401);
     });
 
-    test('should return 400 for breed too short', async ({ request }) => {
-      const newPet = {
-        breed: 'A', // Too short (< 2 characters)
-        type: 'dog',
+    test('should return 400 for name too short', async ({ request }) => {
+      const newBreed = {
+        name: 'A', // Too short (< 2 characters)
+        animalType: 'dog',
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
         },
-        data: newPet,
+        data: newBreed,
       });
 
       expect(response.status()).toBe(400);
@@ -165,19 +165,19 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(data.message).toContain('at least 2 characters');
     });
 
-    test('should return 400 for breed too long', async ({ request }) => {
-      const newPet = {
-        breed: 'A'.repeat(51), // Too long (> 50 characters)
-        type: 'cat',
+    test('should return 400 for name too long', async ({ request }) => {
+      const newBreed = {
+        name: 'A'.repeat(51), // Too long (> 50 characters)
+        animalType: 'cat',
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
         },
-        data: newPet,
+        data: newBreed,
       });
 
       expect(response.status()).toBe(400);
@@ -187,19 +187,19 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(data.message).toContain('not exceed 50 characters');
     });
 
-    test('should return 400 for invalid characters in breed', async ({ request }) => {
-      const newPet = {
-        breed: 'Invalid@Breed!123', // Contains invalid characters
-        type: 'dog',
+    test('should return 400 for invalid characters in name', async ({ request }) => {
+      const newBreed = {
+        name: 'Invalid@Breed!123', // Contains invalid characters
+        animalType: 'dog',
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
         },
-        data: newPet,
+        data: newBreed,
       });
 
       expect(response.status()).toBe(400);
@@ -209,60 +209,40 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(data.message).toContain('letters, numbers, spaces, and hyphens');
     });
 
-    test('should return 400 for invalid type', async ({ request }) => {
-      const newPet = {
-        breed: 'Valid Breed',
-        type: 'fish', // Invalid type
+    test('should return 400 for invalid animal type', async ({ request }) => {
+      const newBreed = {
+        name: 'Valid Breed',
+        animalType: 'fish', // Invalid type
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
         },
-        data: newPet,
+        data: newBreed,
       });
 
       expect(response.status()).toBe(400);
 
       const data = await response.json();
       expect(data.status).toBe('ERROR');
-      expect(data.message).toContain('Type must be one of');
+      expect(data.message).toContain('Animal type must be one of');
     });
 
-    test('should return 400 for missing breed', async ({ request }) => {
-      const newPet = {
-        type: 'dog',
+    test('should return 400 for missing name', async ({ request }) => {
+      const newBreed = {
+        animalType: 'dog',
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
         },
-        data: newPet,
-      });
-
-      expect(response.status()).toBe(400);
-
-      const data = await response.json();
-      expect(data.status).toBe('ERROR');
-    });
-
-    test('should return 400 for missing type', async ({ request }) => {
-      const newPet = {
-        breed: 'Test Breed',
-      };
-
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authTokens.accessToken}`,
-          'x-session-id': sessionId,
-        },
-        data: newPet,
+        data: newBreed,
       });
 
       expect(response.status()).toBe(400);
@@ -271,34 +251,54 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(data.status).toBe('ERROR');
     });
 
-    test('should trim whitespace from breed', async ({ request }) => {
-      const newPet = {
-        breed: '  Trimmed Breed ' + Date.now() + '  ',
-        type: 'bird',
+    test('should return 400 for missing animal type', async ({ request }) => {
+      const newBreed = {
+        name: 'Test Breed',
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
         },
-        data: newPet,
+        data: newBreed,
+      });
+
+      expect(response.status()).toBe(400);
+
+      const data = await response.json();
+      expect(data.status).toBe('ERROR');
+    });
+
+    test('should trim whitespace from name', async ({ request }) => {
+      const newBreed = {
+        name: '  Trimmed Breed ' + Date.now() + '  ',
+        animalType: 'bird',
+      };
+
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authTokens.accessToken}`,
+          'x-session-id': sessionId,
+        },
+        data: newBreed,
       });
 
       expect(response.status()).toBe(201);
 
       const data = await response.json();
-      expect(data.data.pet.breed).toBe(newPet.breed.trim()); // Should be trimmed
+      expect(data.data.breed.name).toBe(newBreed.name.trim()); // Should be trimmed
     });
 
     test('should return 409 for duplicate breed', async ({ request }) => {
       const duplicateBreed = {
-        breed: 'Labrador', // Already exists in seed data
-        type: 'dog',
+        name: 'Labrador', // Already exists in seed data
+        animalType: 'dog',
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
@@ -315,36 +315,36 @@ test.describe('Pet CRUD Integration Tests', () => {
     });
   });
 
-  test.describe('PUT /api/pets/:id - Update pet', () => {
-    let testPetId: string;
+  test.describe('PUT /api/breeds/:id - Update breed', () => {
+    let testBreedId: string;
 
     test.beforeAll(async ({ request }) => {
-      // Create a pet for update tests
-      const newPet = {
-        breed: 'Pet For Update ' + Date.now(),
-        type: 'cat',
+      // Create a breed for update tests
+      const newBreed = {
+        name: 'Breed For Update ' + Date.now(),
+        animalType: 'cat',
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
         },
-        data: newPet,
+        data: newBreed,
       });
 
       const data = await response.json();
-      testPetId = data.data.pet.id;
+      testBreedId = data.data.breed.id;
     });
 
-    test('should update pet with valid data and authentication', async ({ request }) => {
+    test('should update breed with valid data and authentication', async ({ request }) => {
       const updatedData = {
-        breed: 'Updated Breed ' + Date.now(),
-        type: 'dog',
+        name: 'Updated Breed ' + Date.now(),
+        animalType: 'dog',
       };
 
-      const response = await request.put(`${API_BASE}/api/pets/${testPetId}`, {
+      const response = await request.put(`${API_BASE}/api/breeds/${testBreedId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
@@ -357,18 +357,18 @@ test.describe('Pet CRUD Integration Tests', () => {
 
       const data = await response.json();
       expect(data.status).toBe('OK');
-      expect(data.data.pet.id).toBe(testPetId);
-      expect(data.data.pet.breed).toBe(updatedData.breed);
-      expect(data.data.pet.type).toBe(updatedData.type);
+      expect(data.data.breed.id).toBe(testBreedId);
+      expect(data.data.breed.name).toBe(updatedData.name);
+      expect(data.data.breed.animalType).toBe(updatedData.animalType);
     });
 
     test('should return 401 without authentication', async ({ request }) => {
       const updatedData = {
-        breed: 'Unauthorized Update',
-        type: 'bird',
+        name: 'Unauthorized Update',
+        animalType: 'bird',
       };
 
-      const response = await request.put(`${API_BASE}/api/pets/${testPetId}`, {
+      const response = await request.put(`${API_BASE}/api/breeds/${testBreedId}`, {
         headers: { 'Content-Type': 'application/json' },
         data: updatedData,
       });
@@ -376,15 +376,15 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(response.status()).toBe(401);
     });
 
-    test('should return 404 for non-existent pet', async ({ request }) => {
+    test('should return 404 for non-existent breed', async ({ request }) => {
       const updatedData = {
-        breed: 'Non Existent',
-        type: 'dog',
+        name: 'Non Existent',
+        animalType: 'dog',
       };
 
       // Use a valid UUID format but non-existent ID
       const fakeUuid = '019aa791-0000-0000-0000-000000000000';
-      const response = await request.put(`${API_BASE}/api/pets/${fakeUuid}`, {
+      const response = await request.put(`${API_BASE}/api/breeds/${fakeUuid}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
@@ -400,13 +400,13 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(data.message).toContain('not found');
     });
 
-    test('should return 400 for invalid breed validation', async ({ request }) => {
+    test('should return 400 for invalid name validation', async ({ request }) => {
       const updatedData = {
-        breed: 'X', // Too short
-        type: 'cat',
+        name: 'X', // Too short
+        animalType: 'cat',
       };
 
-      const response = await request.put(`${API_BASE}/api/pets/${testPetId}`, {
+      const response = await request.put(`${API_BASE}/api/breeds/${testBreedId}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
@@ -423,11 +423,11 @@ test.describe('Pet CRUD Integration Tests', () => {
 
     test('should return 400 for invalid ID format', async ({ request }) => {
       const updatedData = {
-        breed: 'Valid Breed',
-        type: 'dog',
+        name: 'Valid Breed',
+        animalType: 'dog',
       };
 
-      const response = await request.put(`${API_BASE}/api/pets/invalid`, {
+      const response = await request.put(`${API_BASE}/api/breeds/invalid`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
@@ -439,35 +439,35 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(response.status()).toBe(400);
 
       const data = await response.json();
-      expect(data.message).toContain('Invalid pet ID');
+      expect(data.message).toContain('Invalid breed ID');
     });
   });
 
-  test.describe('DELETE /api/pets/:id - Delete pet', () => {
-    let testPetId: string;
+  test.describe('DELETE /api/breeds/:id - Delete breed', () => {
+    let testBreedId: string;
 
     test.beforeEach(async ({ request }) => {
-      // Create a pet for each delete test
-      const newPet = {
-        breed: 'Pet For Delete ' + Date.now(),
-        type: 'bird',
+      // Create a breed for each delete test
+      const newBreed = {
+        name: 'Breed For Delete ' + Date.now(),
+        animalType: 'bird',
       };
 
-      const response = await request.post(`${API_BASE}/api/pets/add`, {
+      const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
         },
-        data: newPet,
+        data: newBreed,
       });
 
       const data = await response.json();
-      testPetId = data.data.pet.id;
+      testBreedId = data.data.breed.id;
     });
 
-    test('should delete pet with valid ID and authentication', async ({ request }) => {
-      const response = await request.delete(`${API_BASE}/api/pets/${testPetId}`, {
+    test('should delete breed with valid ID and authentication', async ({ request }) => {
+      const response = await request.delete(`${API_BASE}/api/breeds/${testBreedId}`, {
         headers: {
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
@@ -480,21 +480,21 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(data.status).toBe('OK');
       expect(data.data.message).toContain('deleted successfully');
 
-      // Verify pet is actually deleted
-      const getResponse = await request.get(`${API_BASE}/api/pets/${testPetId}`);
+      // Verify breed is actually deleted
+      const getResponse = await request.get(`${API_BASE}/api/breeds/${testBreedId}`);
       expect(getResponse.status()).toBe(404);
     });
 
     test('should return 401 without authentication', async ({ request }) => {
-      const response = await request.delete(`${API_BASE}/api/pets/${testPetId}`);
+      const response = await request.delete(`${API_BASE}/api/breeds/${testBreedId}`);
 
       expect(response.status()).toBe(401);
     });
 
-    test('should return 404 for non-existent pet', async ({ request }) => {
+    test('should return 404 for non-existent breed', async ({ request }) => {
       // Use a valid UUID format but non-existent ID
       const fakeUuid = '019aa791-0000-0000-0000-000000000000';
-      const response = await request.delete(`${API_BASE}/api/pets/${fakeUuid}`, {
+      const response = await request.delete(`${API_BASE}/api/breeds/${fakeUuid}`, {
         headers: {
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
@@ -509,7 +509,7 @@ test.describe('Pet CRUD Integration Tests', () => {
     });
 
     test('should return 400 for invalid ID format', async ({ request }) => {
-      const response = await request.delete(`${API_BASE}/api/pets/abc`, {
+      const response = await request.delete(`${API_BASE}/api/breeds/abc`, {
         headers: {
           'Authorization': `Bearer ${authTokens.accessToken}`,
           'x-session-id': sessionId,
@@ -519,7 +519,7 @@ test.describe('Pet CRUD Integration Tests', () => {
       expect(response.status()).toBe(400);
 
       const data = await response.json();
-      expect(data.message).toContain('Invalid pet ID');
+      expect(data.message).toContain('Invalid breed ID');
     });
   });
 });

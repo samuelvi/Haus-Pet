@@ -3,14 +3,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '../../security/src/contexts/AuthContext';
 import { ProtectedRoute } from '../../security/src/components/ProtectedRoute';
 import { Dashboard } from './components/Dashboard';
-import { PetList } from './components/PetList';
-import { PetForm } from './components/PetForm';
 import { AnimalList } from './components/AnimalList';
 import { AnimalForm } from './components/AnimalForm';
 
 /**
  * Backend Management App
- * Handles pet breed management (protected routes)
+ * Handles breed management (protected routes)
  */
 const App: React.FC = () => {
   return (
@@ -26,15 +24,6 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/pets"
-            element={
-              <ProtectedRoute>
-                <PetList />
               </ProtectedRoute>
             }
           />

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import petRouter from "./pet.router";
+import breedRouter from "./breed.router";
 import authRouter from "./auth.router";
 import animalRouter from "./animal.router";
 import sponsorshipRouter from "./sponsorship.router";
@@ -9,7 +9,7 @@ const router = Router();
 
 // Mount all API entity routers here
 router.use("/auth", authRouter);
-router.use("/pets", petRouter);
+router.use("/breeds", breedRouter);
 router.use("/animals", animalRouter);
 router.use("/sponsorships", sponsorshipRouter);
 

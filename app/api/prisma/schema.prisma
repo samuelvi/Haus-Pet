@@ -11,12 +11,12 @@ datasource db {
   schemas  = ["public", "eventstore", "readmodels"]
 }
 
-model Pet {
-  id    String  @id // UUIDv7 generated in application code
-  breed String  @unique
-  type  PetType
+model Breed {
+  id         String     @id // UUIDv7 generated in application code
+  name       String     @unique
+  animalType AnimalType @map("animal_type")
 
-  @@map("pet")
+  @@map("breed")
   @@schema("public")
 }
 
@@ -35,7 +35,7 @@ model User {
   @@schema("public")
 }
 
-enum PetType {
+enum AnimalType {
   cat
   dog
   bird
@@ -74,7 +74,7 @@ model Event {
 model Animal {
   id             String        @id // UUIDv7 generated in application code
   name           String
-  type           PetType
+  type           AnimalType
   breed          String
   photoUrl       String        @map("photo_url")
   totalSponsored Decimal       @default(0) @map("total_sponsored") @db.Decimal(10, 2)

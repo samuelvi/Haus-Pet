@@ -41,20 +41,20 @@ export interface LoginData {
   password: string;
 }
 
-export type PetType = 'cat' | 'dog' | 'bird';
+export type AnimalType = 'cat' | 'dog' | 'bird';
 
-export interface Pet {
-  id: number;
-  breed: string;
-  type: PetType;
+export interface Breed {
+  id: string;
+  name: string;
+  animalType: AnimalType;
 }
 
-export interface PetFormData {
-  breed: string;
-  type: PetType;
+export interface BreedFormData {
+  name: string;
+  animalType: AnimalType;
 }
 
-export interface PetFilters {
-  type?: PetType;
+export interface BreedFilters {
+  type?: AnimalType;
   search?: string;
 }

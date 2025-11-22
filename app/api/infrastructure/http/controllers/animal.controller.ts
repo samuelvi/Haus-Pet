@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AnimalService, CreateAnimalDto, UpdateAnimalDto } from '../../../application/animal.service';
-import { PetType } from '@prisma/client';
+import { AnimalType } from '@prisma/client';
 
 // UUID validation regex (supports all UUID versions including UUIDv7)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -30,14 +30,14 @@ export class AnimalController {
   findByType = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { type } = req.params;
-      const validTypes: PetType[] = ['cat', 'dog', 'bird'];
+      const validTypes: AnimalType[] = ['cat', 'dog', 'bird'];
 
-      if (!validTypes.includes(type as PetType)) {
+      if (!validTypes.includes(type as AnimalType)) {
         res.status(400).json({ error: `Invalid type. Must be one of: ${validTypes.join(', ')}` });
         return;
       }
 
-      const animals = await this.animalService.findByType(type as PetType);
+      const animals = await this.animalService.findByType(type as AnimalType);
       res.json(animals);
     } catch (error) {
       next(error);

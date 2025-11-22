@@ -11,23 +11,23 @@ const API_BASE_URL = process.env.HAUSPET_API_URL || "http://localhost:3000";
 const MCP_API_TOKEN = process.env.MCP_API_TOKEN;
 
 if (!MCP_API_TOKEN) {
-  console.error("WARNING: MCP_API_TOKEN not set. Protected endpoints (like add_pet) will fail.");
+  console.error("WARNING: MCP_API_TOKEN not set. Protected endpoints (like add_breed) will fail.");
 }
 
 // Tool schemas
-const ListPetsSchema = z.object({});
+const ListBreedsSchema = z.object({});
 
-const ListPetsByTypeSchema = z.object({
-  type: z.enum(["cat", "dog", "bird"]).describe("Type of pet to list"),
+const ListBreedsByTypeSchema = z.object({
+  type: z.enum(["cat", "dog", "bird"]).describe("Type of animal to list breeds for"),
 });
 
-const GetRandomPetSchema = z.object({
-  type: z.enum(["cat", "dog", "bird"]).optional().describe("Optional: type of pet for random selection"),
+const GetRandomBreedSchema = z.object({
+  type: z.enum(["cat", "dog", "bird"]).optional().describe("Optional: type of animal for random breed selection"),
 });
 
-const AddPetSchema = z.object({
-  breed: z.string().min(1).describe("The name of the pet breed"),
-  type: z.enum(["cat", "dog", "bird"]).describe("Type of pet (cat, dog, or bird)"),
+const AddBreedSchema = z.object({
+  name: z.string().min(1).describe("The name of the breed"),
+  animalType: z.enum(["cat", "dog", "bird"]).describe("Type of animal (cat, dog, or bird)"),
 });
 
 // Helper function to make API requests
@@ -71,59 +71,59 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: "list_all_pets",
-        description: "Get a list of all pet breeds available in the HausPet database",
+        name: "list_all_breeds",
+        description: "Get a list of all breeds available in the HausPet database",
         inputSchema: {
           type: "object",
           properties: {},
         },
       },
       {
-        name: "list_pets_by_type",
-        description: "Get a list of pet breeds filtered by type (cat, dog, or bird)",
+        name: "list_breeds_by_type",
+        description: "Get a list of breeds filtered by animal type (cat, dog, or bird)",
         inputSchema: {
           type: "object",
           properties: {
             type: {
               type: "string",
               enum: ["cat", "dog", "bird"],
-              description: "Type of pet to list",
+              description: "Type of animal to list breeds for",
             },
           },
           required: ["type"],
         },
       },
       {
-        name: "get_random_pet",
-        description: "Get a random pet breed, optionally filtered by type",
+        name: "get_random_breed",
+        description: "Get a random breed, optionally filtered by animal type",
         inputSchema: {
           type: "object",
           properties: {
             type: {
               type: "string",
               enum: ["cat", "dog", "bird"],
-              description: "Optional: type of pet for random selection",
+              description: "Optional: type of animal for random breed selection",
             },
           },
         },
       },
       {
-        name: "add_pet",
-        description: "Add a new pet breed to the HausPet database",
+        name: "add_breed",
+        description: "Add a new breed to the HausPet database",
         inputSchema: {
           type: "object",
           properties: {
-            breed: {
+            name: {
               type: "string",
-              description: "The name of the pet breed (e.g., 'Labrador', 'Persian', 'Canary')",
+              description: "The name of the breed (e.g., 'Labrador', 'Persian', 'Canary')",
             },
-            type: {
+            animalType: {
               type: "string",
               enum: ["cat", "dog", "bird"],
-              description: "Type of pet (cat, dog, or bird)",
+              description: "Type of animal (cat, dog, or bird)",
             },
           },
-          required: ["breed", "type"],
+          required: ["name", "animalType"],
         },
       },
     ],
@@ -136,9 +136,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case "list_all_pets": {
-        ListPetsSchema.parse(args);
-        const data = await fetchFromAPI("/api/pets");
+      case "list_all_breeds": {
+        ListBreedsSchema.parse(args);
+        const data = await fetchFromAPI("/api/breeds");
         return {
           content: [
             {
@@ -149,9 +149,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case "list_pets_by_type": {
-        const { type } = ListPetsByTypeSchema.parse(args);
-        const data = await fetchFromAPI(`/api/pets/${type}`);
+      case "list_breeds_by_type": {
+        const { type } = ListBreedsByTypeSchema.parse(args);
+        const data = await fetchFromAPI(`/api/breeds/${type}`);
         return {
           content: [
             {
@@ -162,11 +162,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case "get_random_pet": {
-        const { type } = GetRandomPetSchema.parse(args);
+      case "get_random_breed": {
+        const { type } = GetRandomBreedSchema.parse(args);
         const endpoint = type
-          ? `/api/pets/${type}/random-pet`
-          : "/api/pets/random-pet";
+          ? `/api/breeds/${type}/random-breed`
+          : "/api/breeds/random-breed";
         const data = await fetchFromAPI(endpoint);
         return {
           content: [
@@ -178,14 +178,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
       }
 
-      case "add_pet": {
-        const { breed, type } = AddPetSchema.parse(args);
-        const data = await fetchFromAPI(`/api/pets/${type}/add`, {
+      case "add_breed": {
+        const { name, animalType } = AddBreedSchema.parse(args);
+        const data = await fetchFromAPI(`/api/breeds/${animalType}/add`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ breed }),
+          body: JSON.stringify({ name }),
         });
         return {
           content: [
@@ -193,7 +193,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               type: "text",
               text: JSON.stringify({
                 success: true,
-                message: `Successfully added ${breed} to ${type}s`,
+                message: `Successfully added ${name} to ${animalType} breeds`,
                 data,
               }, null, 2),
             },

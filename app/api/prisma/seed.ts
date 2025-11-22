@@ -1,28 +1,28 @@
-import { PrismaClient, PetType, Role } from '@prisma/client';
+import { PrismaClient, AnimalType, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { uuidv7 } from 'uuidv7';
 
 const prisma = new PrismaClient();
 
-const petsToCreate = [
+const breedsToCreate = [
   // Dogs
-  { breed: 'Labrador', type: PetType.dog },
-  { breed: 'Beagle', type: PetType.dog },
-  { breed: 'Poodle', type: PetType.dog },
-  { breed: 'Golden Retriever', type: PetType.dog },
-  { breed: 'German Shepherd', type: PetType.dog },
+  { name: 'Labrador', animalType: AnimalType.dog },
+  { name: 'Beagle', animalType: AnimalType.dog },
+  { name: 'Poodle', animalType: AnimalType.dog },
+  { name: 'Golden Retriever', animalType: AnimalType.dog },
+  { name: 'German Shepherd', animalType: AnimalType.dog },
 
   // Cats
-  { breed: 'Siamese', type: PetType.cat },
-  { breed: 'Persian', type: PetType.cat },
-  { breed: 'Sphynx', type: PetType.cat },
-  { breed: 'Maine Coon', type: PetType.cat },
-  { breed: 'Bengal', type: PetType.cat },
+  { name: 'Siamese', animalType: AnimalType.cat },
+  { name: 'Persian', animalType: AnimalType.cat },
+  { name: 'Sphynx', animalType: AnimalType.cat },
+  { name: 'Maine Coon', animalType: AnimalType.cat },
+  { name: 'Bengal', animalType: AnimalType.cat },
 
   // Birds
-  { breed: 'Parakeet', type: PetType.bird },
-  { breed: 'Cockatiel', type: PetType.bird },
-  { breed: 'Macaw', type: PetType.bird },
+  { name: 'Parakeet', animalType: AnimalType.bird },
+  { name: 'Cockatiel', animalType: AnimalType.bird },
+  { name: 'Macaw', animalType: AnimalType.bird },
 ];
 
 async function main() {
@@ -48,18 +48,18 @@ async function main() {
   console.log(`Created or found admin user: ${adminUser.email} (ID: ${adminUser.id})`);
   console.log(`  Login credentials: ${adminEmail} / ${adminPassword}`);
 
-  // Seed pets
-  for (const p of petsToCreate) {
-    const pet = await prisma.pet.upsert({
-      where: { breed: p.breed }, // Unique identifier
+  // Seed breeds
+  for (const b of breedsToCreate) {
+    const breed = await prisma.breed.upsert({
+      where: { name: b.name }, // Unique identifier
       update: {}, // No updates needed if it exists
       create: {
         id: uuidv7(),
-        breed: p.breed,
-        type: p.type,
+        name: b.name,
+        animalType: b.animalType,
       },
     });
-    console.log(`Created or found pet: ${pet.breed} (ID: ${pet.id})`);
+    console.log(`Created or found breed: ${breed.name} (ID: ${breed.id})`);
   }
 
   console.log(`Seeding finished.`);

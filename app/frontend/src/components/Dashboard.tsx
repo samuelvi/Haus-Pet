@@ -50,13 +50,13 @@ export const Dashboard: React.FC = () => {
           <div style={styles.placeholderContent}>
             <h3 style={styles.placeholderTitle}>Quick Actions</h3>
             <p style={styles.placeholderText}>
-              Manage pet breeds database
+              Manage breed database
             </p>
             <button
-              onClick={() => navigate('/admin/pets')}
-              style={styles.petManagementButton}
+              onClick={() => navigate('/admin/breeds')}
+              style={styles.breedManagementButton}
             >
-              Manage Pets
+              Manage Breeds
             </button>
           </div>
         </div>
@@ -178,7 +178,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#999',
     fontStyle: 'italic',
   },
-  petManagementButton: {
+  breedManagementButton: {
     padding: '15px 30px',
     fontSize: '16px',
     fontWeight: '600',

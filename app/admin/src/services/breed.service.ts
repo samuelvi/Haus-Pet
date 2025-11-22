@@ -1,18 +1,18 @@
 /**
- * Pet Management Service
- * Handles all pet-related HTTP requests
+ * Breed Management Service
+ * Handles all breed-related HTTP requests
  */
 
 import type {
   ApiResponse,
-  Pet,
-  PetFormData,
-  PetFilters,
-} from '../types/pet.types';
+  Breed,
+  BreedFormData,
+  BreedFilters,
+} from '../types/breed.types';
 
 const API_BASE_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-class PetService {
+class BreedService {
   /**
    * Generic request handler
    */
@@ -44,10 +44,10 @@ class PetService {
   }
 
   /**
-   * Get all pets with optional filters
+   * Get all breeds with optional filters
    */
-  async getAllPets(filters?: PetFilters): Promise<Pet[]> {
-    let endpoint = '/api/pets';
+  async getAllBreeds(filters?: BreedFilters): Promise<Breed[]> {
+    let endpoint = '/api/breeds';
 
     if (filters) {
       const params = new URLSearchParams();
@@ -63,26 +63,26 @@ class PetService {
       }
     }
 
-    return this.request<Pet[]>(endpoint);
+    return this.request<Breed[]>(endpoint);
   }
 
   /**
-   * Get pet by ID
+   * Get breed by ID
    */
-  async getPetById(id: number): Promise<Pet> {
-    return this.request<Pet>(`/api/pets/${id}`);
+  async getBreedById(id: string): Promise<Breed> {
+    return this.request<Breed>(`/api/breeds/${id}`);
   }
 
   /**
-   * Create new pet
+   * Create new breed
    */
-  async createPet(
-    data: PetFormData,
+  async createBreed(
+    data: BreedFormData,
     accessToken: string,
     sessionId: string
-  ): Promise<Pet> {
-    const response = await this.request<{ message: string; pet: Pet }>(
-      '/api/pets/add',
+  ): Promise<Breed> {
+    const response = await this.request<{ message: string; breed: Breed }>(
+      '/api/breeds/add',
       {
         method: 'POST',
         headers: {
@@ -92,20 +92,20 @@ class PetService {
         body: JSON.stringify(data),
       }
     );
-    return response.pet;
+    return response.breed;
   }
 
   /**
-   * Update pet
+   * Update breed
    */
-  async updatePet(
-    id: number,
-    data: PetFormData,
+  async updateBreed(
+    id: string,
+    data: BreedFormData,
     accessToken: string,
     sessionId: string
-  ): Promise<Pet> {
-    const response = await this.request<{ message: string; pet: Pet }>(
-      `/api/pets/${id}`,
+  ): Promise<Breed> {
+    const response = await this.request<{ message: string; breed: Breed }>(
+      `/api/breeds/${id}`,
       {
         method: 'PUT',
         headers: {
@@ -115,18 +115,18 @@ class PetService {
         body: JSON.stringify(data),
       }
     );
-    return response.pet;
+    return response.breed;
   }
 
   /**
-   * Delete pet
+   * Delete breed
    */
-  async deletePet(
-    id: number,
+  async deleteBreed(
+    id: string,
     accessToken: string,
     sessionId: string
   ): Promise<void> {
-    await this.request<{ message: string }>(`/api/pets/${id}`, {
+    await this.request<{ message: string }>(`/api/breeds/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -136,4 +136,4 @@ class PetService {
   }
 }
 
-export const petService = new PetService();
+export const breedService = new BreedService();

@@ -1,24 +1,24 @@
-import { PetReadRepository } from "../../domain/pet-read.repository";
-import { PetWriteRepository } from "../../domain/pet-write.repository";
-import { InMemoryPetRepository } from "./in-memory-pet.repository";
-import { PostgresPetRepository } from "./postgres-pet.repository";
+import { BreedReadRepository } from "../../domain/breed-read.repository";
+import { BreedWriteRepository } from "../../domain/breed-write.repository";
+import { InMemoryBreedRepository } from "./in-memory-breed.repository";
+import { PostgresBreedRepository } from "./postgres-breed.repository";
 import prisma from "../database/prisma-client"; // Changed from postgres-pool
 
 // The factory now returns an object that satisfies both read and write contracts.
-export function createPetRepository(): PetReadRepository & PetWriteRepository {
+export function createBreedRepository(): BreedReadRepository & BreedWriteRepository {
   const persistenceType = process.env.PERSISTENCE_TYPE || 'in-memory';
 
   switch (persistenceType) {
     case 'postgres':
-      console.log('Using PostgreSQL persistence for Pets with Prisma.'); // Updated log message
-      return new PostgresPetRepository(prisma); // Changed from pool
+      console.log('Using PostgreSQL persistence for Breeds with Prisma.'); // Updated log message
+      return new PostgresBreedRepository(prisma); // Changed from pool
 
     case 'in-memory':
-      console.log('Using in-memory persistence for Pets.');
-      return new InMemoryPetRepository();
+      console.log('Using in-memory persistence for Breeds.');
+      return new InMemoryBreedRepository();
 
     default:
       console.warn(`Unknown persistence type "${persistenceType}". Defaulting to in-memory.`);
-      return new InMemoryPetRepository();
+      return new InMemoryBreedRepository();
   }
 }
