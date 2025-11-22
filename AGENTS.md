@@ -28,7 +28,7 @@ In `app/api`: `npm run db:migrate`/`db:seed` manage Prisma migrations and seed d
 - Record new fixtures or test data via Prisma seeds when possible to keep specs deterministic.
 
 ## Commit & Pull Request Guidelines
-- Follow Conventional Commits (e.g., `feat: add pet search filter`, `fix: handle missing auth token`); header limit is relaxed to 200 chars via `commitlint.config.js`.
+- Follow Conventional Commits (e.g., `feat: add breed search filter`, `fix: handle missing auth token`); header limit is relaxed to 200 chars via `commitlint.config.js`.
 - PRs should include: short summary, linked issue/ticket, test results (mention `make test`), and screenshots/GIFs for UI changes. Note any config or migration steps (`npm run db:migrate`, `make up`) in the description.
 
 ## Documentation Pointers

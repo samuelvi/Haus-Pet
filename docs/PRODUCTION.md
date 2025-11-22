@@ -47,7 +47,7 @@ HausPet runs three app containers plus supporting data services. The same stack 
 **Key Considerations**:
 - API and Worker share Redis queue
 - Worker writes audit logs to MongoDB
-- API reads/writes pet data to PostgreSQL
+- API reads/writes breed data to PostgreSQL
 - GUI is a static SPA served separately
 
 ---

@@ -4,12 +4,12 @@ An MCP (Model Context Protocol) server to interact with the HausPet API from Cla
 
 ## Features
 
-The MCP exposes 4 tools to interact with pets:
+The MCP exposes 4 tools to interact with breeds:
 
-- **list_all_pets**: List all available pet breeds
-- **list_pets_by_type**: List pets filtered by type (cat, dog, bird)
-- **get_random_pet**: Get a random pet (optionally by type)
-- **add_pet**: Add a new pet breed to the database
+- **list_all_breeds**: List all available breeds
+- **list_breeds_by_type**: List breeds filtered by type (cat, dog, bird)
+- **get_random_breed**: Get a random breed (optionally by type)
+- **add_breed**: Add a new breed to the database
 
 ## Installation
 
@@ -75,16 +75,16 @@ Close and reopen Claude Desktop to load the MCP configuration.
 Once configured, you can ask Claude questions like:
 
 ### Read Operations
-- "Can you list all available pets?"
+- "Can you list all available breeds?"
 - "Show me all dogs"
-- "Give me a random pet"
+- "Give me a random breed"
 - "What cats do you have in the database?"
 - "Give me a random bird"
 
 ### Write Operations
 - "Add a Beagle to the database"
 - "Add a Siamese cat"
-- "Create a new pet: Golden Retriever, type dog"
+- "Create a new breed: Golden Retriever, type dog"
 
 Claude will automatically use the MCP tools to interact with your local API.
 
@@ -99,11 +99,11 @@ To verify that the MCP is working correctly:
 ## Environment Variables
 
 - `HAUSPET_API_URL`: Base API URL (default: `http://localhost:3000`)
-- `MCP_API_TOKEN`: Static authentication token for protected operations (required for `add_pet`)
+- `MCP_API_TOKEN`: Static authentication token for protected operations (required for `add_breed`)
 
 ### ⚠️ Authentication for Write Operations
 
-**Write operations** like `add_pet` require authentication. The MCP server uses a static API token that must be configured:
+**Write operations** like `add_breed` require authentication. The MCP server uses a static API token that must be configured:
 
 1. **In the project's `.env` file** (already configured):
    ```bash
@@ -126,41 +126,41 @@ You can test the API endpoints that the MCP uses with curl:
 
 ### Read Operations (Public - No Auth Required)
 
-**List all pets:**
+**List all breeds:**
 ```bash
-curl http://localhost:3000/api/pets
+curl http://localhost:3000/api/breeds
 ```
 
-**List pets by type:**
+**List breeds by type:**
 ```bash
-curl http://localhost:3000/api/pets/dog
-curl http://localhost:3000/api/pets/cat
-curl http://localhost:3000/api/pets/bird
+curl http://localhost:3000/api/breeds/type/dog
+curl http://localhost:3000/api/breeds/type/cat
+curl http://localhost:3000/api/breeds/type/bird
 ```
 
-**Get random pet:**
+**Get random breed:**
 ```bash
-curl http://localhost:3000/api/pets/random-pet
+curl http://localhost:3000/api/breeds/random-breed
 ```
 
-**Get random pet by type:**
+**Get random breed by type:**
 ```bash
-curl http://localhost:3000/api/pets/dog/random-pet
+curl http://localhost:3000/api/breeds/dog/random-breed
 ```
 
 ### Write Operations (Protected - Auth Required)
 
-**Add a new pet (requires MCP_API_TOKEN):**
+**Add a new breed (requires MCP_API_TOKEN):**
 ```bash
-curl -X POST http://localhost:3000/api/pets/add \
+curl -X POST http://localhost:3000/api/breeds/add \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer mcp-dev-token-admin-hauspet-2024" \
   -d '{"breed":"Bulldog","type":"dog"}'
 ```
 
-**Add pet to specific type:**
+**Add breed to specific type:**
 ```bash
-curl -X POST http://localhost:3000/api/pets/cat/add \
+curl -X POST http://localhost:3000/api/breeds/cat/add \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer mcp-dev-token-admin-hauspet-2024" \
   -d '{"breed":"Persian"}'

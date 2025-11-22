@@ -145,9 +145,9 @@ After starting the services:
 
 #### Protected Routes (ADMIN Role Required)
 - `/admin/dashboard` - Admin dashboard with user info
-- `/admin/pets` - Pet breeds management (list, search, filter)
-- `/admin/pets/new` - Create new pet breed
-- `/admin/pets/edit/:id` - Edit existing pet breed
+- `/admin/breeds` - Breed management (list, search, filter)
+- `/admin/breeds/new` - Create new breed
+- `/admin/breeds/edit/:id` - Edit existing breed
 
 **Security Note:** All routes except `/login` require authentication and ADMIN role. Attempting to access protected routes will redirect to login or show a 403 Forbidden page.
 
@@ -409,187 +409,43 @@ The API is divided into **public routes** (read-only) and **protected routes** (
 
 ### Security Model
 
-- 🌐 **Public Routes (GET):** Anyone can read pet data
+- 🌐 **Public Routes (GET):** Anyone can read breed data
 - 🔒 **Protected Routes (POST/PUT/DELETE):** Require authentication with JWT token
 
-### Generic Routes
+### Breed Routes (public + protected)
 
-These endpoints operate on all pet types.
+Key endpoints:
 
-#### 1. Get All Pets 🌐
+| Purpose | Method | URL |
+| --- | --- | --- |
+| List breeds (filter by `type`/`search`) | GET | `/api/breeds` |
+| Get breed by ID | GET | `/api/breeds/:id` |
+| Random breed | GET | `/api/breeds/random-breed` |
+| Random breed by type | GET | `/api/breeds/:type/random-breed` |
+| List breeds by type | GET | `/api/breeds/type/:type` |
+| Create breed | POST | `/api/breeds/add` (auth) |
+| Update breed | PUT | `/api/breeds/:id` (auth) |
+| Delete breed | DELETE | `/api/breeds/:id` (auth) |
 
-Retrieves a list of all pets of all types. Supports optional filtering by type and search by breed name.
-
--   **Method:** `GET`
--   **URL:** `/api/pets/`
--   **Authentication:** Not required
-
-**Query Parameters (optional):**
--   `type` - Filter by pet type (`cat`, `dog`, `bird`)
--   `search` - Search by breed name (partial match)
-
-**Example with `curl`:**
-
-```sh
-# Get all pets
-curl http://localhost:3000/api/pets/
-
-# Filter by type
-curl http://localhost:3000/api/pets/?type=dog
-
-# Search by breed
-curl http://localhost:3000/api/pets/?search=retriever
-```
-
-#### 2. Get Pet by ID 🌐
-
-Retrieves a specific pet by its ID.
-
--   **Method:** `GET`
--   **URL:** `/api/pets/:id`
--   **Authentication:** Not required
-
-**Example with `curl`:**
+Examples:
 
 ```sh
-curl http://localhost:3000/api/pets/1
-```
+# List all breeds
+curl http://localhost:3000/api/breeds
 
-#### 3. Get a Random Pet 🌐
+# Filter by type and search term
+curl "http://localhost:3000/api/breeds?type=dog&search=retriever"
 
-Retrieves a random pet from the entire collection.
+# Random breed (optionally by type)
+curl http://localhost:3000/api/breeds/random-breed
+curl http://localhost:3000/api/breeds/dog/random-breed
 
--   **Method:** `GET`
--   **URL:** `/api/pets/random-pet`
--   **Authentication:** Not required
-
-**Example with `curl`:**
-
-```sh
-curl http://localhost:3000/api/pets/random-pet
-```
-
-#### 4. Add a New Pet 🔒
-
-Adds a new pet to the list. **Requires authentication.**
-
--   **Method:** `POST`
--   **URL:** `/api/pets/add`
--   **Authentication:** Required (JWT token + session ID)
--   **Body:** `json`
-
-**Request Body:**
-
--   `breed` (string, required): The name of the breed.
--   `type` (string, required): The type of animal. Must be one of `cat`, `dog`, or `bird`.
-
-**Example with `curl`:**
-
-```sh
-curl -X POST \
+# Create breed (requires JWT + session headers)
+curl -X POST http://localhost:3000/api/breeds/add \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "x-session-id: YOUR_SESSION_ID" \
-  -d '{"breed": "Parakeet", "type": "bird"}' \
-  http://localhost:3000/api/pets/add
-```
-
-#### 5. Update a Pet 🔒
-
-Updates an existing pet. **Requires authentication.**
-
--   **Method:** `PUT`
--   **URL:** `/api/pets/:id`
--   **Authentication:** Required (JWT token + session ID)
--   **Body:** `json`
-
-**Request Body:**
-
--   `breed` (string, required): The new name of the breed.
--   `type` (string, required): The type of animal.
-
-**Example with `curl`:**
-
-```sh
-curl -X PUT \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "x-session-id: YOUR_SESSION_ID" \
-  -d '{"breed": "Golden Retriever", "type": "dog"}' \
-  http://localhost:3000/api/pets/1
-```
-
-#### 6. Delete a Pet 🔒
-
-Deletes a pet. **Requires authentication.**
-
--   **Method:** `DELETE`
--   **URL:** `/api/pets/:id`
--   **Authentication:** Required (JWT token + session ID)
-
-**Example with `curl`:**
-
-```sh
-curl -X DELETE \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "x-session-id: YOUR_SESSION_ID" \
-  http://localhost:3000/api/pets/1
-```
-
-### Type-Specific Routes
-
-These endpoints allow you to work with a specific type of pet (`cat`, `dog`, or `bird`).
-
-#### 1. Get Pets by Type 🌐
-
-Retrieves a list of all pets of a specific type.
-
--   **Method:** `GET`
--   **URL:** `/api/pets/:type/`
--   **Authentication:** Not required
-
-**Example with `curl` (for dogs):**
-
-```sh
-curl http://localhost:3000/api/pets/dog/
-```
-
-#### 2. Get a Random Pet by Type 🌐
-
-Retrieves a random pet of a specific type.
-
--   **Method:** `GET`
--   **URL:** `/api/pets/:type/random-pet`
--   **Authentication:** Not required
-
-**Example with `curl` (for cats):**
-
-```sh
-curl http://localhost:3000/api/pets/cat/random-pet
-```
-
-#### 3. Add a New Pet by Type 🔒
-
-Adds a new pet breed to the specified type. **Requires authentication.**
-
--   **Method:** `POST`
--   **URL:** `/api/pets/:type/add`
--   **Authentication:** Required (JWT token + session ID)
--   **Body:** `json`
-
-**Request Body:**
-
--   `breed` (string, required): The name of the breed.
-
-**Example with `curl` (for dogs):**
-
-```sh
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  -H "x-session-id: YOUR_SESSION_ID" \
-  -d '{"breed": "Beagle"}' \
-  http://localhost:3000/api/pets/dog/add
+  -d '{"name": "Beagle", "animalType": "dog"}'
 ```
 
 ## Authentication API
@@ -789,23 +645,17 @@ The backend follows Domain-Driven Design with three distinct layers:
 src/api/
 ├── domain/              # Business logic (entities, value objects, interfaces)
 │   ├── auth/           # User, Email, Password, errors
-│   └── pet.ts
-├── application/        # Use cases and orchestration
-│   ├── auth/          # AuthService
-│   └── pet.service.ts
+│   └── breed.ts        # Breed aggregate + repositories
+├── application/        # Use cases and orchestration (BreedService, AuthService)
 └── infrastructure/     # Technical implementations
-    ├── auth/
-    │   ├── repositories/  # PostgresUserRepository
-    │   └── services/      # SessionService, JwtService, PasswordHasher
-    ├── http/
-    │   ├── controllers/   # AuthController, PetController
-    │   └── middleware/    # authMiddleware
+    ├── auth/              # SessionService, JwtService, PasswordHasher
+    ├── http/              # Controllers/middleware (BreedController, AuthController)
     └── queue/             # BullMQ + Redis
 ```
 
 ### Data Storage
 
-- **PostgreSQL (port 5432)** - Users and Pet breeds (Prisma ORM)
+- **PostgreSQL (port 5432)** - Users and breeds (Prisma ORM)
 - **MongoDB (port 27017)** - Audit logs (Mongoose)
 - **Redis (port 6379)**
   - Database 0: BullMQ message queue
@@ -818,19 +668,15 @@ app/frontend/src/
 ├── components/              # React components
 │   ├── Login.tsx           # Login form
 │   ├── Dashboard.tsx       # Admin dashboard
-│   ├── PetList.tsx         # Pet breeds list with CRUD
-│   ├── PetForm.tsx         # Create/Edit pet form
+│   ├── AnimalGallery.tsx   # Public gallery
+│   ├── AnimalDetail.tsx    # Detail view
 │   ├── ProtectedRoute.tsx  # Auth-only route wrapper
 │   └── RoleProtectedRoute.tsx  # Role-based route wrapper (ADMIN)
-├── contexts/               # React Context providers
-│   └── AuthContext.tsx     # Authentication state management
+├── contexts/               # React Context providers (Auth)
 ├── services/               # API communication
-│   └── api.service.ts      # HTTP client for backend API
 ├── types/                  # TypeScript type definitions
-│   └── api.types.ts        # User, Pet, Auth types
 ├── schemas/                # Zod validation schemas
-│   └── pet.schema.ts       # Client-side validation
-└── App.tsx                # Routes and providers
+└── App.tsx                 # Routes and providers
 ```
 
 **Security Features:**

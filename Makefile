@@ -68,7 +68,7 @@ test:
 	@echo "Waiting for API to be ready..."
 	@attempts=0; \
 	max_attempts=20; \
-	until curl -s -f -o /dev/null http://localhost:3000/api/pets/; do \
+	until curl -s -f -o /dev/null http://localhost:3000/api/breeds/; do \
 		attempts=$$(($$attempts + 1)); \
 		if [ "$$attempts" -ge "$$max_attempts" ]; then \
 			echo "API failed to start after $$(($$max_attempts * 2)) seconds."; \

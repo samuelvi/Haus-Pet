@@ -1,12 +1,12 @@
--- Create the pet table
-CREATE TABLE pet (
+-- Create the breed table
+CREATE TABLE breed (
     id SERIAL PRIMARY KEY,
     breed VARCHAR(255) UNIQUE NOT NULL,
     type VARCHAR(255) NOT NULL
 );
 
 -- Insert some initial data (optional, but good for testing)
-INSERT INTO pet (breed, type) VALUES
+INSERT INTO breed (breed, type) VALUES
     -- Cats
     ('Siamese', 'cat'),
     ('Persian', 'cat'),

@@ -1,13 +1,13 @@
 # HausPet Backend Management App
 
-This is the **admin panel frontend** for managing the HausPet pet breeds database.
+This is the **admin panel frontend** for managing the HausPet breed database.
 
 ## Purpose
 
 Provides a protected admin interface for CRUD operations:
 - Dashboard with user info
-- Pet breed listing with search and filters
-- Create, update, and delete pet breeds
+- Breed listing with search and filters
+- Create, update, and delete breeds
 - All routes protected (requires authentication)
 
 ## Technology Stack
@@ -25,14 +25,14 @@ Provides a protected admin interface for CRUD operations:
 src/
 ├── components/
 │   ├── Dashboard.tsx       # Admin dashboard
-│   ├── PetList.tsx         # Pet listing with filters
-│   └── PetForm.tsx         # Create/Edit pet form
+│   ├── BreedList.tsx       # Breed listing with filters
+│   └── BreedForm.tsx       # Create/Edit breed form
 ├── services/
-│   └── pet.service.ts      # API client for pet endpoints
+│   └── breed.service.ts    # API client for breed endpoints
 ├── types/
-│   └── pet.types.ts        # TypeScript types
+│   └── breed.types.ts      # TypeScript types
 ├── schemas/
-│   └── pet.schema.ts       # Zod validation schemas
+│   └── breed.schema.ts     # Zod validation schemas
 ├── App.tsx                 # Main app with protected routing
 └── main.tsx                # Entry point
 ```
@@ -62,7 +62,7 @@ VITE_API_URL=http://localhost:3000  # API backend URL
 
 This app depends on:
 - **Security App** (`src/security/`) - Imports AuthContext for authentication
-- **API Server** (`src/api/`) - Consumes `/api/pets/*` endpoints
+- **API Server** (`src/api/`) - Consumes `/api/breeds/*` endpoints
 
 ## Routing
 
@@ -70,9 +70,9 @@ All routes are protected with `ProtectedRoute` component:
 
 - `/` → Redirects to `/dashboard`
 - `/dashboard` → Admin dashboard (protected)
-- `/pets` → Pet list (protected)
-- `/pets/new` → Create new pet (protected)
-- `/pets/edit/:id` → Edit pet (protected)
+- `/breeds` → Breed list (protected)
+- `/breeds/new` → Create new breed (protected)
+- `/breeds/edit/:id` → Edit breed (protected)
 
 If not authenticated, users are redirected to `/login` (Security App).
 
@@ -97,4 +97,4 @@ All write operations (Create, Update, Delete) require:
 - Valid access token in `Authorization` header
 - Session ID in `x-session-id` header
 
-These are automatically managed by the `petService` using tokens from AuthContext.
+These are automatically managed by the `breedService` using tokens from AuthContext.

@@ -16,7 +16,7 @@ hauspet_db (PostgreSQL)
 │   └── sponsorships table     # Read Model projected from events
 │
 └── public schema
-    ├── pet table              # CRUD operations
+    ├── breed table            # CRUD operations
     ├── users table            # Authentication & user management
     └── _prisma_migrations     # Prisma migration history
 ```
@@ -60,9 +60,9 @@ hauspet_db (PostgreSQL)
 **Purpose**: Traditional CRUD entities and cross-cutting concerns.
 
 **Characteristics**:
-- **Pet table**: Simple CRUD for pet breeds
+- **Breed table**: Simple CRUD for breeds
 - **Users table**: Authentication and authorization
-- **Shared enums**: PetType, Role (used across schemas)
+- **Shared enums**: AnimalType, Role (used across schemas)
 
 ## Current vs Future Architecture
 
@@ -85,7 +85,7 @@ hauspet_db (PostgreSQL)
 │                                         │
 │  ┌─────────────────────────────────┐   │
 │  │ public schema                   │   │
-│  │  ├─ pet (13 rows)               │   │
+│  │  ├─ breed (13 rows)             │   │
 │  │  └─ users (1 row)               │   │
 │  └─────────────────────────────────┘   │
 │                                         │
@@ -168,7 +168,7 @@ const animals = await prisma.animal.findMany();
 const sponsorships = await prisma.sponsorship.findMany();
 
 // Public schema
-const pets = await prisma.pet.findMany();
+const breeds = await prisma.breed.findMany();
 const users = await prisma.user.findMany();
 ```
 
@@ -226,7 +226,7 @@ ORDER BY schemaname, tablename;
 
 -- Result:
 -- eventstore | events
--- public     | pet
+-- public     | breed
 -- public     | users
 -- readmodels | animals
 -- readmodels | sponsorships
