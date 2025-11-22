@@ -4,8 +4,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import { RoleProtectedRoute } from './components/RoleProtectedRoute';
 import { Login } from './components/Login';
 import { Dashboard } from './components/Dashboard';
-import { PetList } from './components/PetList';
-import { PetForm } from './components/PetForm';
+// import { PetList } from './components/PetList'; // TODO: Create BreedList component
+// import { PetForm } from './components/PetForm'; // TODO: Create BreedForm component
 import { AnimalGallery } from './components/AnimalGallery';
 import { AnimalDetail } from './components/AnimalDetail';
 
@@ -35,33 +35,37 @@ const App: React.FC = () => {
               </RoleProtectedRoute>
             }
           />
+          {/* TODO: Re-enable these routes once BreedList and BreedForm components are created
           <Route
-            path="/admin/pets"
+            path="/admin/breeds"
             element={
               <RoleProtectedRoute allowedRoles={['ADMIN']}>
-                <PetList />
+                <BreedList />
               </RoleProtectedRoute>
             }
           />
           <Route
-            path="/admin/pets/new"
+            path="/admin/breeds/new"
             element={
               <RoleProtectedRoute allowedRoles={['ADMIN']}>
-                <PetForm />
+                <BreedForm />
               </RoleProtectedRoute>
             }
           />
           <Route
-            path="/admin/pets/edit/:id"
+            path="/admin/breeds/edit/:id"
             element={
               <RoleProtectedRoute allowedRoles={['ADMIN']}>
-                <PetForm />
+                <BreedForm />
               </RoleProtectedRoute>
             }
           />
+          */}
 
-          {/* Legacy public route - redirect to admin */}
-          <Route path="/pets" element={<Navigate to="/admin/pets" replace />} />
+          {/* Legacy routes - redirect to dashboard until breed management is implemented */}
+          <Route path="/pets" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/pets" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="/admin/breeds" element={<Navigate to="/admin/dashboard" replace />} />
 
           {/* Catch all - redirect to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
