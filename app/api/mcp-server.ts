@@ -30,6 +30,10 @@ const AddBreedSchema = z.object({
   animalType: z.enum(["cat", "dog", "bird"]).describe("Type of animal (cat, dog, or bird)"),
 });
 
+const SearchAnimalByNameSchema = z.object({
+  name: z.string().min(1).describe("The name of the animal to search for (partial match, case-insensitive)"),
+});
+
 // Helper function to make API requests
 async function fetchFromAPI(endpoint: string, options?: RequestInit): Promise<any> {
   const headers: HeadersInit = {
@@ -124,6 +128,20 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
           },
           required: ["name", "animalType"],
+        },
+      },
+      {
+        name: "search_animal_by_name",
+        description: "Search for animals by name and get their sponsorship information. Returns animals with matching names (partial, case-insensitive) including total sponsored amount.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              description: "The name (or part of the name) of the animal to search for (e.g., 'Max', 'Luna')",
+            },
+          },
+          required: ["name"],
         },
       },
     ],

@@ -21,6 +21,9 @@ router.get('/', animalController.findAll);
 // GET /api/animals/type/:type - List animals by type
 router.get('/type/:type', animalController.findByType);
 
+// GET /api/animals/search/:name - Search animals by name
+router.get('/search/:name', animalController.searchByName);
+
 // GET /api/animals/:id - Get single animal by ID
 router.get('/:id', animalController.findById);
 

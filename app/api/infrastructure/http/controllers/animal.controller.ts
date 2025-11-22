@@ -70,6 +70,25 @@ export class AnimalController {
   };
 
   /**
+   * GET /api/animals/search/:name - Search animals by name
+   */
+  searchByName = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { name } = req.params;
+
+      if (!name || name.trim().length === 0) {
+        res.status(400).json({ error: 'Name parameter is required' });
+        return;
+      }
+
+      const animals = await this.animalService.findByName(name.trim());
+      res.json(animals);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
    * POST /api/admin/animals - Create new animal (Admin only)
    */
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

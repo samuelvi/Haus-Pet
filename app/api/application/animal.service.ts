@@ -140,6 +140,21 @@ export class AnimalService {
   }
 
   /**
+   * Searches animals by name (case-insensitive partial match from read model)
+   */
+  async findByName(name: string): Promise<Animal[]> {
+    return this.prisma.animal.findMany({
+      where: {
+        name: {
+          contains: name,
+          mode: 'insensitive',
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
    * Gets aggregate by ID (useful for domain operations)
    */
   async getAggregate(id: string): Promise<AnimalAggregate | null> {
