@@ -53,8 +53,8 @@ test.describe('Breed CRUD Integration Tests', () => {
       const breed = data.data[0];
       expect(breed).toHaveProperty('id');
       expect(breed).toHaveProperty('name');
-      expect(breed).toHaveProperty('animalType');
-      expect(['cat', 'dog', 'bird']).toContain(breed.animalType);
+      expect(breed).toHaveProperty('petType');
+      expect(['cat', 'dog', 'bird']).toContain(breed.petType);
     });
   });
 
@@ -69,7 +69,7 @@ test.describe('Breed CRUD Integration Tests', () => {
       expect(data.data).toHaveProperty('id');
       expect(data.data.id).toBe(validBreedId);
       expect(data.data).toHaveProperty('name');
-      expect(data.data).toHaveProperty('animalType');
+      expect(data.data).toHaveProperty('petType');
     });
 
     test('should return 404 for non-existent breed', async ({ request }) => {
@@ -108,7 +108,7 @@ test.describe('Breed CRUD Integration Tests', () => {
     test('should create breed with valid data and authentication', async ({ request }) => {
       const newBreed = {
         name: 'Test Breed ' + Date.now(),
-        animalType: 'dog',
+        petType: 'dog',
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
@@ -126,13 +126,13 @@ test.describe('Breed CRUD Integration Tests', () => {
       expect(data.status).toBe('OK');
       expect(data.data.breed).toHaveProperty('id');
       expect(data.data.breed.name).toBe(newBreed.name);
-      expect(data.data.breed.animalType).toBe(newBreed.animalType);
+      expect(data.data.breed.petType).toBe(newBreed.petType);
     });
 
     test('should return 401 without authentication', async ({ request }) => {
       const newBreed = {
         name: 'Unauthorized Breed',
-        animalType: 'cat',
+        petType: 'cat',
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
@@ -146,7 +146,7 @@ test.describe('Breed CRUD Integration Tests', () => {
     test('should return 400 for name too short', async ({ request }) => {
       const newBreed = {
         name: 'A', // Too short (< 2 characters)
-        animalType: 'dog',
+        petType: 'dog',
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
@@ -168,7 +168,7 @@ test.describe('Breed CRUD Integration Tests', () => {
     test('should return 400 for name too long', async ({ request }) => {
       const newBreed = {
         name: 'A'.repeat(51), // Too long (> 50 characters)
-        animalType: 'cat',
+        petType: 'cat',
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
@@ -190,7 +190,7 @@ test.describe('Breed CRUD Integration Tests', () => {
     test('should return 400 for invalid characters in name', async ({ request }) => {
       const newBreed = {
         name: 'Invalid@Breed!123', // Contains invalid characters
-        animalType: 'dog',
+        petType: 'dog',
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
@@ -209,10 +209,10 @@ test.describe('Breed CRUD Integration Tests', () => {
       expect(data.message).toContain('letters, numbers, spaces, and hyphens');
     });
 
-    test('should return 400 for invalid animal type', async ({ request }) => {
+    test('should return 400 for invalid pet type', async ({ request }) => {
       const newBreed = {
         name: 'Valid Breed',
-        animalType: 'fish', // Invalid type
+        petType: 'fish', // Invalid type
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
@@ -251,7 +251,7 @@ test.describe('Breed CRUD Integration Tests', () => {
       expect(data.status).toBe('ERROR');
     });
 
-    test('should return 400 for missing animal type', async ({ request }) => {
+    test('should return 400 for missing pet type', async ({ request }) => {
       const newBreed = {
         name: 'Test Breed',
       };
@@ -274,7 +274,7 @@ test.describe('Breed CRUD Integration Tests', () => {
     test('should trim whitespace from name', async ({ request }) => {
       const newBreed = {
         name: '  Trimmed Breed ' + Date.now() + '  ',
-        animalType: 'bird',
+        petType: 'bird',
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {

@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { AnimalController } from '../../../infrastructure/http/controllers/animal.controller';
-import { AnimalService } from '../../../application/animal.service';
+import { PetController } from '../../../infrastructure/http/controllers/pet.controller';
+import { PetService } from '../../../application/pet.service';
 import { PostgresEventStoreRepository } from '../../../infrastructure/eventsourcing/postgres-event-store.repository';
 import { JwtService } from '../../../infrastructure/auth/services/jwt.service';
 import { SessionService } from '../../../infrastructure/auth/services/session.service';
@@ -11,8 +11,8 @@ const router = Router();
 
 // Initialize dependencies
 const eventStore = new PostgresEventStoreRepository(prisma);
-const animalService = new AnimalService(prisma, eventStore);
-const animalController = new AnimalController(animalService);
+const petService = new PetService(prisma, eventStore);
+const petController = new PetController(petService);
 
 // Auth middleware
 const jwtService = new JwtService();
@@ -33,13 +33,13 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction): void => 
  * Admin routes - Write operations (protected by auth + admin role)
  */
 
-// POST /api/admin/animals - Create new animal
-router.post('/', authMiddleware, requireAdmin, animalController.create);
+// POST /api/admin/pets - Create new pet
+router.post('/', authMiddleware, requireAdmin, petController.create);
 
-// PATCH /api/admin/animals/:id - Update animal
-router.patch('/:id', authMiddleware, requireAdmin, animalController.update);
+// PATCH /api/admin/pets/:id - Update pet
+router.patch('/:id', authMiddleware, requireAdmin, petController.update);
 
-// DELETE /api/admin/animals/:id - Delete animal
-router.delete('/:id', authMiddleware, requireAdmin, animalController.delete);
+// DELETE /api/admin/pets/:id - Delete pet
+router.delete('/:id', authMiddleware, requireAdmin, petController.delete);
 
 export default router;

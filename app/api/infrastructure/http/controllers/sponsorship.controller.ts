@@ -15,8 +15,8 @@ export class SponsorshipController {
       const dto: CreateSponsorshipDto = req.body;
 
       // Validate required fields
-      if (!dto.animalId || !dto.email || !dto.name || !dto.amount) {
-        res.status(400).json({ error: 'animalId, email, name, and amount are required' });
+      if (!dto.petId || !dto.email || !dto.name || !dto.amount) {
+        res.status(400).json({ error: 'petId, email, name, and amount are required' });
         return;
       }
 
@@ -37,12 +37,12 @@ export class SponsorshipController {
       res.status(201).json(sponsorship);
     } catch (error) {
       if (error instanceof Error) {
-        if (error.message.includes('Animal with id')) {
-          res.status(404).json({ error: 'Animal not found' });
+        if (error.message.includes('Pet with id')) {
+          res.status(404).json({ error: 'Pet not found' });
           return;
         }
-        if (error.message.includes('deleted animal')) {
-          res.status(400).json({ error: 'Cannot sponsor a deleted animal' });
+        if (error.message.includes('deleted pet')) {
+          res.status(400).json({ error: 'Cannot sponsor a deleted pet' });
           return;
         }
       }
@@ -51,12 +51,12 @@ export class SponsorshipController {
   };
 
   /**
-   * GET /api/sponsorships/animal/:animalId - Get sponsorships for an animal
+   * GET /api/sponsorships/pet/:petId - Get sponsorships for a pet
    */
-  findByAnimal = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  findByPet = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { animalId } = req.params;
-      const sponsorships = await this.sponsorshipService.findByAnimal(animalId);
+      const { petId } = req.params;
+      const sponsorships = await this.sponsorshipService.findByPet(petId);
       res.json(sponsorships);
     } catch (error) {
       next(error);

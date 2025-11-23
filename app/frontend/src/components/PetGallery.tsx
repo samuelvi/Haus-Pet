@@ -1,28 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { animalService } from '../services/animal.service';
-import type { Animal, PetType } from '../types/animal.types';
+import { petService } from '../services/pet.service';
+import type { Pet, PetType } from '../types/pet.types';
 
-export const AnimalGallery: React.FC = () => {
-  const [animals, setAnimals] = useState<Animal[]>([]);
+export const PetGallery: React.FC = () => {
+  const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<PetType | ''>('');
   const navigate = useNavigate();
 
-  const loadAnimals = async (): Promise<void> => {
+  const loadPets = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
-      let data: Animal[];
+      let data: Pet[];
       if (typeFilter) {
-        data = await animalService.getAnimalsByType(typeFilter);
+        data = await petService.getPetsByType(typeFilter);
       } else {
-        data = await animalService.getAllAnimals();
+        data = await petService.getAllPets();
       }
-      setAnimals(data);
+      setPets(data);
     } catch (err) {
-      setError('Failed to load animals');
+      setError('Failed to load pets');
       console.error(err);
     } finally {
       setLoading(false);
@@ -30,13 +30,13 @@ export const AnimalGallery: React.FC = () => {
   };
 
   useEffect(() => {
-    loadAnimals();
+    loadPets();
   }, [typeFilter]);
 
   if (loading) {
     return (
       <div style={{ padding: '40px', textAlign: 'center' }}>
-        <div style={{ fontSize: '24px' }}>Loading adorable animals...</div>
+        <div style={{ fontSize: '24px' }}>Loading adorable pets...</div>
       </div>
     );
   }
@@ -45,7 +45,7 @@ export const AnimalGallery: React.FC = () => {
     <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
         <h1 style={{ fontSize: '2.5rem', color: '#2c3e50', marginBottom: '10px' }}>
-          🐾 Animal Sponsorship Gallery
+          🐾 Pet Sponsorship Gallery
         </h1>
         <p style={{ color: '#7f8c8d', fontSize: '1.1rem' }}>
           Help our furry friends by sponsoring them today!
@@ -73,7 +73,7 @@ export const AnimalGallery: React.FC = () => {
             transition: 'all 0.3s',
           }}
         >
-          All Animals
+          All Pets
         </button>
         <button
           onClick={() => setTypeFilter('cat')}
@@ -123,9 +123,9 @@ export const AnimalGallery: React.FC = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px' }}>
-        {animals.map((animal) => (
+        {pets.map((pet) => (
           <div
-            key={animal.id}
+            key={pet.id}
             style={{
               borderRadius: '16px',
               overflow: 'hidden',
@@ -134,7 +134,7 @@ export const AnimalGallery: React.FC = () => {
               transition: 'transform 0.3s, box-shadow 0.3s',
               cursor: 'pointer',
             }}
-            onClick={() => navigate(`/animals/${animal.id}`)}
+            onClick={() => navigate(`/pets/${pet.id}`)}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-5px)';
               e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
@@ -146,11 +146,11 @@ export const AnimalGallery: React.FC = () => {
           >
             <div style={{ position: 'relative' }}>
               <img
-                src={animal.photoUrl}
-                alt={animal.name}
+                src={pet.photoUrl}
+                alt={pet.name}
                 style={{ width: '100%', height: '250px', objectFit: 'cover' }}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://placehold.co/400x250/gray/white?text=${animal.type}`;
+                  (e.target as HTMLImageElement).src = `https://placehold.co/400x250/gray/white?text=${pet.type}`;
                 }}
               />
               <span
@@ -160,20 +160,20 @@ export const AnimalGallery: React.FC = () => {
                   right: '15px',
                   padding: '6px 12px',
                   borderRadius: '20px',
-                  backgroundColor: animal.type === 'dog' ? '#27ae60' : animal.type === 'cat' ? '#e67e22' : '#9b59b6',
+                  backgroundColor: pet.type === 'dog' ? '#27ae60' : pet.type === 'cat' ? '#e67e22' : '#9b59b6',
                   color: 'white',
                   fontWeight: 'bold',
                   fontSize: '0.9rem',
                   textTransform: 'capitalize',
                 }}
               >
-                {animal.type}
+                {pet.type}
               </span>
             </div>
             <div style={{ padding: '20px' }}>
-              <h3 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', color: '#2c3e50' }}>{animal.name}</h3>
+              <h3 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', color: '#2c3e50' }}>{pet.name}</h3>
               <p style={{ margin: '5px 0', color: '#7f8c8d' }}>
-                Breed: <strong>{animal.breed}</strong>
+                Breed: <strong>{pet.breed}</strong>
               </p>
               <div
                 style={{
@@ -186,7 +186,7 @@ export const AnimalGallery: React.FC = () => {
               >
                 <span style={{ fontSize: '0.9rem', color: '#7f8c8d' }}>Total Sponsored</span>
                 <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#27ae60' }}>
-                  ${Number(animal.totalSponsored).toFixed(2)}
+                  ${Number(pet.totalSponsored).toFixed(2)}
                 </div>
               </div>
               <button
@@ -204,20 +204,20 @@ export const AnimalGallery: React.FC = () => {
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/animals/${animal.id}`);
+                  navigate(`/pets/${pet.id}`);
                 }}
               >
-                ❤️ Sponsor {animal.name}
+                ❤️ Sponsor {pet.name}
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {animals.length === 0 && !loading && (
+      {pets.length === 0 && !loading && (
         <div style={{ textAlign: 'center', padding: '60px', color: '#7f8c8d' }}>
           <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🐾</div>
-          <p style={{ fontSize: '1.2rem' }}>No animals found. Check back soon!</p>
+          <p style={{ fontSize: '1.2rem' }}>No pets found. Check back soon!</p>
         </div>
       )}
     </div>

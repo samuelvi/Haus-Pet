@@ -8,7 +8,7 @@ A full-stack pet breeds management system with authentication, built with Node.j
 - **Authentication System** - JWT tokens + Redis sessions
 - **Frontend Admin Panel** - React + TypeScript + Vite (wireframe)
 - **Async Audit Logging** - BullMQ + MongoDB
-- **Animal Sponsorship System** - Event Sourcing architecture with public gallery
+- **Pet Sponsorship System** - Event Sourcing architecture with public gallery
 - **Database** - PostgreSQL (Prisma ORM) + MongoDB (Audit logs)
 - **Message Queue** - Redis + BullMQ
 
@@ -23,7 +23,7 @@ HausPet/
 │   │   ├── domain/              # Entities, repositories, errors, eventsourcing
 │   │   ├── application/         # Services (auth, breeds, audit, sponsorship)
 │   │   ├── infrastructure/      # Prisma, HTTP controllers, queue, auth, repos
-│   │   ├── routes/              # Express routers (auth, breed, animal, admin)
+│   │   ├── routes/              # Express routers (auth, breed, pet, admin)
 │   │   ├── prisma/              # Schema, migrations, seed
 │   │   ├── index.ts / worker.ts # API and BullMQ worker entrypoints
 │   │   └── scripts/             # Utilities (route listing, commit msg helper)
@@ -45,34 +45,20 @@ HausPet/
 
 ## Database Initialization and First-Time Setup
 
-This project uses Prisma to manage the database schema. If you are cloning this repository for the first time, or if you need to reset your database completely, you must follow these steps to initialize the database schema correctly.
-
-**This process is crucial for the application to start without errors.**
-
-### Step 1: Start a Clean Environment
+This project uses Prisma to manage the database schema. For a clean setup or reset:
 
 ```sh
-make prune   # optional: stops stack and clears dev volumes
-make up      # builds/starts API, worker, frontend, dbs, nginx
+make prune      # stop stack and clear dev volumes
+make reset-db   # drop schemas/types/migration table in dev DB
+make seed       # apply migrations and seed data
+make up         # start API, worker, frontend, dbs, nginx
 ```
 
-The API container installs deps, runs `prisma generate`, deploys migrations, and seeds data automatically on startup.
-
-### Step 2: Apply New Migrations (when schema changes)
-
-From `app/api`, create and deploy migrations against the local stack:
+When changing the schema, create a migration in `app/api`:
 
 ```sh
 cd app/api
 npx prisma migrate dev --name <change>
-```
-
-### Step 3: Rerun Stack
-
-If needed, restart the stack to pick up changes:
-
-```sh
-make restart
 ```
 
 ## Authentication
@@ -337,56 +323,56 @@ This project includes an MCP (Model Context Protocol) server that allows you to 
 
 For setup instructions and usage details, see the **[MCP Guide](./docs/MCP-README.md)**.
 
-## Animal Sponsorship System
+## Pet Sponsorship System
 
-The project includes a complete Animal Sponsorship System built with **Event Sourcing** architecture. This allows users to browse adoptable animals and sponsor them.
+The project includes a complete Pet Sponsorship System built with **Event Sourcing** architecture. This allows users to browse adoptable pets and sponsor them.
 
 ### Features
 
-- **Public Gallery** - Browse animals (dogs, cats, birds) with photos
-- **Sponsorship** - Users can sponsor animals with donations
+- **Public Gallery** - Browse pets (dogs, cats, birds) with photos
+- **Sponsorship** - Users can sponsor pets with donations
 - **Event Sourcing** - All changes are stored as immutable events
-- **Admin Management** - Protected CRUD operations for animals
+- **Admin Management** - Protected CRUD operations for pets
 
-### Seeding Animal Data
+### Seeding Pet Data
 
-To populate the database with sample animals for development/testing:
+To populate the database with sample pets for development/testing:
 
 ```sh
 # Run from Docker container
-docker exec hauspet_api npx ts-node prisma/seed-animals.ts
+docker exec hauspet_api npx ts-node prisma/seed-pets.ts
 
 # Or run locally (with Docker database running)
 cd app/api
-npx ts-node prisma/seed-animals.ts
+npx ts-node prisma/seed-pets.ts
 ```
 
-This creates 11 animals: 4 dogs, 4 cats, and 3 birds with photos and sample sponsorship amounts.
+This creates 11 pets: 4 dogs, 4 cats, and 3 birds with photos and sample sponsorship amounts.
 
-### Animal API Endpoints
+### Pet API Endpoints
 
 #### Public Routes 🌐
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/animals` | List all animals |
-| GET | `/api/animals/type/:type` | List animals by type (cat/dog/bird) |
-| GET | `/api/animals/:id` | Get single animal by ID |
+| GET | `/api/pets` | List all pets |
+| GET | `/api/pets/type/:type` | List pets by type (cat/dog/bird) |
+| GET | `/api/pets/:id` | Get single pet by ID |
 
 #### Admin Routes 🔒 (Requires ADMIN role)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/admin/animals` | Create new animal |
-| PATCH | `/api/admin/animals/:id` | Update animal |
-| DELETE | `/api/admin/animals/:id` | Delete animal |
+| POST | `/api/admin/pets` | Create new pet |
+| PATCH | `/api/admin/pets/:id` | Update pet |
+| DELETE | `/api/admin/pets/:id` | Delete pet |
 
 ### Sponsorship API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/sponsorships` | Create a sponsorship |
-| GET | `/api/sponsorships/animal/:animalId` | Get sponsorships for an animal |
+| GET | `/api/sponsorships/pet/:petId` | Get sponsorships for a pet |
 | GET | `/api/sponsorships/recent?limit=10` | Get recent sponsorships (max 100) |
 
 **Example - Create Sponsorship:**
@@ -395,7 +381,7 @@ This creates 11 animals: 4 dogs, 4 cats, and 3 birds with photos and sample spon
 curl -X POST \
   -H "Content-Type: application/json" \
   -d '{
-    "animalId": "uuid-here",
+    "petId": "uuid-here",
     "email": "sponsor@example.com",
     "name": "John Doe",
     "amount": 25.00
@@ -668,8 +654,8 @@ app/frontend/src/
 ├── components/              # React components
 │   ├── Login.tsx           # Login form
 │   ├── Dashboard.tsx       # Admin dashboard
-│   ├── AnimalGallery.tsx   # Public gallery
-│   ├── AnimalDetail.tsx    # Detail view
+│   ├── PetGallery.tsx      # Public gallery
+│   ├── PetDetail.tsx       # Detail view
 │   ├── ProtectedRoute.tsx  # Auth-only route wrapper
 │   └── RoleProtectedRoute.tsx  # Role-based route wrapper (ADMIN)
 ├── contexts/               # React Context providers (Auth)

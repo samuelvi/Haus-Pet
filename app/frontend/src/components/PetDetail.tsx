@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { animalService } from '../services/animal.service';
-import type { Animal, Sponsorship, CreateSponsorshipDto } from '../types/animal.types';
+import { petService } from '../services/pet.service';
+import type { Pet, Sponsorship, CreateSponsorshipDto } from '../types/pet.types';
 
-export const AnimalDetail: React.FC = () => {
+export const PetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [animal, setAnimal] = useState<Animal | null>(null);
+  const [pet, setPet] = useState<Pet | null>(null);
   const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +15,7 @@ export const AnimalDetail: React.FC = () => {
   const [success, setSuccess] = useState<boolean>(false);
 
   const [formData, setFormData] = useState<CreateSponsorshipDto>({
-    animalId: id || '',
+    petId: id || '',
     email: '',
     name: '',
     amount: 10,
@@ -24,22 +24,22 @@ export const AnimalDetail: React.FC = () => {
 
   useEffect(() => {
     if (id) {
-      loadAnimalData(id);
+      loadPetData(id);
     }
   }, [id]);
 
-  const loadAnimalData = async (animalId: string): Promise<void> => {
+  const loadPetData = async (petId: string): Promise<void> => {
     try {
       setLoading(true);
-      const [animalData, sponsorshipsData] = await Promise.all([
-        animalService.getAnimalById(animalId),
-        animalService.getSponsorshipsForAnimal(animalId),
+      const [petData, sponsorshipsData] = await Promise.all([
+        petService.getPetById(petId),
+        petService.getSponsorshipsForPet(petId),
       ]);
-      setAnimal(animalData);
+      setPet(petData);
       setSponsorships(sponsorshipsData);
-      setFormData((prev) => ({ ...prev, animalId }));
+      setFormData((prev) => ({ ...prev, petId }));
     } catch (err) {
-      setError('Failed to load animal');
+      setError('Failed to load pet');
       console.error(err);
     } finally {
       setLoading(false);
@@ -53,11 +53,11 @@ export const AnimalDetail: React.FC = () => {
     try {
       setSubmitting(true);
       setError(null);
-      await animalService.createSponsorship(formData);
+      await petService.createSponsorship(formData);
       setSuccess(true);
       setShowForm(false);
       // Reload data to show updated total
-      await loadAnimalData(id);
+      await loadPetData(id);
       // Reset form
       setFormData((prev) => ({ ...prev, email: '', name: '', amount: 10 }));
     } catch (err) {
@@ -71,10 +71,10 @@ export const AnimalDetail: React.FC = () => {
     return <div style={{ padding: '40px', textAlign: 'center', fontSize: '24px' }}>Loading...</div>;
   }
 
-  if (!animal) {
+  if (!pet) {
     return (
       <div style={{ padding: '40px', textAlign: 'center' }}>
-        <h2>Animal not found</h2>
+        <h2>Pet not found</h2>
         <button onClick={() => navigate('/gallery')} style={{ padding: '10px 20px', cursor: 'pointer' }}>
           Back to Gallery
         </button>
@@ -108,7 +108,7 @@ export const AnimalDetail: React.FC = () => {
           marginBottom: '20px',
           textAlign: 'center',
         }}>
-          🎉 Thank you for your sponsorship! {animal.name} appreciates your support!
+          🎉 Thank you for your sponsorship! {pet.name} appreciates your support!
         </div>
       )}
 
@@ -127,11 +127,11 @@ export const AnimalDetail: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
         <div>
           <img
-            src={animal.photoUrl}
-            alt={animal.name}
+            src={pet.photoUrl}
+            alt={pet.name}
             style={{ width: '100%', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
             onError={(e) => {
-              (e.target as HTMLImageElement).src = `https://placehold.co/400x400/gray/white?text=${animal.type}`;
+              (e.target as HTMLImageElement).src = `https://placehold.co/400x400/gray/white?text=${pet.type}`;
             }}
           />
         </div>
@@ -142,18 +142,18 @@ export const AnimalDetail: React.FC = () => {
               display: 'inline-block',
               padding: '8px 16px',
               borderRadius: '20px',
-              backgroundColor: animal.type === 'dog' ? '#27ae60' : animal.type === 'cat' ? '#e67e22' : '#9b59b6',
+              backgroundColor: pet.type === 'dog' ? '#27ae60' : pet.type === 'cat' ? '#e67e22' : '#9b59b6',
               color: 'white',
               fontWeight: 'bold',
               marginBottom: '15px',
               textTransform: 'capitalize',
             }}
           >
-            {animal.type}
+            {pet.type}
           </span>
-          <h1 style={{ fontSize: '2.5rem', margin: '10px 0', color: '#2c3e50' }}>{animal.name}</h1>
+          <h1 style={{ fontSize: '2.5rem', margin: '10px 0', color: '#2c3e50' }}>{pet.name}</h1>
           <p style={{ fontSize: '1.2rem', color: '#7f8c8d', margin: '10px 0' }}>
-            Breed: <strong>{animal.breed}</strong>
+            Breed: <strong>{pet.breed}</strong>
           </p>
 
           <div
@@ -167,7 +167,7 @@ export const AnimalDetail: React.FC = () => {
           >
             <span style={{ fontSize: '1rem', color: '#7f8c8d' }}>Total Sponsored</span>
             <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#27ae60', margin: '10px 0' }}>
-              ${Number(animal.totalSponsored).toFixed(2)}
+              ${Number(pet.totalSponsored).toFixed(2)}
             </div>
             <span style={{ fontSize: '0.9rem', color: '#95a5a6' }}>
               {sponsorships.length} sponsor{sponsorships.length !== 1 ? 's' : ''}
@@ -190,11 +190,11 @@ export const AnimalDetail: React.FC = () => {
                 fontSize: '1.2rem',
               }}
             >
-              ❤️ Sponsor {animal.name}
+              ❤️ Sponsor {pet.name}
             </button>
           ) : (
             <form onSubmit={handleSubmit} style={{ marginTop: '20px', padding: '20px', backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #ecf0f1' }}>
-              <h3 style={{ margin: '0 0 20px 0', color: '#2c3e50' }}>Sponsor {animal.name}</h3>
+              <h3 style={{ margin: '0 0 20px 0', color: '#2c3e50' }}>Sponsor {pet.name}</h3>
 
               <div style={{ marginBottom: '15px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#2c3e50' }}>

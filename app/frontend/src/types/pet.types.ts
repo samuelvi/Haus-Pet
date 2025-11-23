@@ -1,6 +1,6 @@
 export type PetType = 'cat' | 'dog' | 'bird';
 
-export interface Animal {
+export interface Pet {
   id: string;
   name: string;
   type: PetType;
@@ -13,12 +13,12 @@ export interface Animal {
 
 export interface Sponsorship {
   id: string;
-  animalId: string;
+  petId: string;
   userId: string;
   amount: number;
   currency: string;
   createdAt: string;
-  animal?: Animal;
+  pet?: Pet;
   user?: {
     id: string;
     name: string;
@@ -27,7 +27,7 @@ export interface Sponsorship {
 }
 
 export interface CreateSponsorshipDto {
-  animalId: string;
+  petId: string;
   email: string;
   name: string;
   amount: number;

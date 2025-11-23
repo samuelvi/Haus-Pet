@@ -1,6 +1,6 @@
 export type PetType = 'cat' | 'dog' | 'bird';
 
-export interface Animal {
+export interface Pet {
   id: string;
   name: string;
   type: PetType;
@@ -11,14 +11,14 @@ export interface Animal {
   updatedAt: string;
 }
 
-export interface CreateAnimalDto {
+export interface CreatePetDto {
   name: string;
   type: PetType;
   breed: string;
   photoUrl?: string;
 }
 
-export interface UpdateAnimalDto {
+export interface UpdatePetDto {
   name?: string;
   type?: PetType;
   breed?: string;

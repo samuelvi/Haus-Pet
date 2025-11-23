@@ -1,12 +1,12 @@
 import { PrismaClient, Sponsorship } from '@prisma/client';
 import { SponsorshipAggregate } from '../domain/sponsorship';
-import { AnimalAggregate } from '../domain/animal';
+import { PetAggregate } from '../domain/pet';
 import { EventStoreRepository } from '../domain/eventsourcing';
-import { SponsorshipProjector, AnimalProjector } from '../infrastructure/projections';
+import { SponsorshipProjector, PetProjector } from '../infrastructure/projections';
 import { generateId } from '../infrastructure/utils/uuid';
 
 export interface CreateSponsorshipDto {
-  animalId: string;
+  petId: string;
   email: string;
   name: string;
   amount: number;
@@ -18,37 +18,26 @@ export interface CreateSponsorshipDto {
  */
 export class SponsorshipService {
   private readonly sponsorshipProjector: SponsorshipProjector;
-  private readonly animalProjector: AnimalProjector;
+  private readonly petProjector: PetProjector;
 
   constructor(
     private readonly prisma: PrismaClient,
     private readonly eventStore: EventStoreRepository
   ) {
     this.sponsorshipProjector = new SponsorshipProjector(prisma);
-    this.animalProjector = new AnimalProjector(prisma);
+    this.petProjector = new PetProjector(prisma);
   }
 
   /**
    * Creates a new sponsorship
    * - Auto-creates user if email doesn't exist
-   * - Records sponsorship on animal aggregate
+   * - Records sponsorship on pet aggregate
    */
   async create(dto: CreateSponsorshipDto): Promise<Sponsorship> {
     const currency = dto.currency || 'USD';
 
-    // Verify animal exists
-    const animalEvents = await this.eventStore.getEventsForAggregate(dto.animalId);
-    if (animalEvents.length === 0) {
-      throw new Error(`Animal with id ${dto.animalId} not found`);
-    }
-
-    // Load animal aggregate
-    const animal = new AnimalAggregate(dto.animalId);
-    animal.loadFromHistory(animalEvents);
-
-    if (animal.isDeleted) {
-      throw new Error('Cannot sponsor a deleted animal');
-    }
+    // Verify pet exists (event-sourced path or fallback to read model)
+    const petEvents = await this.eventStore.getEventsForAggregate(dto.petId);
 
     // Find or create user
     let user = await this.prisma.user.findUnique({
@@ -67,50 +56,87 @@ export class SponsorshipService {
       });
     }
 
-    // Create sponsorship aggregate
-    const sponsorshipId = generateId();
-    const sponsorship = SponsorshipAggregate.create(
-      sponsorshipId,
-      dto.animalId,
-      user.id,
-      dto.email,
-      dto.amount,
-      currency
-    );
+    // If we have history, go through aggregate/eventsourcing path
+    if (petEvents.length > 0) {
+      const pet = new PetAggregate(dto.petId);
+      pet.loadFromHistory(petEvents);
 
-    // Record sponsorship on animal
-    animal.recordSponsorship(sponsorshipId, user.id, dto.amount, currency);
+      if (pet.isDeleted) {
+        throw new Error('Cannot sponsor a deleted pet');
+      }
 
-    // Persist sponsorship events
-    const sponsorshipEvents = sponsorship.getUncommittedEvents();
-    await this.eventStore.append(sponsorshipEvents);
+      const sponsorshipId = generateId();
+      const sponsorship = SponsorshipAggregate.create(
+        sponsorshipId,
+        dto.petId,
+        user.id,
+        dto.email,
+        dto.amount,
+        currency
+      );
 
-    // Persist animal events (AnimalSponsored)
-    const animalNewEvents = animal.getUncommittedEvents();
-    await this.eventStore.append(animalNewEvents);
+      // Record sponsorship on pet
+      pet.recordSponsorship(sponsorshipId, user.id, dto.amount, currency);
 
-    // Project sponsorship to read model
-    for (const event of sponsorshipEvents) {
-      await this.sponsorshipProjector.project(event);
+      // Persist sponsorship events
+      const sponsorshipEvents = sponsorship.getUncommittedEvents();
+      await this.eventStore.append(sponsorshipEvents);
+
+      // Persist pet events (PetSponsored)
+      const petNewEvents = pet.getUncommittedEvents();
+      await this.eventStore.append(petNewEvents);
+
+      // Project sponsorship to read model
+      for (const event of sponsorshipEvents) {
+        await this.sponsorshipProjector.project(event);
+      }
+
+      // Project pet update to read model (totalSponsored increment)
+      for (const event of petNewEvents) {
+        await this.petProjector.project(event);
+      }
+
+      return this.prisma.sponsorship.findUniqueOrThrow({
+        where: { id: sponsorshipId },
+        include: { pet: true, user: true },
+      });
     }
 
-    // Project animal update to read model (totalSponsored increment)
-    for (const event of animalNewEvents) {
-      await this.animalProjector.project(event);
+    // Fallback: no event history, use read model directly
+    const petRecord = await this.prisma.pet.findUnique({ where: { id: dto.petId } });
+    if (!petRecord) {
+      throw new Error(`Pet with id ${dto.petId} not found`);
     }
 
-    return this.prisma.sponsorship.findUniqueOrThrow({
-      where: { id: sponsorshipId },
-      include: { animal: true, user: true },
+    const created = await this.prisma.sponsorship.create({
+      data: {
+        id: generateId(),
+        petId: dto.petId,
+        userId: user.id,
+        amount: dto.amount,
+        currency,
+      },
+      include: { pet: true, user: true },
     });
+
+    await this.prisma.pet.update({
+      where: { id: dto.petId },
+      data: {
+        totalSponsored: {
+          increment: dto.amount,
+        },
+      },
+    });
+
+    return created;
   }
 
   /**
-   * Gets all sponsorships for an animal
+   * Gets all sponsorships for a pet
    */
-  async findByAnimal(animalId: string): Promise<Sponsorship[]> {
+  async findByPet(petId: string): Promise<Sponsorship[]> {
     return this.prisma.sponsorship.findMany({
-      where: { animalId },
+      where: { petId },
       include: { user: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -122,7 +148,7 @@ export class SponsorshipService {
   async findByUser(userId: string): Promise<Sponsorship[]> {
     return this.prisma.sponsorship.findMany({
       where: { userId },
-      include: { animal: true },
+      include: { pet: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -132,7 +158,7 @@ export class SponsorshipService {
    */
   async findRecent(limit: number = 10): Promise<Sponsorship[]> {
     return this.prisma.sponsorship.findMany({
-      include: { animal: true, user: true },
+      include: { pet: true, user: true },
       orderBy: { createdAt: 'desc' },
       take: limit,
     });

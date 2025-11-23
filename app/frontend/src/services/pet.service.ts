@@ -1,28 +1,28 @@
-import type { Animal, Sponsorship, CreateSponsorshipDto, PetType } from '../types/animal.types';
+import type { Pet, Sponsorship, CreateSponsorshipDto, PetType } from '../types/pet.types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export const animalService = {
-  async getAllAnimals(): Promise<Animal[]> {
-    const response = await fetch(`${API_URL}/api/animals`);
+export const petService = {
+  async getAllPets(): Promise<Pet[]> {
+    const response = await fetch(`${API_URL}/api/pets`);
     if (!response.ok) {
-      throw new Error('Failed to fetch animals');
+      throw new Error('Failed to fetch pets');
     }
     return response.json();
   },
 
-  async getAnimalsByType(type: PetType): Promise<Animal[]> {
-    const response = await fetch(`${API_URL}/api/animals/type/${type}`);
+  async getPetsByType(type: PetType): Promise<Pet[]> {
+    const response = await fetch(`${API_URL}/api/pets/type/${type}`);
     if (!response.ok) {
-      throw new Error('Failed to fetch animals');
+      throw new Error('Failed to fetch pets');
     }
     return response.json();
   },
 
-  async getAnimalById(id: string): Promise<Animal> {
-    const response = await fetch(`${API_URL}/api/animals/${id}`);
+  async getPetById(id: string): Promise<Pet> {
+    const response = await fetch(`${API_URL}/api/pets/${id}`);
     if (!response.ok) {
-      throw new Error('Animal not found');
+      throw new Error('Pet not found');
     }
     return response.json();
   },
@@ -42,8 +42,8 @@ export const animalService = {
     return response.json();
   },
 
-  async getSponsorshipsForAnimal(animalId: string): Promise<Sponsorship[]> {
-    const response = await fetch(`${API_URL}/api/sponsorships/animal/${animalId}`);
+  async getSponsorshipsForPet(petId: string): Promise<Sponsorship[]> {
+    const response = await fetch(`${API_URL}/api/sponsorships/pet/${petId}`);
     if (!response.ok) {
       throw new Error('Failed to fetch sponsorships');
     }

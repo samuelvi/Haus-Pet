@@ -1,7 +1,7 @@
-import { PrismaClient, Breed as PrismaBreed, AnimalType as PrismaAnimalType } from "@prisma/client";
+import { PrismaClient, Breed as PrismaBreed, PetType as PrismaPetType } from "@prisma/client";
 import { BreedReadRepository, BreedFilters } from "../../domain/breed-read.repository";
 import { BreedWriteRepository } from "../../domain/breed-write.repository";
-import { Breed as DomainBreed, AnimalType as DomainAnimalType } from "../../domain/breed";
+import { Breed as DomainBreed, PetType as DomainPetType } from "../../domain/breed";
 
 export class PostgresBreedRepository implements BreedReadRepository, BreedWriteRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -12,7 +12,7 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
       id: prismaBreed.id,
       name: prismaBreed.name,
       // Cast the string value from Prisma's enum to the domain's enum
-      animalType: prismaBreed.animalType as DomainAnimalType,
+      petType: prismaBreed.petType as DomainPetType,
     };
   }
 
@@ -22,7 +22,7 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
     // Only filter by type at database level
     // Search/fuzzy matching is done at application level for database agnosticism
     if (filters?.type) {
-      where.animalType = filters.type as PrismaAnimalType;
+      where.petType = filters.type as PrismaPetType;
     }
 
     const prismaBreeds = await this.prisma.breed.findMany({
@@ -52,10 +52,10 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
     return prismaBreed ? this.toDomain(prismaBreed) : null;
   }
 
-  public async findByType(type: DomainAnimalType): Promise<DomainBreed[]> {
+  public async findByType(type: DomainPetType): Promise<DomainBreed[]> {
     const prismaBreeds = await this.prisma.breed.findMany({
       // Cast the domain enum to the Prisma enum for the query
-      where: { animalType: type as PrismaAnimalType },
+      where: { petType: type as PrismaPetType },
     });
     return prismaBreeds.map(this.toDomain);
   }
@@ -69,7 +69,7 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
       data: {
         id: breed.id, // UUIDv7 must be provided
         name: breed.name,
-        animalType: breed.animalType as PrismaAnimalType,
+        petType: breed.petType as PrismaPetType,
       },
     });
 
@@ -82,8 +82,8 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
     if (breedData.name !== undefined) {
       updateData.name = breedData.name;
     }
-    if (breedData.animalType !== undefined) {
-      updateData.animalType = breedData.animalType as PrismaAnimalType;
+    if (breedData.petType !== undefined) {
+      updateData.petType = breedData.petType as PrismaPetType;
     }
 
     const updatedPrismaBreed = await this.prisma.breed.update({

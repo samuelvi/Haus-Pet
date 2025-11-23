@@ -1,6 +1,6 @@
 import { BreedReadRepository, BreedFilters } from "../domain/breed-read.repository";
 import { BreedWriteRepository } from "../domain/breed-write.repository";
-import { Breed, AnimalType } from "../domain/breed";
+import { Breed, PetType } from "../domain/breed";
 import { BreedAlreadyExistsError } from "../domain/errors/breed-already-exists.error";
 import { FuzzySearchService } from "./fuzzy-search.service";
 import { generateId } from "../infrastructure/utils/uuid";
@@ -33,7 +33,7 @@ export class BreedService {
     return breeds;
   }
 
-  public async getBreedsByType(type: AnimalType): Promise<Breed[]> {
+  public async getBreedsByType(type: PetType): Promise<Breed[]> {
     return this.breedReadRepository.findByType(type);
   }
 
@@ -46,7 +46,7 @@ export class BreedService {
     return breeds[randomIndex];
   }
 
-  public async getRandomBreedByType(type: AnimalType): Promise<Breed | null> {
+  public async getRandomBreedByType(type: PetType): Promise<Breed | null> {
     const breeds = await this.breedReadRepository.findByType(type);
     if (breeds.length === 0) {
       return null;
@@ -55,7 +55,7 @@ export class BreedService {
     return breeds[randomIndex];
   }
 
-  public async addBreed(name: string, animalType: AnimalType): Promise<Breed> {
+  public async addBreed(name: string, petType: PetType): Promise<Breed> {
     const existingBreed = await this.breedReadRepository.findByName(name);
     if (existingBreed) {
       throw new BreedAlreadyExistsError("Breed already exists");
@@ -64,7 +64,7 @@ export class BreedService {
     const newBreed: Breed = {
       id: generateId(),
       name,
-      animalType
+      petType
     };
 
     const savedBreed = await this.breedWriteRepository.save(newBreed);
@@ -75,7 +75,7 @@ export class BreedService {
     return this.breedReadRepository.findById(id);
   }
 
-  public async updateBreed(id: string, name: string, animalType: AnimalType): Promise<Breed> {
+  public async updateBreed(id: string, name: string, petType: PetType): Promise<Breed> {
     const existingBreed = await this.breedReadRepository.findById(id);
     if (!existingBreed) {
       throw new Error("Breed not found");
@@ -89,7 +89,7 @@ export class BreedService {
       }
     }
 
-    return this.breedWriteRepository.update(id, { name, animalType });
+    return this.breedWriteRepository.update(id, { name, petType });
   }
 
   public async deleteBreed(id: string): Promise<void> {

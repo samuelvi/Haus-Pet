@@ -1,15 +1,15 @@
 import { BreedReadRepository, BreedFilters } from "../../domain/breed-read.repository";
 import { BreedWriteRepository } from "../../domain/breed-write.repository";
-import { Breed, AnimalType } from "../../domain/breed";
+import { Breed, PetType } from "../../domain/breed";
 import { generateId } from "../utils/uuid";
 
 export class InMemoryBreedRepository implements BreedReadRepository, BreedWriteRepository {
   private breeds: Breed[] = [
-    { id: generateId(), name: "Siamese", animalType: AnimalType.Cat },
-    { id: generateId(), name: "Persian", animalType: AnimalType.Cat },
-    { id: generateId(), name: "Golden Retriever", animalType: AnimalType.Dog },
-    { id: generateId(), name: "Labrador", animalType: AnimalType.Dog },
-    { id: generateId(), name: "Budgerigar", animalType: AnimalType.Bird },
+    { id: generateId(), name: "Siamese", petType: PetType.Cat },
+    { id: generateId(), name: "Persian", petType: PetType.Cat },
+    { id: generateId(), name: "Golden Retriever", petType: PetType.Dog },
+    { id: generateId(), name: "Labrador", petType: PetType.Dog },
+    { id: generateId(), name: "Budgerigar", petType: PetType.Bird },
   ];
 
   public async findAll(filters?: BreedFilters): Promise<Breed[]> {
@@ -18,7 +18,7 @@ export class InMemoryBreedRepository implements BreedReadRepository, BreedWriteR
     // Only filter by type at repository level
     // Search/fuzzy matching is done at application level for consistency
     if (filters?.type) {
-      result = result.filter((breed) => breed.animalType === filters.type);
+      result = result.filter((breed) => breed.petType === filters.type);
     }
 
     return result.sort((a, b) => a.name.localeCompare(b.name));
@@ -34,8 +34,8 @@ export class InMemoryBreedRepository implements BreedReadRepository, BreedWriteR
     return foundBreed || null;
   }
 
-  public async findByType(type: AnimalType): Promise<Breed[]> {
-    return this.breeds.filter((breed) => breed.animalType === type);
+  public async findByType(type: PetType): Promise<Breed[]> {
+    return this.breeds.filter((breed) => breed.petType === type);
   }
 
   public async save(breed: Breed): Promise<Breed> {

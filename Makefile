@@ -8,7 +8,7 @@ TEST_COMPOSE_FILE = docker/docker-compose.test.yaml
 TEST_COMPOSE = docker compose -f $(TEST_COMPOSE_FILE)
 TEST_API_SERVICE = hauspet_api_test
 
-.PHONY: up down logs restart install shell list-routes prune mongo-shell test test-up test-down test-run test-prune proxy-up proxy-down proxy-logs proxy-restart prod-cert
+.PHONY: up down logs restart install shell list-routes prune mongo-shell reset-db seed test test-up test-down test-run test-prune proxy-up proxy-down proxy-logs proxy-restart prod-cert
 
 # --- Development Environment ---
 up:
@@ -19,6 +19,14 @@ down:
 
 prune:
 	$(COMPOSE) down -v
+
+reset-db:
+	@echo "Resetting dev database schemas/enums/migrations..."
+	@docker compose -f docker/docker-compose.yaml exec hauspet_db sh -c "psql -U user -d hauspet_db -c \"DROP SCHEMA IF EXISTS readmodels CASCADE; DROP SCHEMA IF EXISTS eventstore CASCADE; DROP TABLE IF EXISTS breed, users, _prisma_migrations CASCADE; DROP TYPE IF EXISTS \\\"PetType\\\" CASCADE;\""
+
+seed:
+	@echo "Applying migrations and seeding dev database..."
+	@docker compose -f docker/docker-compose.yaml run --rm hauspet_api sh -c "npm install --silent && npx prisma migrate deploy && npx prisma db seed && npx ts-node prisma/seed-pets-readmodel.ts"
 
 logs:
 	$(COMPOSE) logs -f $(API_SERVICE)

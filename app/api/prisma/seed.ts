@@ -1,4 +1,4 @@
-import { PrismaClient, AnimalType, Role } from '@prisma/client';
+import { PrismaClient, PetType, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { uuidv7 } from 'uuidv7';
 
@@ -6,23 +6,23 @@ const prisma = new PrismaClient();
 
 const breedsToCreate = [
   // Dogs
-  { name: 'Labrador', animalType: AnimalType.dog },
-  { name: 'Beagle', animalType: AnimalType.dog },
-  { name: 'Poodle', animalType: AnimalType.dog },
-  { name: 'Golden Retriever', animalType: AnimalType.dog },
-  { name: 'German Shepherd', animalType: AnimalType.dog },
+  { name: 'Labrador', petType: PetType.dog },
+  { name: 'Beagle', petType: PetType.dog },
+  { name: 'Poodle', petType: PetType.dog },
+  { name: 'Golden Retriever', petType: PetType.dog },
+  { name: 'German Shepherd', petType: PetType.dog },
 
   // Cats
-  { name: 'Siamese', animalType: AnimalType.cat },
-  { name: 'Persian', animalType: AnimalType.cat },
-  { name: 'Sphynx', animalType: AnimalType.cat },
-  { name: 'Maine Coon', animalType: AnimalType.cat },
-  { name: 'Bengal', animalType: AnimalType.cat },
+  { name: 'Siamese', petType: PetType.cat },
+  { name: 'Persian', petType: PetType.cat },
+  { name: 'Sphynx', petType: PetType.cat },
+  { name: 'Maine Coon', petType: PetType.cat },
+  { name: 'Bengal', petType: PetType.cat },
 
   // Birds
-  { name: 'Parakeet', animalType: AnimalType.bird },
-  { name: 'Cockatiel', animalType: AnimalType.bird },
-  { name: 'Macaw', animalType: AnimalType.bird },
+  { name: 'Parakeet', petType: PetType.bird },
+  { name: 'Cockatiel', petType: PetType.bird },
+  { name: 'Macaw', petType: PetType.bird },
 ];
 
 async function main() {
@@ -56,7 +56,7 @@ async function main() {
       create: {
         id: uuidv7(),
         name: b.name,
-        animalType: b.animalType,
+        petType: b.petType,
       },
     });
     console.log(`Created or found breed: ${breed.name} (ID: ${breed.id})`);

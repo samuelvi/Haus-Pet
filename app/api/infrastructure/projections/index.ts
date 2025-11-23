@@ -1,3 +1,3 @@
 // Projection exports
-export { AnimalProjector } from './animal.projector';
+export { PetProjector } from './pet.projector';
 export { SponsorshipProjector } from './sponsorship.projector';

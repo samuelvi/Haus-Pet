@@ -21,7 +21,7 @@ export class SponsorshipProjector {
     await this.prisma.sponsorship.create({
       data: {
         id: event.aggregateId,
-        animalId: data.animalId,
+        petId: data.petId,
         userId: data.userId,
         amount: data.amount,
         currency: data.currency,

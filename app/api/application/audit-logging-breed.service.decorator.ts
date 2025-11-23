@@ -1,6 +1,6 @@
 import { BreedService } from "./breed.service";
 import { AuditService } from "./audit.service";
-import { Breed, AnimalType } from "../domain/breed";
+import { Breed, PetType } from "../domain/breed";
 import { BreedFilters } from "../domain/breed-read.repository";
 import { QueueService } from "../infrastructure/queue/queue.service";
 import { RedisHealthService } from "../infrastructure/queue/redis-health.service";
@@ -58,7 +58,7 @@ export class AuditLoggingBreedServiceDecorator {
     return result;
   }
 
-  public async getBreedsByType(type: AnimalType, auditContext: AuditContext): Promise<Breed[]> {
+  public async getBreedsByType(type: PetType, auditContext: AuditContext): Promise<Breed[]> {
     await this.audit("getBreedsByType", auditContext, `Attempting to get all breeds of type ${type}.`);
     const result = await this.decoratedService.getBreedsByType(type);
     await this.audit("getBreedsByType", auditContext, "", `Successfully retrieved ${result.length} breeds of type ${type}.`);
@@ -72,17 +72,17 @@ export class AuditLoggingBreedServiceDecorator {
     return result;
   }
 
-  public async getRandomBreedByType(type: AnimalType, auditContext: AuditContext): Promise<Breed | null> {
+  public async getRandomBreedByType(type: PetType, auditContext: AuditContext): Promise<Breed | null> {
     await this.audit("getRandomBreedByType", auditContext, `Attempting to get a random breed of type ${type}.`);
     const result = await this.decoratedService.getRandomBreedByType(type);
     await this.audit("getRandomBreedByType", auditContext, "", result ? `Successfully retrieved random breed: ${result.name}` : `No breeds of type ${type} found.`);
     return result;
   }
 
-  public async addBreed(name: string, animalType: AnimalType, auditContext: AuditContext): Promise<Breed> {
-    await this.audit("addBreed", auditContext, `Attempting to add breed: '${name}' of type '${animalType}'.`);
+  public async addBreed(name: string, petType: PetType, auditContext: AuditContext): Promise<Breed> {
+    await this.audit("addBreed", auditContext, `Attempting to add breed: '${name}' of type '${petType}'.`);
     try {
-      const result = await this.decoratedService.addBreed(name, animalType);
+      const result = await this.decoratedService.addBreed(name, petType);
       await this.audit("addBreed", auditContext, "", `Successfully added breed: ${result.name}.`);
       return result;
     } catch (error: any) {
@@ -98,7 +98,7 @@ export class AuditLoggingBreedServiceDecorator {
     return result;
   }
 
-  public async updateBreed(id: string, name: string, animalType: AnimalType, auditContext: AuditContext): Promise<Breed> {
+  public async updateBreed(id: string, name: string, petType: PetType, auditContext: AuditContext): Promise<Breed> {
     try {
       // Get current state before update
       const beforeState = await this.decoratedService.getBreedById(id);
@@ -106,7 +106,7 @@ export class AuditLoggingBreedServiceDecorator {
 
       await this.audit("updateBreed", auditContext, `Attempting to update breed ID ${id}. Before: ${beforeStateStr}`);
 
-      const result = await this.decoratedService.updateBreed(id, name, animalType);
+      const result = await this.decoratedService.updateBreed(id, name, petType);
 
       // Log the after state
       const afterStateStr = JSON.stringify(result);

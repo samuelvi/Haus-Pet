@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { animalService } from '../services/animal.service';
+import { petService } from '../services/pet.service';
 import { useAuth } from '../../../security/src/contexts/AuthContext';
-import type { PetType, CreateAnimalDto, UpdateAnimalDto } from '../types/animal.types';
+import type { PetType, CreatePetDto, UpdatePetDto } from '../types/pet.types';
 
-export const AnimalForm: React.FC = () => {
+export const PetForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
   const { tokens, sessionId } = useAuth();
 
-  const [formData, setFormData] = useState<CreateAnimalDto>({
+  const [formData, setFormData] = useState<CreatePetDto>({
     name: '',
     type: 'cat',
     breed: '',
@@ -21,22 +21,22 @@ export const AnimalForm: React.FC = () => {
 
   useEffect(() => {
     if (isEditing && id) {
-      loadAnimal(id);
+      loadPet(id);
     }
   }, [id, isEditing]);
 
-  const loadAnimal = async (animalId: string): Promise<void> => {
+  const loadPet = async (petId: string): Promise<void> => {
     try {
       setLoading(true);
-      const animal = await animalService.getAnimalById(animalId);
+      const pet = await petService.getPetById(petId);
       setFormData({
-        name: animal.name,
-        type: animal.type,
-        breed: animal.breed,
-        photoUrl: animal.photoUrl,
+        name: pet.name,
+        type: pet.type,
+        breed: pet.breed,
+        photoUrl: pet.photoUrl,
       });
     } catch (err) {
-      setError('Failed to load animal');
+      setError('Failed to load pet');
       console.error(err);
     } finally {
       setLoading(false);
@@ -55,18 +55,18 @@ export const AnimalForm: React.FC = () => {
       setError(null);
 
       if (isEditing && id) {
-        const updateData: UpdateAnimalDto = { ...formData };
+        const updateData: UpdatePetDto = { ...formData };
         if (!updateData.photoUrl) delete updateData.photoUrl;
-        await animalService.updateAnimal(id, updateData, tokens.accessToken, sessionId);
+        await petService.updatePet(id, updateData, tokens.accessToken, sessionId);
       } else {
-        const createData: CreateAnimalDto = { ...formData };
+        const createData: CreatePetDto = { ...formData };
         if (!createData.photoUrl) delete createData.photoUrl;
-        await animalService.createAnimal(createData, tokens.accessToken, sessionId);
+        await petService.createPet(createData, tokens.accessToken, sessionId);
       }
 
-      navigate('/animals');
+      navigate('/pets');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save animal');
+      setError(err instanceof Error ? err.message : 'Failed to save pet');
       console.error(err);
     } finally {
       setLoading(false);
@@ -84,7 +84,7 @@ export const AnimalForm: React.FC = () => {
 
   return (
     <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-      <h2>{isEditing ? 'Edit Animal' : 'Add New Animal'}</h2>
+      <h2>{isEditing ? 'Edit Pet' : 'Add New Pet'}</h2>
 
       {error && (
         <div style={{ padding: '10px', backgroundColor: '#f8d7da', color: '#721c24', borderRadius: '4px', marginBottom: '20px' }}>
@@ -183,11 +183,11 @@ export const AnimalForm: React.FC = () => {
               cursor: loading ? 'not-allowed' : 'pointer',
             }}
           >
-            {loading ? 'Saving...' : isEditing ? 'Update Animal' : 'Create Animal'}
+            {loading ? 'Saving...' : isEditing ? 'Update Pet' : 'Create Pet'}
           </button>
           <button
             type="button"
-            onClick={() => navigate('/animals')}
+            onClick={() => navigate('/pets')}
             style={{
               flex: 1,
               padding: '12px',

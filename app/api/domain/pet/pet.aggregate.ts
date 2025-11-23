@@ -1,16 +1,16 @@
 import { AggregateRoot, DomainEvent } from '../eventsourcing';
 import {
-  AnimalEventTypes,
-  AnimalCreatedData,
-  AnimalUpdatedData,
-  AnimalSponsoredData,
-} from './animal.events';
+  PetEventTypes,
+  PetCreatedData,
+  PetUpdatedData,
+  PetSponsoredData,
+} from './pet.events';
 
 /**
- * Animal Aggregate Root
- * Encapsulates all business logic related to animals and their sponsorships
+ * Pet Aggregate Root
+ * Encapsulates all business logic related to pets and their sponsorships
  */
-export class AnimalAggregate extends AggregateRoot {
+export class PetAggregate extends AggregateRoot {
   private _name: string = '';
   private _type: 'cat' | 'dog' | 'bird' = 'cat';
   private _breed: string = '';
@@ -18,7 +18,6 @@ export class AnimalAggregate extends AggregateRoot {
   private _totalSponsored: number = 0;
   private _isDeleted: boolean = false;
 
-  // Getters
   get name(): string {
     return this._name;
   }
@@ -44,11 +43,11 @@ export class AnimalAggregate extends AggregateRoot {
   }
 
   protected getAggregateType(): string {
-    return 'Animal';
+    return 'Pet';
   }
 
   /**
-   * Creates a new Animal
+   * Creates a new Pet
    */
   static create(
     id: string,
@@ -56,41 +55,41 @@ export class AnimalAggregate extends AggregateRoot {
     type: 'cat' | 'dog' | 'bird',
     breed: string,
     photoUrl: string
-  ): AnimalAggregate {
-    const animal = new AnimalAggregate(id);
-    animal.raiseEvent(AnimalEventTypes.ANIMAL_CREATED, {
+  ): PetAggregate {
+    const pet = new PetAggregate(id);
+    pet.raiseEvent(PetEventTypes.PET_CREATED, {
       name,
       type,
       breed,
       photoUrl,
     } as unknown as Record<string, unknown>);
-    return animal;
+    return pet;
   }
 
   /**
-   * Updates animal information
+   * Updates pet information
    */
-  update(data: AnimalUpdatedData): void {
+  update(data: PetUpdatedData): void {
     if (this._isDeleted) {
-      throw new Error('Cannot update a deleted animal');
+      throw new Error('Cannot update a deleted pet');
     }
-    this.raiseEvent(AnimalEventTypes.ANIMAL_UPDATED, data as unknown as Record<string, unknown>);
+    this.raiseEvent(PetEventTypes.PET_UPDATED, data as unknown as Record<string, unknown>);
   }
 
   /**
-   * Marks the animal as deleted
+   * Marks the pet as deleted
    */
   delete(): void {
     if (this._isDeleted) {
-      throw new Error('Animal is already deleted');
+      throw new Error('Pet is already deleted');
     }
-    this.raiseEvent(AnimalEventTypes.ANIMAL_DELETED, {
+    this.raiseEvent(PetEventTypes.PET_DELETED, {
       deletedAt: new Date().toISOString(),
     });
   }
 
   /**
-   * Records a sponsorship for this animal
+   * Records a sponsorship for this pet
    */
   recordSponsorship(
     sponsorshipId: string,
@@ -99,12 +98,12 @@ export class AnimalAggregate extends AggregateRoot {
     currency: string = 'USD'
   ): void {
     if (this._isDeleted) {
-      throw new Error('Cannot sponsor a deleted animal');
+      throw new Error('Cannot sponsor a deleted pet');
     }
     if (amount <= 0) {
       throw new Error('Sponsorship amount must be positive');
     }
-    this.raiseEvent(AnimalEventTypes.ANIMAL_SPONSORED, {
+    this.raiseEvent(PetEventTypes.PET_SPONSORED, {
       sponsorshipId,
       userId,
       amount,
@@ -117,36 +116,49 @@ export class AnimalAggregate extends AggregateRoot {
    */
   protected applyEvent(event: DomainEvent): void {
     switch (event.eventType) {
-      case AnimalEventTypes.ANIMAL_CREATED:
-        this.applyAnimalCreated(event.data as unknown as AnimalCreatedData);
+      case PetEventTypes.PET_CREATED:
+        this.applyPetCreated(event.data as unknown as PetCreatedData);
         break;
-      case AnimalEventTypes.ANIMAL_UPDATED:
-        this.applyAnimalUpdated(event.data as AnimalUpdatedData);
+      case PetEventTypes.PET_UPDATED:
+        this.applyPetUpdated(event.data as unknown as PetUpdatedData);
         break;
-      case AnimalEventTypes.ANIMAL_DELETED:
+      case PetEventTypes.PET_DELETED:
         this._isDeleted = true;
         break;
-      case AnimalEventTypes.ANIMAL_SPONSORED:
-        this.applyAnimalSponsored(event.data as unknown as AnimalSponsoredData);
+      case PetEventTypes.PET_SPONSORED:
+        this.applyPetSponsored(event.data as unknown as PetSponsoredData);
+        break;
+      // Legacy support for previously named Animal events
+      case 'AnimalCreated':
+        this.applyPetCreated(event.data as unknown as PetCreatedData);
+        break;
+      case 'AnimalUpdated':
+        this.applyPetUpdated(event.data as unknown as PetUpdatedData);
+        break;
+      case 'AnimalDeleted':
+        this._isDeleted = true;
+        break;
+      case 'AnimalSponsored':
+        this.applyPetSponsored(event.data as unknown as PetSponsoredData);
         break;
     }
   }
 
-  private applyAnimalCreated(data: AnimalCreatedData): void {
+  private applyPetCreated(data: PetCreatedData): void {
     this._name = data.name;
     this._type = data.type;
     this._breed = data.breed;
     this._photoUrl = data.photoUrl;
   }
 
-  private applyAnimalUpdated(data: AnimalUpdatedData): void {
+  private applyPetUpdated(data: PetUpdatedData): void {
     if (data.name !== undefined) this._name = data.name;
     if (data.type !== undefined) this._type = data.type;
     if (data.breed !== undefined) this._breed = data.breed;
     if (data.photoUrl !== undefined) this._photoUrl = data.photoUrl;
   }
 
-  private applyAnimalSponsored(data: AnimalSponsoredData): void {
+  private applyPetSponsored(data: PetSponsoredData): void {
     this._totalSponsored += data.amount;
   }
 }

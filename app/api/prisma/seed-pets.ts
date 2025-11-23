@@ -3,7 +3,7 @@ import { uuidv7 } from 'uuidv7';
 
 const prisma = new PrismaClient();
 
-const animals = [
+const pets = [
   // Dogs
   {
     id: uuidv7(),
@@ -97,49 +97,49 @@ const animals = [
   },
 ];
 
-async function seedAnimals(): Promise<void> {
-  console.log('🌱 Seeding animals...');
+async function seedPets(): Promise<void> {
+  console.log('🌱 Seeding pets...');
 
-  // Clear existing animals (optional - comment out to keep existing)
+  // Clear existing pets (optional - comment out to keep existing)
   await prisma.sponsorship.deleteMany();
   await prisma.animal.deleteMany();
-  await prisma.event.deleteMany({ where: { aggregateType: 'Animal' } });
+  await prisma.event.deleteMany({ where: { aggregateType: 'Pet' } });
   await prisma.event.deleteMany({ where: { aggregateType: 'Sponsorship' } });
 
-  console.log('✅ Cleared existing animals and sponsorships');
+  console.log('✅ Cleared existing pets and sponsorships');
 
-  // Insert animals
-  for (const animal of animals) {
+  // Insert pets
+  for (const pet of pets) {
     await prisma.animal.create({
-      data: animal,
+      data: pet,
     });
 
     // Also create the corresponding event for event sourcing consistency
     await prisma.event.create({
       data: {
         id: uuidv7(),
-        aggregateId: animal.id,
-        aggregateType: 'Animal',
-        eventType: 'AnimalCreated',
+        aggregateId: pet.id,
+        aggregateType: 'Pet',
+        eventType: 'PetCreated',
         eventData: {
-          name: animal.name,
-          type: animal.type,
-          breed: animal.breed,
-          photoUrl: animal.photoUrl,
+          name: pet.name,
+          type: pet.type,
+          breed: pet.breed,
+          photoUrl: pet.photoUrl,
         },
         version: 1,
       },
     });
 
-    console.log(`  ✅ Created ${animal.type}: ${animal.name} (${animal.breed})`);
+    console.log(`  ✅ Created ${pet.type}: ${pet.name} (${pet.breed})`);
   }
 
-  console.log(`\n🎉 Seeded ${animals.length} animals successfully!`);
+  console.log(`\n🎉 Seeded ${pets.length} pets successfully!`);
 }
 
-seedAnimals()
+seedPets()
   .catch((e) => {
-    console.error('❌ Error seeding animals:', e);
+    console.error('❌ Error seeding pets:', e);
     process.exit(1);
   })
   .finally(async () => {

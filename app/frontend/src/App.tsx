@@ -6,8 +6,8 @@ import { Login } from './components/Login';
 import { Dashboard } from './components/Dashboard';
 // import { PetList } from './components/PetList'; // TODO: Create BreedList component
 // import { PetForm } from './components/PetForm'; // TODO: Create BreedForm component
-import { AnimalGallery } from './components/AnimalGallery';
-import { AnimalDetail } from './components/AnimalDetail';
+import { PetGallery } from './components/PetGallery';
+import { PetDetail } from './components/PetDetail';
 
 const App: React.FC = () => {
   return (
@@ -19,8 +19,8 @@ const App: React.FC = () => {
 
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/gallery" element={<AnimalGallery />} />
-          <Route path="/animals/:id" element={<AnimalDetail />} />
+          <Route path="/gallery" element={<PetGallery />} />
+          <Route path="/pets/:id" element={<PetDetail />} />
 
           {/* Admin routes - protected by ADMIN role */}
           <Route

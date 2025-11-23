@@ -11,7 +11,7 @@ export type SponsorshipEventType = (typeof SponsorshipEventTypes)[keyof typeof S
  * Data payload for SponsorshipCreated event
  */
 export interface SponsorshipCreatedData {
-  animalId: string;
+  petId: string;
   userId: string;
   userEmail: string;
   amount: number;

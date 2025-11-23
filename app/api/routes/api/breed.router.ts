@@ -8,7 +8,7 @@ import { AuditLoggingBreedServiceDecorator } from "../../application/audit-loggi
 import { QueueService } from "../../infrastructure/queue/queue.service";
 import { RedisHealthService } from "../../infrastructure/queue/redis-health.service";
 import redisConnection from "../../infrastructure/queue/redis-connection";
-import { AnimalType } from "../../domain/breed";
+import { PetType } from "../../domain/breed";
 import { JwtService } from "../../infrastructure/auth/services/jwt.service";
 import { SessionService } from "../../infrastructure/auth/services/session.service";
 import { createAuthMiddleware } from "../../infrastructure/http/middleware/auth.middleware";
@@ -37,11 +37,11 @@ const jwtService = new JwtService();
 const sessionService = new SessionService();
 const authMiddleware = createAuthMiddleware(jwtService, sessionService);
 
-// --- Middleware to validate animal type ---
-const validateAnimalType = (req: Request, res: Response, next: NextFunction) => {
+// --- Middleware to validate pet type ---
+const validatePetType = (req: Request, res: Response, next: NextFunction) => {
   const type = req.params.type;
-  if (!Object.values(AnimalType).includes(type as AnimalType)) {
-    return res.status(400).json({ status: "ERROR", message: `Invalid animal type: '${type}'` });
+  if (!Object.values(PetType).includes(type as PetType)) {
+    return res.status(400).json({ status: "ERROR", message: `Invalid pet type: '${type}'` });
   }
   next();
 };
@@ -70,18 +70,18 @@ router.post("/add", authMiddleware, (req: Request, res: Response) => breedContro
 
 // --- Type-Specific Routes (MUST come before /:id to avoid conflicts) ---
 // GET routes are PUBLIC
-router.get("/:type/random-breed", validateAnimalType, (req: Request, res: Response) => breedController.getRandomBreedByType(req, res));
+router.get("/:type/random-breed", validatePetType, (req: Request, res: Response) => breedController.getRandomBreedByType(req, res));
 
 // POST routes are PROTECTED
-router.post("/:type/add", authMiddleware, validateAnimalType, (req: Request, res: Response) => breedController.addBreedToType(req, res));
+router.post("/:type/add", authMiddleware, validatePetType, (req: Request, res: Response) => breedController.addBreedToType(req, res));
 
 // --- ID-Based Routes (MUST come last due to /:id param) ---
 // GET by type or ID: if it's a valid type, handle as type; otherwise validate as ID
 router.get("/:idOrType", (req: Request, res: Response, next: NextFunction) => {
   const param = req.params.idOrType;
 
-  // Check if it's a valid animal type
-  if (Object.values(AnimalType).includes(param as AnimalType)) {
+  // Check if it's a valid pet type
+  if (Object.values(PetType).includes(param as PetType)) {
     // Remap parameter for controller
     req.params.type = param;
     return breedController.getBreedsByType(req, res);

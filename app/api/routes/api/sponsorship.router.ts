@@ -18,8 +18,8 @@ const sponsorshipController = new SponsorshipController(sponsorshipService);
 // POST /api/sponsorships - Create a new sponsorship
 router.post('/', sponsorshipController.create);
 
-// GET /api/sponsorships/animal/:animalId - Get sponsorships for an animal
-router.get('/animal/:animalId', sponsorshipController.findByAnimal);
+// GET /api/sponsorships/pet/:petId - Get sponsorships for a pet
+router.get('/pet/:petId', sponsorshipController.findByPet);
 
 // GET /api/sponsorships/recent - Get recent sponsorships
 router.get('/recent', sponsorshipController.findRecent);

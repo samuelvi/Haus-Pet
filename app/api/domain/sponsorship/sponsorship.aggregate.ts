@@ -6,7 +6,7 @@ import { SponsorshipEventTypes, SponsorshipCreatedData } from './sponsorship.eve
  * Represents a single sponsorship transaction
  */
 export class SponsorshipAggregate extends AggregateRoot {
-  private _animalId: string = '';
+  private _petId: string = '';
   private _userId: string = '';
   private _userEmail: string = '';
   private _amount: number = 0;
@@ -14,8 +14,8 @@ export class SponsorshipAggregate extends AggregateRoot {
   private _createdAt: Date = new Date();
 
   // Getters
-  get animalId(): string {
-    return this._animalId;
+  get petId(): string {
+    return this._petId;
   }
 
   get userId(): string {
@@ -47,7 +47,7 @@ export class SponsorshipAggregate extends AggregateRoot {
    */
   static create(
     id: string,
-    animalId: string,
+    petId: string,
     userId: string,
     userEmail: string,
     amount: number,
@@ -59,7 +59,7 @@ export class SponsorshipAggregate extends AggregateRoot {
 
     const sponsorship = new SponsorshipAggregate(id);
     sponsorship.raiseEvent(SponsorshipEventTypes.SPONSORSHIP_CREATED, {
-      animalId,
+      petId,
       userId,
       userEmail,
       amount,
@@ -80,7 +80,7 @@ export class SponsorshipAggregate extends AggregateRoot {
   }
 
   private applySponsorshipCreated(data: SponsorshipCreatedData): void {
-    this._animalId = data.animalId;
+    this._petId = data.petId;
     this._userId = data.userId;
     this._userEmail = data.userEmail;
     this._amount = data.amount;

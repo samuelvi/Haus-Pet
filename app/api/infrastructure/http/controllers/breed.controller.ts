@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AuditLoggingBreedServiceDecorator } from "../../../application/audit-logging-breed.service.decorator";
 import { BreedAlreadyExistsError } from "../../../domain/errors/breed-already-exists.error";
-import { AnimalType } from "../../../domain/breed";
+import { PetType } from "../../../domain/breed";
 import { BreedFilters } from "../../../domain/breed-read.repository";
 import { breedSchema, breedIdSchema } from "../validators/breed.validator";
 import { z } from "zod";
@@ -16,8 +16,8 @@ export class BreedController {
       // Extract query parameters
       if (req.query.type && typeof req.query.type === 'string') {
         const type = req.query.type.toLowerCase();
-        if (Object.values(AnimalType).includes(type as AnimalType)) {
-          filters.type = type as AnimalType;
+        if (Object.values(PetType).includes(type as PetType)) {
+          filters.type = type as PetType;
         }
       }
 
@@ -33,7 +33,7 @@ export class BreedController {
   }
 
   public async getBreedsByType(req: Request, res: Response): Promise<void> {
-    const type = req.params.type as AnimalType;
+    const type = req.params.type as PetType;
     try {
       const breeds = await this.breedService.getBreedsByType(type, req.auditContext!);
       res.status(200).json({ status: "OK", data: breeds });
@@ -56,7 +56,7 @@ export class BreedController {
   }
 
   public async getRandomBreedByType(req: Request, res: Response): Promise<void> {
-    const type = req.params.type as AnimalType;
+    const type = req.params.type as PetType;
     try {
       const breed = await this.breedService.getRandomBreedByType(type, req.auditContext!);
       if (breed) {
@@ -79,8 +79,8 @@ export class BreedController {
         return;
       }
 
-      const { name, animalType } = validation.data;
-      const newBreed = await this.breedService.addBreed(name, animalType, req.auditContext!);
+      const { name, petType } = validation.data;
+      const newBreed = await this.breedService.addBreed(name, petType, req.auditContext!);
       res.status(201).json({ status: "OK", data: { message: "Breed added successfully", breed: newBreed } });
     } catch (error: any) {
       if (error instanceof BreedAlreadyExistsError) {
@@ -92,7 +92,7 @@ export class BreedController {
   }
 
   public async addBreedToType(req: Request, res: Response): Promise<void> {
-    const type = req.params.type as AnimalType;
+    const type = req.params.type as PetType;
     try {
       const { name } = req.body;
       if (!name || typeof name !== 'string') {
@@ -150,9 +150,9 @@ export class BreedController {
       }
 
       const { id } = idValidation.data;
-      const { name, animalType } = bodyValidation.data;
+      const { name, petType } = bodyValidation.data;
 
-      const updatedBreed = await this.breedService.updateBreed(id, name, animalType, req.auditContext!);
+      const updatedBreed = await this.breedService.updateBreed(id, name, petType, req.auditContext!);
       res.status(200).json({ status: "OK", data: { message: "Breed updated successfully", breed: updatedBreed } });
     } catch (error: any) {
       if (error.message === "Breed not found") {

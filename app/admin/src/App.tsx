@@ -3,8 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '../../security/src/contexts/AuthContext';
 import { ProtectedRoute } from '../../security/src/components/ProtectedRoute';
 import { Dashboard } from './components/Dashboard';
-import { AnimalList } from './components/AnimalList';
-import { AnimalForm } from './components/AnimalForm';
+import { PetList } from './components/PetList';
+import { PetForm } from './components/PetForm';
 
 /**
  * Backend Management App
@@ -46,30 +46,30 @@ const App: React.FC = () => {
             }
           />
 
-          {/* Animal routes for sponsorship management */}
+          {/* Pet routes for sponsorship management */}
           <Route
-            path="/animals"
+            path="/pets"
             element={
               <ProtectedRoute>
-                <AnimalList />
+                <PetList />
               </ProtectedRoute>
             }
           />
 
           <Route
-            path="/animals/new"
+            path="/pets/new"
             element={
               <ProtectedRoute>
-                <AnimalForm />
+                <PetForm />
               </ProtectedRoute>
             }
           />
 
           <Route
-            path="/animals/edit/:id"
+            path="/pets/edit/:id"
             element={
               <ProtectedRoute>
-                <AnimalForm />
+                <PetForm />
               </ProtectedRoute>
             }
           />
