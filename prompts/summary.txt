@@ -1,0 +1,16 @@
+Revisa el proyecto para que cumpla lo siguiente:
+1. Debe existir una api que ofrece razas (breeds) de animales random. Puede solicitarse por tipo de animal, es decir, pet. (ej: dog, cat)
+2. Debe existir un MCP que hace llamadas a esta api. No sólo get sino también POST.
+3. Debe existir un backend, donde se pueden añadir razas (breeds) de animales
+4. Debe existir una parte frontal (gallery) donde se puede apadrinar (sponsorship) un animal (pet). Cada vez que se apadrina un animal, se guarda un usuario si no existía previamente. Debe haber un total calculado con todos los apadrinamientos. En este caso se ha de usar EventSourcing.
+
+Otros:
+- Cada acción realizada se debe registrar en mongodb (tabla logs), para ello utilizamos el patrón decorator.
+- En lugar de animal, debe usar la palabra pet.
+- Se debe usar prisma.
+- Debe haber scripts para alimentar la base de datos con datos de prueba (fixtures).
+- El entorno test, debe iniciar otros contenedores.
+- Para dev y producción existe un proxy inverso debidamente montado con nginx.
+- Todo el proyecto sigue enfoque DDD.
+
+Cuando lo tengas, revisa que todo se cumple y depués reinicia todo, lanza tests y prueba que todo funciona a la perfección, si algo falla, continua hasta arreglarlo. Cuando finalices sube los cambios y comprueba que pasan las pipelines de github (https://github.com/samuelvi/Haus-Pet/actions)

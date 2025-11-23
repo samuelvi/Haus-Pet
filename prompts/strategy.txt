@@ -1,0 +1,15 @@
+creación de docker
+creación de razas
+creación de api tectura
+refactoring a modo ddd
+ampliación tipo de razas
+ampliación api lectura
+ampliación api escritura
+orm prisma
+logger, factory en mongo
+orm mongo
+incorporar pets
+
+Event sourcing para gestión de pets y sponsorship
+
+
