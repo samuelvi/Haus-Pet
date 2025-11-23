@@ -53,12 +53,8 @@ This approach ensures:
 ```
 tests/
 ├── unit/                           # Vitest unit tests
-│   ├── repositories/               # Repository layer tests
-│   │   ├── breed-repository.test.ts
-│   │   └── sponsorship-repository.test.ts
-│   ├── services/                   # Service layer tests (future)
-│   ├── middleware/                 # Middleware tests (future)
-│   └── utils/                      # Utility function tests (future)
+│   └── utils/                      # Utility function tests
+│       └── example.test.ts         # Example unit test
 │
 ├── integration/                    # Playwright integration tests
 │   ├── auth.spec.ts               # Authentication endpoints
@@ -176,11 +172,16 @@ describe('BreedRepository', () => {
 ```
 
 **What to Test:**
-- Repository methods (CRUD operations)
-- Service business logic
-- Utility functions
+- Pure utility functions (string manipulation, formatting)
+- Business logic calculations (without external dependencies)
 - Validation functions
-- Error handling
+- Algorithm implementations
+- Error handling logic
+
+**What NOT to Test:**
+- Repository methods → Use integration tests
+- Database operations → Use integration tests
+- API endpoints → Use integration/functional tests
 
 ### 2. Integration Tests
 

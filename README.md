@@ -312,7 +312,9 @@ This project implements a comprehensive testing strategy with three levels of te
 ### Test Levels
 
 #### 1. Unit Tests (Vitest)
-Fast, isolated tests for individual components like repositories and services. These tests use mocks and don't require external dependencies.
+Fast, isolated tests for pure utility functions, business logic, and algorithms. These tests use mocks and don't require external dependencies.
+
+**Note:** Repository and database tests are covered by integration tests for better real-world validation.
 
 **Run unit tests:**
 ```sh
@@ -330,6 +332,11 @@ npm run test:unit:coverage  # With coverage
 ```
 
 **Location:** `tests/unit/`
+
+**Example tests:**
+- Utility functions (string manipulation, validation)
+- Business logic calculations
+- Pure functions without side effects
 
 #### 2. Integration Tests (Playwright)
 Tests that verify interactions between components and external services (database, API endpoints). These tests run against a real test environment.
