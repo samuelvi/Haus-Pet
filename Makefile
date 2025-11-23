@@ -8,7 +8,7 @@ TEST_COMPOSE_FILE = docker/docker-compose.test.yaml
 TEST_COMPOSE = docker compose -f $(TEST_COMPOSE_FILE)
 TEST_API_SERVICE = hauspet_api_test
 
-.PHONY: up down logs restart install shell list-routes prune mongo-shell reset-db seed test test-up test-down test-run test-prune proxy-up proxy-down proxy-logs proxy-restart prod-cert
+.PHONY: up down logs restart install shell list-routes prune mongo-shell reset-db seed test test-up test-down test-run test-prune test-unit test-integration test-functional test-all proxy-up proxy-down proxy-logs proxy-restart prod-cert
 
 # --- Development Environment ---
 up:
@@ -71,7 +71,20 @@ test-list-routes:
 	@$(TEST_COMPOSE) run --rm $(TEST_API_SERVICE) sh -c "npm install > /dev/null && ./node_modules/.bin/ts-node scripts/list-routes.ts"
 
 
-test:
+# --- Tests ---
+test-unit:
+	@echo "Running unit tests with Vitest..."
+	@npm run test:unit
+
+test-unit-watch:
+	@echo "Running unit tests in watch mode..."
+	@npm run test:unit:watch
+
+test-unit-coverage:
+	@echo "Running unit tests with coverage..."
+	@npm run test:unit:coverage
+
+test-integration:
 	@make test-up
 	@echo "Waiting for API to be ready..."
 	@attempts=0; \
@@ -88,12 +101,43 @@ test:
 		echo "API not ready, waiting 2 seconds... (Attempt $$attempts/$$max_attempts)"; \
 		sleep 2; \
 	done
-	@echo "API is ready! Running tests..."
-	@# Run tests and capture the exit code to ensure cleanup always happens.
-	@make test-run ; EXIT_CODE=$$? ; \
+	@echo "API is ready! Running integration tests..."
+	@npx playwright test tests/integration ; EXIT_CODE=$$? ; \
 		echo "Cleaning up test environment..." ; \
 		make test-down ; \
 		exit $$EXIT_CODE
+
+test-functional:
+	@make test-up
+	@echo "Waiting for API to be ready..."
+	@attempts=0; \
+	max_attempts=20; \
+	until curl -s -f -o /dev/null http://localhost:3000/api/breeds/; do \
+		attempts=$$(($$attempts + 1)); \
+		if [ "$$attempts" -ge "$$max_attempts" ]; then \
+			echo "API failed to start after $$(($$max_attempts * 2)) seconds."; \
+			echo "Dumping container logs for debugging..."; \
+			$(TEST_COMPOSE) logs $(TEST_API_SERVICE); \
+			make test-down; \
+			exit 1; \
+		fi; \
+		echo "API not ready, waiting 2 seconds... (Attempt $$attempts/$$max_attempts)"; \
+		sleep 2; \
+	done
+	@echo "API is ready! Running functional tests..."
+	@npx playwright test tests/functional ; EXIT_CODE=$$? ; \
+		echo "Cleaning up test environment..." ; \
+		make test-down ; \
+		exit $$EXIT_CODE
+
+test-all:
+	@echo "Running all tests (unit, integration, functional)..."
+	@make test-unit
+	@make test-integration
+	@make test-functional
+
+test:
+	@make test-all
 
 # --- Proxy (Local Development) ---
 PROXY_COMPOSE_FILE = docker/docker-compose.proxy.yaml

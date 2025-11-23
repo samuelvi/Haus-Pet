@@ -307,15 +307,203 @@ If you were to deploy this application manually (e.g., on a cloud server without
 
 ## Testing
 
-This project uses **Playwright** for functional API testing. The tests run against a real, isolated database to ensure that the entire application stack works as expected.
+This project implements a comprehensive testing strategy with three levels of tests to ensure code quality and reliability.
 
-To run the tests, you can use the following command:
+### Test Levels
 
+#### 1. Unit Tests (Vitest)
+Fast, isolated tests for individual components like repositories and services. These tests use mocks and don't require external dependencies.
+
+**Run unit tests:**
 ```sh
-npm run test:functional
+make test-unit              # Run once
+make test-unit-watch        # Watch mode
+make test-unit-coverage     # With coverage report
 ```
 
-For a more detailed explanation of the testing philosophy, environment, and available commands, please see the **[Testing Guide](./docs/TESTING.md)**.
+**Using npm:**
+```sh
+npm run test:unit           # Run once
+npm run test:unit:watch     # Watch mode
+npm run test:unit:ui        # Interactive UI
+npm run test:unit:coverage  # With coverage
+```
+
+**Location:** `tests/unit/`
+
+#### 2. Integration Tests (Playwright)
+Tests that verify interactions between components and external services (database, API endpoints). These tests run against a real test environment.
+
+**Run integration tests:**
+```sh
+make test-integration       # Starts test env, runs tests, cleans up
+```
+
+**Using npm:**
+```sh
+npm run test:integration    # Run integration tests only
+```
+
+**Location:** `tests/integration/`
+
+**Test Coverage:**
+- Authentication flows (signup, login, logout, token refresh)
+- Public routes (no authentication required)
+- Admin-only routes with role verification
+- Sponsorship system with duplicate user prevention
+- Edge cases (concurrent requests, boundary values, data integrity)
+
+#### 3. Functional Tests (Playwright)
+End-to-end tests that verify complete user workflows and business processes, including event sourcing behavior.
+
+**Run functional tests:**
+```sh
+make test-functional        # Starts test env, runs tests, cleans up
+```
+
+**Using npm:**
+```sh
+npm run test:functional     # Run functional tests only
+```
+
+**Location:** `tests/functional/`
+
+**Test Coverage:**
+- Complete pet CRUD operations with event sourcing verification
+- Event history reconstruction
+- Read model consistency
+- Sponsorship workflows
+
+### Running All Tests
+
+To run all test suites sequentially:
+
+```sh
+make test          # or make test-all
+npm test           # or npm run test:all
+```
+
+This will execute:
+1. Unit tests (fast)
+2. Integration tests (with test environment)
+3. Functional tests (with test environment)
+
+### Test Environment
+
+Integration and functional tests use a dedicated test environment:
+- **Test Database:** PostgreSQL on port 5433 (separate from dev port 5432)
+- **Test API:** Running on port 3000
+- **Isolated:** Completely separate from development environment
+- **Auto-cleanup:** Test environment is automatically torn down after tests
+
+### Test Configuration
+
+- **Unit Tests:** `vitest.config.ts`
+- **Integration/Functional Tests:** `playwright.config.ts`
+
+### Writing Tests
+
+#### Unit Test Example
+```typescript
+// tests/unit/repositories/breed-repository.test.ts
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+describe('BreedRepository', () => {
+  it('should return all breeds', async () => {
+    // Test implementation
+  });
+});
+```
+
+#### Integration Test Example
+```typescript
+// tests/integration/auth.spec.ts
+import { test, expect } from '@playwright/test';
+
+test('should login successfully', async ({ request }) => {
+  const response = await request.post('/api/auth/login', {
+    data: { email: 'admin@hauspet.com', password: 'Admin123' }
+  });
+  expect(response.status()).toBe(200);
+});
+```
+
+### Critical Test Cases
+
+The test suite includes critical scenarios:
+
+✅ **Duplicate User Prevention:** Ensures the same email doesn't create multiple users during sponsorship
+✅ **Event Sourcing:** Verifies all CRUD operations generate correct domain events
+✅ **Role-Based Access:** Validates admin-only routes reject regular users
+✅ **Concurrent Requests:** Tests race conditions and data consistency
+✅ **Edge Cases:** Boundary values, invalid inputs, error handling
+
+### CI/CD Integration
+
+The project includes a comprehensive GitHub Actions workflow that automatically runs all tests on every push and pull request to the `main` branch.
+
+**Pipeline Structure:**
+
+```
+┌─────────────────┐
+│  Unit Tests     │  (Fast, no dependencies)
+└────────┬────────┘
+         │ ✓ Pass
+         ▼
+┌─────────────────┐
+│ Integration     │  (Docker + API + DB)
+│ Tests           │
+└────────┬────────┘
+         │ ✓ Pass
+         ▼
+┌─────────────────┐
+│ Functional      │  (Full workflows)
+│ Tests           │
+└────────┬────────┘
+         │ ✓ Pass
+         ▼
+┌─────────────────┐
+│ Test Summary    │  (Overall status)
+└─────────────────┘
+```
+
+**Workflow File:** `.github/workflows/test.yml`
+
+**Triggers:**
+- Push to `main` branch
+- Pull requests to `main` branch
+
+**Jobs:**
+
+1. **Unit Tests**
+   - Runs Vitest tests (isolated, no dependencies)
+   - Generates code coverage report
+   - Uploads coverage as artifact
+
+2. **Integration Tests**
+   - Starts Docker test environment
+   - Runs Playwright integration tests
+   - Uploads test reports
+
+3. **Functional Tests**
+   - Starts Docker test environment
+   - Runs Playwright functional tests
+   - Uploads test reports
+
+4. **Test Summary**
+   - Aggregates results from all test suites
+   - Fails if any suite failed
+   - Displays overall status
+
+**Artifacts:**
+- Coverage reports (7 days retention)
+- Integration test reports (7 days retention)
+- Functional test reports (7 days retention)
+
+**View Results:**
+Go to the **Actions** tab in your GitHub repository to see test runs and download artifacts.
+
+For a more detailed explanation of the testing philosophy and architecture, please see the **[Testing Guide](./docs/TESTING.md)**.
 
 ## MCP Server
 
