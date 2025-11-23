@@ -318,8 +318,8 @@ test.describe('Breed CRUD Integration Tests', () => {
   test.describe('PUT /api/breeds/:id - Update breed', () => {
     let testBreedId: string;
 
-    test.beforeAll(async ({ request }) => {
-      // Create a breed for update tests
+    test.beforeEach(async ({ request }) => {
+      // Create a breed for each update test
       const newBreed = {
         name: 'Breed For Update ' + Date.now(),
         petType: 'cat',
