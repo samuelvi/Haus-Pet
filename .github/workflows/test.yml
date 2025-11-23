@@ -55,7 +55,7 @@ jobs:
         run: |
           echo "Waiting for API to be ready..."
           for i in {1..30}; do
-            if curl -s -f -o /dev/null http://localhost:3000/api/pets/; then
+            if curl -s -f -o /dev/null http://localhost:3000/api/breeds; then
               echo "API is ready!"
               break
             fi
