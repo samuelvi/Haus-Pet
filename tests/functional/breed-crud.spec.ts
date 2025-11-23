@@ -228,12 +228,12 @@ test.describe('Breed CRUD Integration Tests', () => {
 
       const data = await response.json();
       expect(data.status).toBe('ERROR');
-      expect(data.message).toContain('Animal type must be one of');
+      expect(data.message).toContain('Pet type must be one of');
     });
 
     test('should return 400 for missing name', async ({ request }) => {
       const newBreed = {
-        animalType: 'dog',
+        petType: 'dog',
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
@@ -295,7 +295,7 @@ test.describe('Breed CRUD Integration Tests', () => {
     test('should return 409 for duplicate breed', async ({ request }) => {
       const duplicateBreed = {
         name: 'Labrador', // Already exists in seed data
-        animalType: 'dog',
+        petType: 'dog',
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
@@ -322,7 +322,7 @@ test.describe('Breed CRUD Integration Tests', () => {
       // Create a breed for update tests
       const newBreed = {
         name: 'Breed For Update ' + Date.now(),
-        animalType: 'cat',
+        petType: 'cat',
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
@@ -341,7 +341,7 @@ test.describe('Breed CRUD Integration Tests', () => {
     test('should update breed with valid data and authentication', async ({ request }) => {
       const updatedData = {
         name: 'Updated Breed ' + Date.now(),
-        animalType: 'dog',
+        petType: 'dog',
       };
 
       const response = await request.put(`${API_BASE}/api/breeds/${testBreedId}`, {
@@ -359,13 +359,13 @@ test.describe('Breed CRUD Integration Tests', () => {
       expect(data.status).toBe('OK');
       expect(data.data.breed.id).toBe(testBreedId);
       expect(data.data.breed.name).toBe(updatedData.name);
-      expect(data.data.breed.animalType).toBe(updatedData.animalType);
+      expect(data.data.breed.petType).toBe(updatedData.petType);
     });
 
     test('should return 401 without authentication', async ({ request }) => {
       const updatedData = {
         name: 'Unauthorized Update',
-        animalType: 'bird',
+        petType: 'bird',
       };
 
       const response = await request.put(`${API_BASE}/api/breeds/${testBreedId}`, {
@@ -379,7 +379,7 @@ test.describe('Breed CRUD Integration Tests', () => {
     test('should return 404 for non-existent breed', async ({ request }) => {
       const updatedData = {
         name: 'Non Existent',
-        animalType: 'dog',
+        petType: 'dog',
       };
 
       // Use a valid UUID format but non-existent ID
@@ -403,7 +403,7 @@ test.describe('Breed CRUD Integration Tests', () => {
     test('should return 400 for invalid name validation', async ({ request }) => {
       const updatedData = {
         name: 'X', // Too short
-        animalType: 'cat',
+        petType: 'cat',
       };
 
       const response = await request.put(`${API_BASE}/api/breeds/${testBreedId}`, {
@@ -424,7 +424,7 @@ test.describe('Breed CRUD Integration Tests', () => {
     test('should return 400 for invalid ID format', async ({ request }) => {
       const updatedData = {
         name: 'Valid Breed',
-        animalType: 'dog',
+        petType: 'dog',
       };
 
       const response = await request.put(`${API_BASE}/api/breeds/invalid`, {
@@ -450,7 +450,7 @@ test.describe('Breed CRUD Integration Tests', () => {
       // Create a breed for each delete test
       const newBreed = {
         name: 'Breed For Delete ' + Date.now(),
-        animalType: 'bird',
+        petType: 'bird',
       };
 
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
