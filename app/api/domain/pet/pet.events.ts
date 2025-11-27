@@ -15,7 +15,7 @@ export type PetEventType = (typeof PetEventTypes)[keyof typeof PetEventTypes];
  */
 export interface PetCreatedData {
   name: string;
-  type: 'cat' | 'dog' | 'bird';
+  type: string;
   breed: string;
   photoUrl: string;
 }
@@ -25,7 +25,7 @@ export interface PetCreatedData {
  */
 export interface PetUpdatedData {
   name?: string;
-  type?: 'cat' | 'dog' | 'bird';
+  type?: string;
   breed?: string;
   photoUrl?: string;
 }

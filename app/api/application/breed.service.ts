@@ -4,13 +4,15 @@ import { Breed, PetType } from "../domain/breed";
 import { BreedAlreadyExistsError } from "../domain/errors/breed-already-exists.error";
 import { FuzzySearchService } from "./fuzzy-search.service";
 import { generateId } from "../infrastructure/utils/uuid";
+import { BreedTypeRepository } from "../domain/breed-type.repository";
 
 export class BreedService {
   private fuzzySearchService: FuzzySearchService;
 
   constructor(
     private readonly breedReadRepository: BreedReadRepository,
-    private readonly breedWriteRepository: BreedWriteRepository
+    private readonly breedWriteRepository: BreedWriteRepository,
+    private readonly breedTypeRepository: BreedTypeRepository
   ) {
     this.fuzzySearchService = new FuzzySearchService();
   }
@@ -61,10 +63,16 @@ export class BreedService {
       throw new BreedAlreadyExistsError("Breed already exists");
     }
 
+    const breedType = await this.breedTypeRepository.findByName(petType);
+    if (!breedType?.id) {
+      throw new Error(`Breed type '${petType}' does not exist`);
+    }
+
     const newBreed: Breed = {
       id: generateId(),
       name,
-      petType
+      petType,
+      breedTypeId: breedType.id,
     };
 
     const savedBreed = await this.breedWriteRepository.save(newBreed);
@@ -89,13 +97,23 @@ export class BreedService {
       }
     }
 
-    return this.breedWriteRepository.update(id, { name, petType });
+    const breedType = await this.breedTypeRepository.findByName(petType);
+    if (!breedType?.id) {
+      throw new Error(`Breed type '${petType}' does not exist`);
+    }
+
+    return this.breedWriteRepository.update(id, { name, petType, breedTypeId: breedType.id });
   }
 
   public async deleteBreed(id: string): Promise<void> {
     const existingBreed = await this.breedReadRepository.findById(id);
     if (!existingBreed) {
       throw new Error("Breed not found");
+    }
+
+    const petsUsing = await this.breedReadRepository.countPetsUsingBreedName(existingBreed.name);
+    if (petsUsing > 0) {
+      throw new Error("Cannot delete breed: there are pets using this breed");
     }
 
     await this.breedWriteRepository.delete(id);

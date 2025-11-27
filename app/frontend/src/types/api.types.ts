@@ -41,12 +41,13 @@ export interface LoginData {
   password: string;
 }
 
-export type PetType = 'cat' | 'dog' | 'bird';
+export type PetType = string;
 
 export interface Breed {
   id: string;
   name: string;
   petType: PetType;
+  breedTypeId?: string;
 }
 
 export interface BreedFormData {
@@ -57,4 +58,9 @@ export interface BreedFormData {
 export interface BreedFilters {
   type?: PetType;
   search?: string;
+}
+
+export interface BreedType {
+  id: string;
+  name: string;
 }

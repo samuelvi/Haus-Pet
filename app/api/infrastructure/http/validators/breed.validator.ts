@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { PetType } from '../../../domain/breed';
 
 /**
  * Validation schema for creating/updating a breed
@@ -11,9 +10,10 @@ export const breedSchema = z.object({
     .min(2, 'Name must be at least 2 characters long')
     .max(50, 'Name must not exceed 50 characters')
     .regex(/^[a-zA-Z0-9\s-]+$/, 'Name can only contain letters, numbers, spaces, and hyphens'),
-  petType: z.nativeEnum(PetType, {
-    errorMap: () => ({ message: `Pet type must be one of: ${Object.values(PetType).join(', ')}` }),
-  }),
+  petType: z
+    .string({ required_error: 'petType is required' })
+    .trim()
+    .min(1, 'petType must be provided'),
 });
 
 /**

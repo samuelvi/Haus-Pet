@@ -4,6 +4,7 @@ import authRouter from "./auth.router";
 import petRouter from "./pet.router";
 import sponsorshipRouter from "./sponsorship.router";
 import adminPetRouter from "./admin/pet.router";
+import adminBreedTypeRouter from "./admin/breed-type.router";
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use("/sponsorships", sponsorshipRouter);
 
 // Admin routes (TODO: add auth middleware)
 router.use("/admin/pets", adminPetRouter);
+router.use("/admin/breed-types", adminBreedTypeRouter);
 
 export default router;

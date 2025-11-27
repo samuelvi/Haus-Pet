@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { PetService, CreatePetDto, UpdatePetDto } from '../../../application/pet.service';
-import { PetType } from '@prisma/client';
 
 // UUID validation regex (supports all UUID versions including UUIDv7)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -30,14 +29,12 @@ export class PetController {
   findByType = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { type } = req.params;
-      const validTypes: PetType[] = ['cat', 'dog', 'bird'];
-
-      if (!validTypes.includes(type as PetType)) {
-        res.status(400).json({ error: `Invalid type. Must be one of: ${validTypes.join(', ')}` });
+      if (!type || typeof type !== 'string') {
+        res.status(400).json({ error: 'Invalid type' });
         return;
       }
 
-      const pets = await this.petService.findByType(type as PetType);
+      const pets = await this.petService.findByType(type);
       res.json(pets);
     } catch (error) {
       next(error);
@@ -101,12 +98,6 @@ export class PetController {
         return;
       }
 
-      const validTypes = ['cat', 'dog', 'bird'];
-      if (!validTypes.includes(dto.type)) {
-        res.status(400).json({ error: `Invalid type. Must be one of: ${validTypes.join(', ')}` });
-        return;
-      }
-
       const pet = await this.petService.create(dto);
       res.status(201).json(pet);
     } catch (error) {
@@ -127,14 +118,6 @@ export class PetController {
       }
 
       const dto: UpdatePetDto = req.body;
-
-      if (dto.type) {
-        const validTypes = ['cat', 'dog', 'bird'];
-        if (!validTypes.includes(dto.type)) {
-          res.status(400).json({ error: `Invalid type. Must be one of: ${validTypes.join(', ')}` });
-          return;
-        }
-      }
 
       const pet = await this.petService.update(id, dto);
       res.json(pet);

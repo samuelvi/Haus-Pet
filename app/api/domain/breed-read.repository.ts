@@ -10,4 +10,5 @@ export interface BreedReadRepository {
   findById(id: string): Promise<Breed | null>;
   findByName(name: string): Promise<Breed | null>;
   findByType(type: PetType): Promise<Breed[]>;
+  countPetsUsingBreedName(name: string): Promise<number>;
 }

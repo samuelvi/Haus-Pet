@@ -12,7 +12,7 @@ export class PhotoService {
   /**
    * Fetches a random photo URL for the given pet type
    */
-  async getRandomPhoto(type: 'cat' | 'dog' | 'bird'): Promise<string> {
+  async getRandomPhoto(type: string): Promise<string> {
     try {
       switch (type) {
         case 'cat':

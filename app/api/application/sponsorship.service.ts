@@ -163,4 +163,26 @@ export class SponsorshipService {
       take: limit,
     });
   }
+
+  /**
+   * Deletes a sponsorship and recalculates pet total
+   */
+  async delete(id: string): Promise<void> {
+    const sponsorship = await this.prisma.sponsorship.findUnique({ where: { id } });
+    if (!sponsorship) {
+      throw new Error("Sponsorship not found");
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.sponsorship.delete({ where: { id } }),
+      this.prisma.pet.update({
+        where: { id: sponsorship.petId },
+        data: {
+          totalSponsored: {
+            decrement: sponsorship.amount,
+          },
+        },
+      }),
+    ]);
+  }
 }

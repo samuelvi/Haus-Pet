@@ -11,10 +11,22 @@ datasource db {
   schemas  = ["public", "eventstore", "readmodels"]
 }
 
+model BreedType {
+  id        String   @id // UUIDv7 generated in application code
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  breeds    Breed[]
+
+  @@map("breed_types")
+  @@schema("public")
+}
+
 model Breed {
-  id      String   @id // UUIDv7 generated in application code
-  name    String   @unique
-  petType PetType  @map("pet_type")
+  id          String    @id // UUIDv7 generated in application code
+  name        String    @unique
+  breedTypeId String    @map("breed_type_id")
+  breedType   BreedType @relation(fields: [breedTypeId], references: [id])
 
   @@map("breed")
   @@schema("public")
@@ -32,14 +44,6 @@ model User {
   sponsorships Sponsorship[] // Relation to sponsorships
 
   @@map("users")
-  @@schema("public")
-}
-
-enum PetType {
-  cat
-  dog
-  bird
-
   @@schema("public")
 }
 
@@ -74,7 +78,7 @@ model Event {
 model Pet {
   id             String        @id // UUIDv7 generated in application code
   name           String
-  type           PetType
+  type           String
   breed          String
   photoUrl       String        @map("photo_url")
   totalSponsored Decimal       @default(0) @map("total_sponsored") @db.Decimal(10, 2)

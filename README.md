@@ -43,9 +43,30 @@ HausPet/
 - Prisma schema and migrations live in `app/api/prisma/`.
 - Docker Compose brings up API, worker, frontend, Postgres, Redis, MongoDB, and nginx for local dev. The same stack has a dedicated test variant in `docker/docker-compose.test.yaml`.
 
-## Database Initialization and First-Time Setup
+## Quick Start
 
-This project uses Prisma to manage the database schema. For a clean setup or reset:
+### First-Time Setup
+
+To initialize the entire HausPet development environment:
+
+```sh
+make init
+```
+
+This command will:
+1. Stop any existing services
+2. Build all Docker containers
+3. Start all services (API, worker, frontend, databases, nginx)
+4. Display access URLs and useful commands
+
+After initialization, access the application at:
+- **Frontend:** http://localhost:5173
+- **API:** http://localhost:3000
+- **Nginx (Proxy):** http://localhost
+
+### Database Reset
+
+For a clean database setup or reset:
 
 ```sh
 make prune      # stop stack and clear dev volumes
@@ -97,7 +118,8 @@ See the **[Authentication API](#authentication-api)** section for detailed examp
 The project includes a React-based admin panel with **role-based access control**:
 
 - **Technology:** React + TypeScript + Vite
-- **Styling:** Inline styles (wireframe/minimalist design)
+- **Styling:** Tailwind CSS v3.4 (modern, responsive design system)
+- **Documentation:** See [docs/TAILWIND.md](docs/TAILWIND.md) for styling guide
 - **Routing:** React Router DOM with protected routes
 - **State Management:** Context API (AuthContext)
 - **Security:** Role-based authentication (ADMIN only)
@@ -208,6 +230,49 @@ This project uses Docker to run. Make sure you have Docker and Docker Compose in
 
 ## Development
 
+### Common Makefile Commands
+
+The project includes a comprehensive Makefile with commands for managing the development environment:
+
+#### Environment Management
+```sh
+make init          # 🚀 Initialize entire environment (first-time setup)
+make up            # Start all services
+make down          # Stop all services
+make restart       # Restart all services
+make prune         # Stop and remove all volumes (clean slate)
+make logs          # View API logs
+```
+
+#### Frontend (GUI) Commands
+```sh
+make gui-build     # Rebuild frontend container (use after package.json changes)
+make gui-restart   # Restart frontend service
+make gui-logs      # View frontend logs
+make gui-shell     # Access frontend container shell
+```
+
+#### Database Commands
+```sh
+make reset-db      # Reset database schema and migrations
+make seed          # Apply migrations and seed data
+make mongo-shell   # Access MongoDB audit database
+```
+
+#### Testing
+```sh
+make test          # Run all tests (unit + integration + functional)
+make test-unit     # Run unit tests only
+make test-integration  # Run integration tests
+make test-functional   # Run functional tests with Playwright
+```
+
+#### Utilities
+```sh
+make list-routes   # List all API routes
+make shell         # Access API container shell
+```
+
 ### Suggesting a Commit Message (AI-assisted)
 
 This project includes a tool to help you write Conventional Commit messages with AI assistance.
@@ -307,14 +372,12 @@ If you were to deploy this application manually (e.g., on a cloud server without
 
 ## Testing
 
-This project implements a comprehensive testing strategy with three levels of tests to ensure code quality and reliability.
+This project uses automated testing to ensure code quality and reliability.
 
 ### Test Levels
 
 #### 1. Unit Tests (Vitest)
 Fast, isolated tests for pure utility functions, business logic, and algorithms. These tests use mocks and don't require external dependencies.
-
-**Note:** Repository and database tests are covered by integration tests for better real-world validation.
 
 **Run unit tests:**
 ```sh
@@ -333,35 +396,11 @@ npm run test:unit:coverage  # With coverage
 
 **Location:** `tests/unit/`
 
-**Example tests:**
-- Utility functions (string manipulation, validation)
-- Business logic calculations
-- Pure functions without side effects
+**Current tests:**
+- Example utility function tests
 
-#### 2. Integration Tests (Playwright)
-Tests that verify interactions between components and external services (database, API endpoints). These tests run against a real test environment.
-
-**Run integration tests:**
-```sh
-make test-integration       # Starts test env, runs tests, cleans up
-```
-
-**Using npm:**
-```sh
-npm run test:integration    # Run integration tests only
-```
-
-**Location:** `tests/integration/`
-
-**Test Coverage:**
-- Authentication flows (signup, login, logout, token refresh)
-- Public routes (no authentication required)
-- Admin-only routes with role verification
-- Sponsorship system with duplicate user prevention
-- Edge cases (concurrent requests, boundary values, data integrity)
-
-#### 3. Functional Tests (Playwright)
-End-to-end tests that verify complete user workflows and business processes, including event sourcing behavior.
+#### 2. Functional Tests (Playwright)
+End-to-end tests that verify complete user workflows and business processes against a real test environment.
 
 **Run functional tests:**
 ```sh
@@ -375,15 +414,12 @@ npm run test:functional     # Run functional tests only
 
 **Location:** `tests/functional/`
 
-**Test Coverage:**
-- Complete pet CRUD operations with event sourcing verification
-- Event history reconstruction
-- Read model consistency
-- Sponsorship workflows
+**Current tests:**
+- Breed CRUD operations (create, read, update, delete)
 
 ### Running All Tests
 
-To run all test suites sequentially:
+To run all test suites:
 
 ```sh
 make test          # or make test-all
@@ -391,13 +427,12 @@ npm test           # or npm run test:all
 ```
 
 This will execute:
-1. Unit tests (fast)
-2. Integration tests (with test environment)
-3. Functional tests (with test environment)
+1. Unit tests (fast, no dependencies)
+2. Functional tests (with Docker test environment)
 
 ### Test Environment
 
-Integration and functional tests use a dedicated test environment:
+Functional tests use a dedicated test environment:
 - **Test Database:** PostgreSQL on port 5433 (separate from dev port 5432)
 - **Test API:** Running on port 3000
 - **Isolated:** Completely separate from development environment
@@ -406,44 +441,7 @@ Integration and functional tests use a dedicated test environment:
 ### Test Configuration
 
 - **Unit Tests:** `vitest.config.ts`
-- **Integration/Functional Tests:** `playwright.config.ts`
-
-### Writing Tests
-
-#### Unit Test Example
-```typescript
-// tests/unit/repositories/breed-repository.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-describe('BreedRepository', () => {
-  it('should return all breeds', async () => {
-    // Test implementation
-  });
-});
-```
-
-#### Integration Test Example
-```typescript
-// tests/integration/auth.spec.ts
-import { test, expect } from '@playwright/test';
-
-test('should login successfully', async ({ request }) => {
-  const response = await request.post('/api/auth/login', {
-    data: { email: 'admin@hauspet.com', password: 'Admin123' }
-  });
-  expect(response.status()).toBe(200);
-});
-```
-
-### Critical Test Cases
-
-The test suite includes critical scenarios:
-
-✅ **Duplicate User Prevention:** Ensures the same email doesn't create multiple users during sponsorship
-✅ **Event Sourcing:** Verifies all CRUD operations generate correct domain events
-✅ **Role-Based Access:** Validates admin-only routes reject regular users
-✅ **Concurrent Requests:** Tests race conditions and data consistency
-✅ **Edge Cases:** Boundary values, invalid inputs, error handling
+- **Functional Tests:** `playwright.config.ts`
 
 ### CI/CD Integration
 
@@ -528,6 +526,7 @@ The project includes a complete Pet Sponsorship System built with **Event Sourci
 - **Sponsorship** - Users can sponsor pets with donations
 - **Event Sourcing** - All changes are stored as immutable events
 - **Admin Management** - Protected CRUD operations for pets
+- **Admin UI (frontend)** - `/admin/pets` (event-sourced CRUD with fuzzy search) and `/admin/breeds` (Prisma CRUD)
 
 ### Seeding Pet Data
 
@@ -561,6 +560,24 @@ This creates 11 pets: 4 dogs, 4 cats, and 3 birds with photos and sample sponsor
 | POST | `/api/admin/pets` | Create new pet |
 | PATCH | `/api/admin/pets/:id` | Update pet |
 | DELETE | `/api/admin/pets/:id` | Delete pet |
+
+#### Admin UI (Frontend)
+
+- Login as `admin@hauspet.com / Admin123`
+- Dashboard links:
+  - `http://localhost/admin/pets` (event-sourced CRUD for pets, with fuzzy search in the admin list)
+  - `http://localhost/admin/breeds` (Prisma-based CRUD for breeds)
+  - `http://localhost/admin/breed-types` (breed type CRUD; delete blocked if breeds exist)
+- All admin UI routes are under `/admin/*` and protected by the ADMIN role
+
+#### Breed Type Admin Routes 🔒 (Requires ADMIN role)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/breed-types` | List breed types |
+| POST | `/api/admin/breed-types` | Create breed type |
+| PATCH | `/api/admin/breed-types/:id` | Rename breed type |
+| DELETE | `/api/admin/breed-types/:id` | Delete breed type (fails if breeds exist) |
 
 ### Sponsorship API Endpoints
 

@@ -12,7 +12,7 @@ import {
  */
 export class PetAggregate extends AggregateRoot {
   private _name: string = '';
-  private _type: 'cat' | 'dog' | 'bird' = 'cat';
+  private _type: string = 'cat';
   private _breed: string = '';
   private _photoUrl: string = '';
   private _totalSponsored: number = 0;
@@ -22,7 +22,7 @@ export class PetAggregate extends AggregateRoot {
     return this._name;
   }
 
-  get type(): 'cat' | 'dog' | 'bird' {
+  get type(): string {
     return this._type;
   }
 
@@ -52,7 +52,7 @@ export class PetAggregate extends AggregateRoot {
   static create(
     id: string,
     name: string,
-    type: 'cat' | 'dog' | 'bird',
+    type: string,
     breed: string,
     photoUrl: string
   ): PetAggregate {

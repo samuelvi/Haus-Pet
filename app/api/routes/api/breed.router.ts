@@ -8,17 +8,19 @@ import { AuditLoggingBreedServiceDecorator } from "../../application/audit-loggi
 import { QueueService } from "../../infrastructure/queue/queue.service";
 import { RedisHealthService } from "../../infrastructure/queue/redis-health.service";
 import redisConnection from "../../infrastructure/queue/redis-connection";
-import { PetType } from "../../domain/breed";
 import { JwtService } from "../../infrastructure/auth/services/jwt.service";
 import { SessionService } from "../../infrastructure/auth/services/session.service";
 import { createAuthMiddleware } from "../../infrastructure/http/middleware/auth.middleware";
+import { PostgresBreedTypeRepository } from "../../infrastructure/repositories/postgres-breed-type.repository";
+import prisma from "../../infrastructure/database/prisma-client";
 
 const router = Router();
 
 // --- Dependency Injection / Composition Root ---
 
 const breedRepository = createBreedRepository();
-const realBreedService = new BreedService(breedRepository, breedRepository);
+const breedTypeRepository = new PostgresBreedTypeRepository(prisma);
+const realBreedService = new BreedService(breedRepository, breedRepository, breedTypeRepository);
 // The MongoAuditRepository no longer needs a client passed to its constructor.
 const auditRepository = new MongoAuditRepository();
 const auditService = new AuditService(auditRepository);
@@ -40,8 +42,8 @@ const authMiddleware = createAuthMiddleware(jwtService, sessionService);
 // --- Middleware to validate pet type ---
 const validatePetType = (req: Request, res: Response, next: NextFunction) => {
   const type = req.params.type;
-  if (!Object.values(PetType).includes(type as PetType)) {
-    return res.status(400).json({ status: "ERROR", message: `Invalid pet type: '${type}'` });
+  if (!type || typeof type !== "string" || type.trim().length === 0) {
+    return res.status(400).json({ status: "ERROR", message: "Invalid pet type" });
   }
   next();
 };
@@ -81,7 +83,7 @@ router.get("/:idOrType", (req: Request, res: Response, next: NextFunction) => {
   const param = req.params.idOrType;
 
   // Check if it's a valid pet type
-  if (Object.values(PetType).includes(param as PetType)) {
+  if (param && param.length > 0 && !param.includes("-")) {
     // Remap parameter for controller
     req.params.type = param;
     return breedController.getBreedsByType(req, res);

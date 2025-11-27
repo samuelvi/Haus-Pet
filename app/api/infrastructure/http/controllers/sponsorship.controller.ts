@@ -77,4 +77,25 @@ export class SponsorshipController {
       next(error);
     }
   };
+
+  /**
+   * DELETE /api/sponsorships/:id - Delete sponsorship and recalc totals
+   */
+  delete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        res.status(400).json({ error: 'Sponsorship id is required' });
+        return;
+      }
+      await this.sponsorshipService.delete(id);
+      res.status(204).send();
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("not found")) {
+        res.status(404).json({ error: 'Sponsorship not found' });
+        return;
+      }
+      next(error);
+    }
+  };
 }

@@ -1,4 +1,11 @@
-import type { Pet, Sponsorship, CreateSponsorshipDto, PetType } from '../types/pet.types';
+import type {
+  Pet,
+  Sponsorship,
+  CreateSponsorshipDto,
+  PetType,
+  CreatePetInput,
+  UpdatePetInput,
+} from '../types/pet.types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -56,5 +63,67 @@ export const petService = {
       throw new Error('Failed to fetch sponsorships');
     }
     return response.json();
+  },
+
+  async createPet(
+    data: CreatePetInput,
+    accessToken: string,
+    sessionId: string
+  ): Promise<Pet> {
+    const response = await fetch(`${API_URL}/api/admin/pets`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'x-session-id': sessionId,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to create pet');
+    }
+
+    return response.json();
+  },
+
+  async updatePet(
+    id: string,
+    data: UpdatePetInput,
+    accessToken: string,
+    sessionId: string
+  ): Promise<Pet> {
+    const response = await fetch(`${API_URL}/api/admin/pets/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'x-session-id': sessionId,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to update pet');
+    }
+
+    return response.json();
+  },
+
+  async deletePet(id: string, accessToken: string, sessionId: string): Promise<void> {
+    const response = await fetch(`${API_URL}/api/admin/pets/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'x-session-id': sessionId,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to delete pet');
+    }
   },
 };

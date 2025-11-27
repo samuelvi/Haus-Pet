@@ -1,4 +1,4 @@
-export type PetType = 'cat' | 'dog' | 'bird';
+export type PetType = string;
 
 export interface Pet {
   id: string;
@@ -32,4 +32,18 @@ export interface CreateSponsorshipDto {
   name: string;
   amount: number;
   currency?: string;
+}
+
+export interface CreatePetInput {
+  name: string;
+  type: PetType;
+  breed: string;
+  photoUrl?: string;
+}
+
+export interface UpdatePetInput {
+  name?: string;
+  type?: PetType;
+  breed?: string;
+  photoUrl?: string;
 }

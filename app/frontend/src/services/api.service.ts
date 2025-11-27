@@ -13,6 +13,7 @@ import type {
   Breed,
   BreedFormData,
   BreedFilters,
+  BreedType,
 } from '../types/api.types';
 
 const API_BASE_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -194,6 +195,75 @@ class ApiService {
     sessionId: string
   ): Promise<void> {
     await this.request<{ message: string }>(`/api/breeds/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'x-session-id': sessionId,
+      },
+    });
+  }
+
+  /**
+   * List breed types (admin)
+   */
+  async getBreedTypes(accessToken: string, sessionId: string): Promise<BreedType[]> {
+    return this.request<BreedType[]>('/api/admin/breed-types', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'x-session-id': sessionId,
+      },
+    });
+  }
+
+  /**
+   * Create breed type (admin)
+   */
+  async createBreedType(
+    name: string,
+    accessToken: string,
+    sessionId: string
+  ): Promise<BreedType> {
+    const res = await this.request<BreedType>('/api/admin/breed-types', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'x-session-id': sessionId,
+      },
+      body: JSON.stringify({ name }),
+    });
+    return res;
+  }
+
+  /**
+   * Update breed type (admin)
+   */
+  async updateBreedType(
+    id: string,
+    name: string,
+    accessToken: string,
+    sessionId: string
+  ): Promise<BreedType> {
+    const res = await this.request<BreedType>(`/api/admin/breed-types/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'x-session-id': sessionId,
+      },
+      body: JSON.stringify({ name }),
+    });
+    return res;
+  }
+
+  /**
+   * Delete breed type (admin)
+   */
+  async deleteBreedType(
+    id: string,
+    accessToken: string,
+    sessionId: string
+  ): Promise<void> {
+    await this.request<void>(`/api/admin/breed-types/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

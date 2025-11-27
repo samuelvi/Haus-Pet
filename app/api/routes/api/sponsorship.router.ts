@@ -24,4 +24,7 @@ router.get('/pet/:petId', sponsorshipController.findByPet);
 // GET /api/sponsorships/recent - Get recent sponsorships
 router.get('/recent', sponsorshipController.findRecent);
 
+// DELETE /api/sponsorships/:id - Delete sponsorship and recalc totals
+router.delete('/:id', sponsorshipController.delete);
+
 export default router;

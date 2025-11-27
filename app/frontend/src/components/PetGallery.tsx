@@ -33,193 +33,182 @@ export const PetGallery: React.FC = () => {
     loadPets();
   }, [typeFilter]);
 
+  const petTypeConfig = [
+    { type: '', label: 'All Pets', emoji: '🐾', color: 'primary' },
+    { type: 'cat', label: 'Cats', emoji: '🐱', color: 'orange' },
+    { type: 'dog', label: 'Dogs', emoji: '🐕', color: 'green' },
+    { type: 'bird', label: 'Birds', emoji: '🐦', color: 'purple' },
+  ];
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'dog': return 'bg-green-500';
+      case 'cat': return 'bg-orange-500';
+      case 'bird': return 'bg-purple-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
   if (loading) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
-        <div style={{ fontSize: '24px' }}>Loading adorable pets...</div>
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-4">
+            <svg className="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          </div>
+          <p className="text-xl font-semibold text-gray-700">Loading adorable pets...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1400px', margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '2.5rem', color: '#2c3e50', marginBottom: '10px' }}>
-          🐾 Pet Sponsorship Gallery
-        </h1>
-        <p style={{ color: '#7f8c8d', fontSize: '1.1rem' }}>
-          Help our furry friends by sponsoring them today!
-        </p>
-      </div>
-
-      {error && (
-        <div style={{ padding: '15px', backgroundColor: '#f8d7da', color: '#721c24', borderRadius: '8px', marginBottom: '20px', textAlign: 'center' }}>
-          {error}
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent mb-2">
+              Pet Sponsorship Gallery
+            </h1>
+            <p className="text-lg text-gray-600">
+              Help our furry friends find their forever homes by sponsoring them today
+            </p>
+          </div>
         </div>
-      )}
+      </header>
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '30px', gap: '10px', flexWrap: 'wrap' }}>
-        <button
-          onClick={() => setTypeFilter('')}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: typeFilter === '' ? '#3498db' : '#ecf0f1',
-            color: typeFilter === '' ? 'white' : '#2c3e50',
-            border: 'none',
-            borderRadius: '25px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            fontSize: '1rem',
-            transition: 'all 0.3s',
-          }}
-        >
-          All Pets
-        </button>
-        <button
-          onClick={() => setTypeFilter('cat')}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: typeFilter === 'cat' ? '#e67e22' : '#ecf0f1',
-            color: typeFilter === 'cat' ? 'white' : '#2c3e50',
-            border: 'none',
-            borderRadius: '25px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            fontSize: '1rem',
-          }}
-        >
-          🐱 Cats
-        </button>
-        <button
-          onClick={() => setTypeFilter('dog')}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: typeFilter === 'dog' ? '#27ae60' : '#ecf0f1',
-            color: typeFilter === 'dog' ? 'white' : '#2c3e50',
-            border: 'none',
-            borderRadius: '25px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            fontSize: '1rem',
-          }}
-        >
-          🐕 Dogs
-        </button>
-        <button
-          onClick={() => setTypeFilter('bird')}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: typeFilter === 'bird' ? '#9b59b6' : '#ecf0f1',
-            color: typeFilter === 'bird' ? 'white' : '#2c3e50',
-            border: 'none',
-            borderRadius: '25px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            fontSize: '1rem',
-          }}
-        >
-          🐦 Birds
-        </button>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px' }}>
-        {pets.map((pet) => (
-          <div
-            key={pet.id}
-            style={{
-              borderRadius: '16px',
-              overflow: 'hidden',
-              backgroundColor: '#fff',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-              transition: 'transform 0.3s, box-shadow 0.3s',
-              cursor: 'pointer',
-            }}
-            onClick={() => navigate(`/pets/${pet.id}`)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-5px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
-            }}
-          >
-            <div style={{ position: 'relative' }}>
-              <img
-                src={pet.photoUrl}
-                alt={pet.name}
-                style={{ width: '100%', height: '250px', objectFit: 'cover' }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://placehold.co/400x250/gray/white?text=${pet.type}`;
-                }}
-              />
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '15px',
-                  right: '15px',
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  backgroundColor: pet.type === 'dog' ? '#27ae60' : pet.type === 'cat' ? '#e67e22' : '#9b59b6',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: '0.9rem',
-                  textTransform: 'capitalize',
-                }}
-              >
-                {pet.type}
-              </span>
-            </div>
-            <div style={{ padding: '20px' }}>
-              <h3 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', color: '#2c3e50' }}>{pet.name}</h3>
-              <p style={{ margin: '5px 0', color: '#7f8c8d' }}>
-                Breed: <strong>{pet.breed}</strong>
-              </p>
-              <div
-                style={{
-                  marginTop: '15px',
-                  padding: '15px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '10px',
-                  textAlign: 'center',
-                }}
-              >
-                <span style={{ fontSize: '0.9rem', color: '#7f8c8d' }}>Total Sponsored</span>
-                <div style={{ fontSize: '1.6rem', fontWeight: 'bold', color: '#27ae60' }}>
-                  ${Number(pet.totalSponsored).toFixed(2)}
-                </div>
-              </div>
-              <button
-                style={{
-                  width: '100%',
-                  marginTop: '15px',
-                  padding: '14px',
-                  backgroundColor: '#e74c3c',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '1rem',
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/pets/${pet.id}`);
-                }}
-              >
-                ❤️ Sponsor {pet.name}
-              </button>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 p-4">
+            <div className="flex items-center gap-3">
+              <svg className="w-6 h-6 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <p className="font-medium text-red-800">{error}</p>
             </div>
           </div>
-        ))}
-      </div>
+        )}
 
-      {pets.length === 0 && !loading && (
-        <div style={{ textAlign: 'center', padding: '60px', color: '#7f8c8d' }}>
-          <div style={{ fontSize: '4rem', marginBottom: '20px' }}>🐾</div>
-          <p style={{ fontSize: '1.2rem' }}>No pets found. Check back soon!</p>
+        {/* Filter Buttons */}
+        <div className="flex flex-wrap justify-center gap-3 mb-8">
+          {petTypeConfig.map((config) => {
+            const isActive = typeFilter === config.type;
+            const colorClasses = {
+              primary: isActive ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-primary-50',
+              orange: isActive ? 'bg-orange-500 text-white' : 'bg-white text-gray-700 hover:bg-orange-50',
+              green: isActive ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-green-50',
+              purple: isActive ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 hover:bg-purple-50',
+            }[config.color];
+
+            return (
+              <button
+                key={config.type}
+                onClick={() => setTypeFilter(config.type as PetType | '')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft hover:shadow-medium ${colorClasses} ${isActive ? 'scale-105' : ''}`}
+              >
+                <span className="mr-2">{config.emoji}</span>
+                {config.label}
+              </button>
+            );
+          })}
         </div>
-      )}
+
+        {/* Pet Grid */}
+        {pets.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {pets.map((pet) => (
+              <div
+                key={pet.id}
+                onClick={() => navigate(`/pets/${pet.id}`)}
+                className="group card hover:shadow-large transition-all duration-300 cursor-pointer transform hover:-translate-y-2"
+              >
+                {/* Pet Image */}
+                <div className="relative overflow-hidden">
+                  <img
+                    src={pet.photoUrl}
+                    alt={pet.name}
+                    className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-300"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://placehold.co/400x300/e2e8f0/64748b?text=${pet.type}`;
+                    }}
+                  />
+                  {/* Type Badge */}
+                  <div className="absolute top-3 right-3">
+                    <span className={`${getTypeColor(pet.type)} text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase shadow-lg`}>
+                      {pet.type}
+                    </span>
+                  </div>
+                  {/* Overlay on Hover */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </div>
+
+                {/* Pet Info */}
+                <div className="card-body space-y-3">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors mb-1">
+                      {pet.name}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Breed:</span> {pet.breed}
+                    </p>
+                  </div>
+
+                  {/* Sponsorship Amount */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                    <p className="text-xs text-green-700 font-medium uppercase tracking-wide mb-1">
+                      Total Sponsored
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${Number(pet.totalSponsored).toFixed(2)}
+                    </p>
+                  </div>
+
+                  {/* Sponsor Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/pets/${pet.id}`);
+                    }}
+                    className="btn btn-danger w-full py-3 flex items-center justify-center gap-2 group-hover:scale-105 transition-transform"
+                  >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                    </svg>
+                    Sponsor {pet.name}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Empty State */
+          <div className="text-center py-20">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-white rounded-full shadow-soft mb-6">
+              <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">No pets found</h3>
+            <p className="text-gray-600">Check back soon for more adorable friends!</p>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
+          <p className="text-gray-600">
+            Made with{' '}
+            <span className="text-red-500">❤️</span>
+            {' '}for our furry friends
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };

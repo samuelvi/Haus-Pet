@@ -1,6 +1,7 @@
 COMPOSE_FILE = docker/docker-compose.yaml
 COMPOSE = docker compose -f $(COMPOSE_FILE)
 API_SERVICE = hauspet_api
+GUI_SERVICE = hauspet_gui
 MONGO_SHELL_CMD = mongosh -u audit_user -p audit_pass --authenticationDatabase admin
 
 # --- Test Environment ---
@@ -8,7 +9,7 @@ TEST_COMPOSE_FILE = docker/docker-compose.test.yaml
 TEST_COMPOSE = docker compose -f $(TEST_COMPOSE_FILE)
 TEST_API_SERVICE = hauspet_api_test
 
-.PHONY: up down logs restart install shell list-routes prune mongo-shell reset-db seed test test-up test-down test-run test-prune test-unit test-integration test-functional test-all proxy-up proxy-down proxy-logs proxy-restart prod-cert
+.PHONY: up down logs restart install shell list-routes prune mongo-shell reset-db seed test test-up test-down test-run test-prune test-unit test-integration test-functional test-all proxy-up proxy-down proxy-logs proxy-restart prod-cert gui-build gui-restart gui-logs gui-shell init
 
 # --- Development Environment ---
 up:
@@ -47,6 +48,51 @@ list-routes:
 
 mongo-shell:
 	$(COMPOSE) exec hauspet_audit_db $(MONGO_SHELL_CMD)
+
+# --- Frontend (GUI) Commands ---
+gui-build:
+	@echo "Rebuilding frontend container..."
+	@$(COMPOSE) stop $(GUI_SERVICE)
+	@$(COMPOSE) build --no-cache $(GUI_SERVICE)
+	@$(COMPOSE) up -d $(GUI_SERVICE)
+	@echo "Frontend rebuilt successfully!"
+
+gui-restart:
+	@echo "Restarting frontend..."
+	@$(COMPOSE) restart $(GUI_SERVICE)
+
+gui-logs:
+	@$(COMPOSE) logs -f $(GUI_SERVICE)
+
+gui-shell:
+	@$(COMPOSE) exec $(GUI_SERVICE) sh
+
+# --- Initialization ---
+init:
+	@echo "🚀 Initializing HausPet development environment..."
+	@echo ""
+	@echo "📦 Building and starting all services..."
+	@$(COMPOSE) down
+	@$(COMPOSE) build
+	@$(COMPOSE) up -d
+	@echo ""
+	@echo "⏳ Waiting for services to be ready..."
+	@sleep 10
+	@echo ""
+	@echo "✅ HausPet is ready!"
+	@echo ""
+	@echo "🌐 Access points:"
+	@echo "   - Frontend (GUI):  http://localhost:5173"
+	@echo "   - API:             http://localhost:3000"
+	@echo "   - Nginx:           http://localhost"
+	@echo ""
+	@echo "📚 Useful commands:"
+	@echo "   make logs          - View API logs"
+	@echo "   make gui-logs      - View frontend logs"
+	@echo "   make restart       - Restart all services"
+	@echo "   make gui-restart   - Restart frontend only"
+	@echo "   make down          - Stop all services"
+	@echo ""
 
 # --- Test Environment ---
 test-up:

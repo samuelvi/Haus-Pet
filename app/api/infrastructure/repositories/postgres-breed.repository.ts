@@ -1,4 +1,4 @@
-import { PrismaClient, Breed as PrismaBreed, PetType as PrismaPetType } from "@prisma/client";
+import { PrismaClient, Breed as PrismaBreed } from "@prisma/client";
 import { BreedReadRepository, BreedFilters } from "../../domain/breed-read.repository";
 import { BreedWriteRepository } from "../../domain/breed-write.repository";
 import { Breed as DomainBreed, PetType as DomainPetType } from "../../domain/breed";
@@ -11,8 +11,8 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
     return {
       id: prismaBreed.id,
       name: prismaBreed.name,
-      // Cast the string value from Prisma's enum to the domain's enum
-      petType: prismaBreed.petType as DomainPetType,
+      petType: (prismaBreed as any).breedType?.name ?? (prismaBreed as any).petType ?? '',
+      breedTypeId: (prismaBreed as any).breedTypeId ?? (prismaBreed as any).breed_type_id,
     };
   }
 
@@ -22,20 +22,39 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
     // Only filter by type at database level
     // Search/fuzzy matching is done at application level for database agnosticism
     if (filters?.type) {
-      where.petType = filters.type as PrismaPetType;
+      where.breedType = {
+        name: {
+          equals: filters.type,
+          mode: 'insensitive',
+        },
+      };
     }
 
     const prismaBreeds = await this.prisma.breed.findMany({
-      where,
+      where: where as any,
       orderBy: { name: 'asc' },
+      include: { breedType: true } as any,
     });
 
     return prismaBreeds.map(this.toDomain);
   }
 
+  public async countPetsUsingBreedName(name: string): Promise<number> {
+    const count = await this.prisma.pet.count({
+      where: {
+        breed: {
+          equals: name,
+          mode: "insensitive",
+        },
+      },
+    });
+    return count;
+  }
+
   public async findById(id: string): Promise<DomainBreed | null> {
     const prismaBreed = await this.prisma.breed.findUnique({
       where: { id },
+      include: { breedType: true } as any,
     });
     return prismaBreed ? this.toDomain(prismaBreed) : null;
   }
@@ -48,14 +67,22 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
           mode: 'insensitive',
         },
       },
+      include: { breedType: true } as any,
     });
     return prismaBreed ? this.toDomain(prismaBreed) : null;
   }
 
   public async findByType(type: DomainPetType): Promise<DomainBreed[]> {
     const prismaBreeds = await this.prisma.breed.findMany({
-      // Cast the domain enum to the Prisma enum for the query
-      where: { petType: type as PrismaPetType },
+      where: {
+        breedType: {
+          name: {
+            equals: type,
+            mode: 'insensitive',
+          },
+        },
+      } as any,
+      include: { breedType: true } as any,
     });
     return prismaBreeds.map(this.toDomain);
   }
@@ -69,8 +96,9 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
       data: {
         id: breed.id, // UUIDv7 must be provided
         name: breed.name,
-        petType: breed.petType as PrismaPetType,
+        breedTypeId: breed.breedTypeId,
       },
+      include: { breedType: true } as any,
     });
 
     return this.toDomain(createdPrismaBreed);
@@ -83,12 +111,18 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
       updateData.name = breedData.name;
     }
     if (breedData.petType !== undefined) {
-      updateData.petType = breedData.petType as PrismaPetType;
+      updateData.breedType = {
+        connect: { name: breedData.petType },
+      };
+    }
+    if (breedData.breedTypeId !== undefined) {
+      updateData.breedTypeId = breedData.breedTypeId;
     }
 
     const updatedPrismaBreed = await this.prisma.breed.update({
       where: { id },
       data: updateData,
+      include: { breedType: true } as any,
     });
 
     return this.toDomain(updatedPrismaBreed);

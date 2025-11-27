@@ -5,11 +5,11 @@ import { generateId } from "../utils/uuid";
 
 export class InMemoryBreedRepository implements BreedReadRepository, BreedWriteRepository {
   private breeds: Breed[] = [
-    { id: generateId(), name: "Siamese", petType: PetType.Cat },
-    { id: generateId(), name: "Persian", petType: PetType.Cat },
-    { id: generateId(), name: "Golden Retriever", petType: PetType.Dog },
-    { id: generateId(), name: "Labrador", petType: PetType.Dog },
-    { id: generateId(), name: "Budgerigar", petType: PetType.Bird },
+    { id: generateId(), name: "Siamese", petType: "cat", breedTypeId: "type-cat" },
+    { id: generateId(), name: "Persian", petType: "cat", breedTypeId: "type-cat" },
+    { id: generateId(), name: "Golden Retriever", petType: "dog", breedTypeId: "type-dog" },
+    { id: generateId(), name: "Labrador", petType: "dog", breedTypeId: "type-dog" },
+    { id: generateId(), name: "Budgerigar", petType: "bird", breedTypeId: "type-bird" },
   ];
 
   public async findAll(filters?: BreedFilters): Promise<Breed[]> {
@@ -36,6 +36,10 @@ export class InMemoryBreedRepository implements BreedReadRepository, BreedWriteR
 
   public async findByType(type: PetType): Promise<Breed[]> {
     return this.breeds.filter((breed) => breed.petType === type);
+  }
+
+  public async countPetsUsingBreedName(_name: string): Promise<number> {
+    return 0;
   }
 
   public async save(breed: Breed): Promise<Breed> {

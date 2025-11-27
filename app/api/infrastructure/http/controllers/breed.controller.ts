@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AuditLoggingBreedServiceDecorator } from "../../../application/audit-logging-breed.service.decorator";
 import { BreedAlreadyExistsError } from "../../../domain/errors/breed-already-exists.error";
-import { PetType } from "../../../domain/breed";
+import type { PetType } from "../../../domain/breed";
 import { BreedFilters } from "../../../domain/breed-read.repository";
 import { breedSchema, breedIdSchema } from "../validators/breed.validator";
 import { z } from "zod";
@@ -15,17 +15,14 @@ export class BreedController {
 
       // Extract query parameters
       if (req.query.type && typeof req.query.type === 'string') {
-        const type = req.query.type.toLowerCase();
-        if (Object.values(PetType).includes(type as PetType)) {
-          filters.type = type as PetType;
-        }
+        filters.type = req.query.type.toLowerCase();
       }
 
       if (req.query.search && typeof req.query.search === 'string') {
         filters.search = req.query.search.trim();
       }
 
-      const breeds = await this.breedService.getAllBreeds(req.auditContext!, filters);
+      const breeds = await this.breedService.getAllBreeds((req as any).auditContext ?? {}, filters);
       res.status(200).json({ status: "OK", data: breeds });
     } catch (error) {
       res.status(500).json({ status: "ERROR", message: "Error fetching breeds" });
@@ -35,7 +32,7 @@ export class BreedController {
   public async getBreedsByType(req: Request, res: Response): Promise<void> {
     const type = req.params.type as PetType;
     try {
-      const breeds = await this.breedService.getBreedsByType(type, req.auditContext!);
+      const breeds = await this.breedService.getBreedsByType(type, (req as any).auditContext ?? {});
       res.status(200).json({ status: "OK", data: breeds });
     } catch (error) {
       res.status(500).json({ status: "ERROR", message: `Error fetching ${type} breeds` });
@@ -44,7 +41,7 @@ export class BreedController {
 
   public async getRandomBreed(req: Request, res: Response): Promise<void> {
     try {
-      const breed = await this.breedService.getRandomBreed(req.auditContext!);
+      const breed = await this.breedService.getRandomBreed((req as any).auditContext ?? {});
       if (breed) {
         res.status(200).json({ status: "OK", data: breed });
       } else {
@@ -58,7 +55,7 @@ export class BreedController {
   public async getRandomBreedByType(req: Request, res: Response): Promise<void> {
     const type = req.params.type as PetType;
     try {
-      const breed = await this.breedService.getRandomBreedByType(type, req.auditContext!);
+      const breed = await this.breedService.getRandomBreedByType(type, (req as any).auditContext ?? {});
       if (breed) {
         res.status(200).json({ status: "OK", data: breed });
       } else {
@@ -80,7 +77,7 @@ export class BreedController {
       }
 
       const { name, petType } = validation.data;
-      const newBreed = await this.breedService.addBreed(name, petType, req.auditContext!);
+      const newBreed = await this.breedService.addBreed(name, petType, (req as any).auditContext ?? {});
       res.status(201).json({ status: "OK", data: { message: "Breed added successfully", breed: newBreed } });
     } catch (error: any) {
       if (error instanceof BreedAlreadyExistsError) {
@@ -100,7 +97,7 @@ export class BreedController {
         return;
       }
 
-      const newBreed = await this.breedService.addBreed(name, type, req.auditContext!);
+      const newBreed = await this.breedService.addBreed(name, type, (req as any).auditContext ?? {});
       res.status(201).json({ status: "OK", data: { message: `${type} breed added successfully`, breed: newBreed } });
     } catch (error: any) {
       if (error instanceof BreedAlreadyExistsError) {
@@ -121,7 +118,7 @@ export class BreedController {
       }
 
       const { id } = validation.data;
-      const breed = await this.breedService.getBreedById(id, req.auditContext!);
+      const breed = await this.breedService.getBreedById(id, (req as any).auditContext ?? {});
       if (breed) {
         res.status(200).json({ status: "OK", data: breed });
       } else {
@@ -152,7 +149,7 @@ export class BreedController {
       const { id } = idValidation.data;
       const { name, petType } = bodyValidation.data;
 
-      const updatedBreed = await this.breedService.updateBreed(id, name, petType, req.auditContext!);
+      const updatedBreed = await this.breedService.updateBreed(id, name, petType, (req as any).auditContext ?? {});
       res.status(200).json({ status: "OK", data: { message: "Breed updated successfully", breed: updatedBreed } });
     } catch (error: any) {
       if (error.message === "Breed not found") {
@@ -175,11 +172,13 @@ export class BreedController {
       }
 
       const { id } = validation.data;
-      await this.breedService.deleteBreed(id, req.auditContext!);
+      await this.breedService.deleteBreed(id, (req as any).auditContext ?? {});
       res.status(200).json({ status: "OK", data: { message: "Breed deleted successfully" } });
     } catch (error: any) {
       if (error.message === "Breed not found") {
         res.status(404).json({ status: "ERROR", message: error.message });
+      } else if (error.message?.includes("pets using this breed")) {
+        res.status(400).json({ status: "ERROR", message: error.message });
       } else {
         res.status(500).json({ status: "ERROR", message: "Error deleting breed" });
       }

@@ -1,9 +1,10 @@
-import { PrismaClient, Pet, PetType } from '@prisma/client';
+import { PrismaClient, Pet } from '@prisma/client';
 import { PetAggregate } from '../domain/pet';
 import { EventStoreRepository } from '../domain/eventsourcing';
 import { PetProjector } from '../infrastructure/projections';
 import { PhotoService } from '../infrastructure/services';
 import { generateId } from '../infrastructure/utils/uuid';
+import type { PetType } from '../domain/breed';
 
 export interface CreatePetDto {
   name: string;
@@ -41,7 +42,7 @@ export class PetService {
     const id = generateId();
 
     // Fetch random photo if not provided
-    const photoUrl = dto.photoUrl || (await this.photoService.getRandomPhoto(dto.type));
+    const photoUrl = dto.photoUrl || (await this.photoService.getRandomPhoto(dto.type as any));
 
     // Create aggregate and raise event
     const pet = PetAggregate.create(id, dto.name, dto.type, dto.breed, photoUrl);
@@ -92,6 +93,11 @@ export class PetService {
    */
   async delete(id: string): Promise<void> {
     // Load aggregate from history
+    const sponsorshipCount = await this.prisma.sponsorship.count({ where: { petId: id } });
+    if (sponsorshipCount > 0) {
+      throw new Error("Cannot delete pet with existing sponsorships");
+    }
+
     const events = await this.eventStore.getEventsForAggregate(id);
     if (events.length === 0) {
       throw new Error(`Pet with id ${id} not found`);
