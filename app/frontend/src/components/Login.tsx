@@ -27,17 +27,17 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-100 via-primary-50 to-white px-4">
       <div className="w-full max-w-md">
         {/* Logo/Brand Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-2xl mb-4 shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-secondary-500 rounded-2xl mb-4 shadow-lg">
             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">HausPet Admin</h1>
-          <p className="text-gray-600">Sign in to manage your pet shelter</p>
+          <h1 className="text-3xl font-bold text-dark-900 mb-2">HausPet Admin</h1>
+          <p className="text-warm-700">Sign in to manage your pet shelter</p>
         </div>
 
         {/* Login Card */}
@@ -111,12 +111,12 @@ export const Login: React.FC = () => {
             </form>
 
             {/* Demo Credentials */}
-            <div className="pt-6 border-t border-gray-200">
-              <div className="bg-blue-50 rounded-lg p-4">
-                <p className="text-xs font-semibold text-blue-900 uppercase tracking-wide mb-2">
+            <div className="pt-6 border-t border-primary-200">
+              <div className="bg-accent-50 rounded-lg p-4 border border-accent-200">
+                <p className="text-xs font-semibold text-accent-900 uppercase tracking-wide mb-2">
                   Demo Credentials
                 </p>
-                <div className="space-y-1 text-sm text-blue-800">
+                <div className="space-y-1 text-sm text-accent-800">
                   <p><span className="font-medium">Email:</span> admin@hauspet.com</p>
                   <p><span className="font-medium">Password:</span> Admin123</p>
                 </div>
@@ -126,9 +126,9 @@ export const Login: React.FC = () => {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-gray-600 mt-8">
+        <p className="text-center text-sm text-warm-700 mt-8">
           Need help? Contact{' '}
-          <a href="mailto:support@hauspet.com" className="font-medium text-primary-600 hover:text-primary-700">
+          <a href="mailto:support@hauspet.com" className="font-medium text-secondary-600 hover:text-secondary-700">
             support@hauspet.com
           </a>
         </p>

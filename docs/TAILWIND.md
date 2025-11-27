@@ -76,8 +76,13 @@ export default {
 
 **Key configurations:**
 - **Content paths**: Tells Tailwind where to look for class names
-- **Custom colors**: Primary (blue) and secondary (purple) palettes
-- **Custom shadows**: Soft, medium, and large elevation levels
+- **Custom colors**: Warm earth tones palette inspired by natural colors
+  - `primary`: Rosa pálido/beige (#E8CFC1)
+  - `secondary`: Naranja terracota (#D67747)
+  - `accent`: Dorado/mostaza oscuro (#A87008)
+  - `warm`: Marrón medio (#6B553D)
+  - `dark`: Marrón muy oscuro (#3A2812)
+- **Custom shadows**: Soft, medium, and large elevation levels with warm tones
 - **Fonts**: Inter as the primary sans-serif font
 
 ### 2. `postcss.config.js`
@@ -185,19 +190,40 @@ The main CSS file that imports Tailwind and defines custom components:
 
 ### Colors
 
-#### Primary (Blue)
-Used for main actions, links, and primary UI elements.
+HausPet uses a warm, earthy color palette inspired by natural tones that evoke comfort and care.
+
+#### Primary (Rosa pálido/Beige - #E8CFC1)
+Used for backgrounds and soft UI elements.
 - `primary-50` to `primary-900` (lighter to darker)
+- Base color at `primary-200`
 
-#### Secondary (Purple)
-Used for accents and secondary actions.
+#### Secondary (Naranja terracota - #D67747)
+Used for main actions, CTAs, and interactive elements.
 - `secondary-50` to `secondary-900`
+- Base color at `secondary-500`
 
-#### Semantic Colors
-- **Success**: `green-*` (e.g., `bg-green-600`)
-- **Danger**: `red-*` (e.g., `bg-red-600`)
-- **Warning**: `yellow-*` (e.g., `bg-yellow-600`)
-- **Info**: `blue-*` (e.g., `bg-blue-600`)
+#### Accent (Dorado/Mostaza - #A87008)
+Used for highlights, success states, and attention-grabbing elements.
+- `accent-50` to `accent-900`
+- Base color at `accent-500`
+
+#### Warm (Marrón medio - #6B553D)
+Used for secondary UI elements and neutral states.
+- `warm-50` to `warm-900`
+- Base color at `warm-600`
+
+#### Dark (Marrón oscuro - #3A2812)
+Used for text, borders, and high-contrast elements.
+- `dark-50` to `dark-900`
+- Base color at `dark-900`
+
+### Color Usage Guidelines
+
+- **Backgrounds**: Use `primary-50` or `primary-100` for page backgrounds
+- **Cards**: White backgrounds with `primary-200` borders
+- **Buttons**: `secondary-500` for primary actions, `accent-500` for success
+- **Text**: `dark-900` for headings, `dark-800` for body, `warm-600` for muted text
+- **Accents**: `secondary-*` for interactive elements, `accent-*` for highlights
 
 ### Typography
 

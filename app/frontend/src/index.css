@@ -4,12 +4,12 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-primary-50 text-dark-900 antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    @apply font-semibold tracking-tight text-dark-900;
   }
 }
 
@@ -20,29 +20,29 @@
   }
 
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-sm hover:shadow-md;
+    @apply bg-secondary-500 text-white hover:bg-secondary-600 focus:ring-secondary-400 shadow-sm hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-400;
+    @apply bg-primary-200 text-dark-800 hover:bg-primary-300 focus:ring-primary-400;
   }
 
   .btn-danger {
-    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm hover:shadow-md;
+    @apply bg-secondary-700 text-white hover:bg-secondary-800 focus:ring-secondary-600 shadow-sm hover:shadow-md;
   }
 
   .btn-success {
-    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-sm hover:shadow-md;
+    @apply bg-accent-500 text-white hover:bg-accent-600 focus:ring-accent-400 shadow-sm hover:shadow-md;
   }
 
   /* Input fields */
   .input {
-    @apply w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors;
+    @apply w-full px-4 py-2.5 rounded-lg border border-warm-300 bg-white text-dark-900 placeholder:text-warm-500 focus:border-secondary-400 focus:ring-2 focus:ring-secondary-400/20 transition-colors;
   }
 
   /* Card styles */
   .card {
-    @apply bg-white rounded-xl shadow-soft border border-gray-200 overflow-hidden;
+    @apply bg-white rounded-xl shadow-soft border border-primary-200 overflow-hidden;
   }
 
   .card-body {
@@ -55,19 +55,19 @@
   }
 
   .badge-primary {
-    @apply bg-primary-100 text-primary-700;
+    @apply bg-primary-200 text-dark-800;
   }
 
   .badge-success {
-    @apply bg-green-100 text-green-700;
+    @apply bg-accent-100 text-accent-800;
   }
 
   .badge-warning {
-    @apply bg-yellow-100 text-yellow-700;
+    @apply bg-secondary-100 text-secondary-800;
   }
 
   .badge-danger {
-    @apply bg-red-100 text-red-700;
+    @apply bg-secondary-200 text-secondary-900;
   }
 }
 

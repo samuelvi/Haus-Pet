@@ -35,46 +35,46 @@ export const PetGallery: React.FC = () => {
 
   const petTypeConfig = [
     { type: '', label: 'All Pets', emoji: '🐾', color: 'primary' },
-    { type: 'cat', label: 'Cats', emoji: '🐱', color: 'orange' },
-    { type: 'dog', label: 'Dogs', emoji: '🐕', color: 'green' },
-    { type: 'bird', label: 'Birds', emoji: '🐦', color: 'purple' },
+    { type: 'cat', label: 'Cats', emoji: '🐱', color: 'secondary' },
+    { type: 'dog', label: 'Dogs', emoji: '🐕', color: 'accent' },
+    { type: 'bird', label: 'Birds', emoji: '🐦', color: 'warm' },
   ];
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'dog': return 'bg-green-500';
-      case 'cat': return 'bg-orange-500';
-      case 'bird': return 'bg-purple-500';
-      default: return 'bg-gray-500';
+      case 'dog': return 'bg-accent-600';
+      case 'cat': return 'bg-secondary-500';
+      case 'bird': return 'bg-warm-600';
+      default: return 'bg-dark-600';
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-100 via-primary-50 to-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full shadow-lg mb-4">
-            <svg className="animate-spin h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24">
+            <svg className="animate-spin h-8 w-8 text-secondary-500" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           </div>
-          <p className="text-xl font-semibold text-gray-700">Loading adorable pets...</p>
+          <p className="text-xl font-semibold text-dark-800">Loading adorable pets...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-100 via-primary-50 to-white">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-primary-200 sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent mb-2">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-secondary-500 to-accent-600 bg-clip-text text-transparent mb-2">
               Pet Sponsorship Gallery
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-warm-700">
               Help our furry friends find their forever homes by sponsoring them today
             </p>
           </div>
@@ -99,10 +99,10 @@ export const PetGallery: React.FC = () => {
           {petTypeConfig.map((config) => {
             const isActive = typeFilter === config.type;
             const colorClasses = {
-              primary: isActive ? 'bg-primary-600 text-white' : 'bg-white text-gray-700 hover:bg-primary-50',
-              orange: isActive ? 'bg-orange-500 text-white' : 'bg-white text-gray-700 hover:bg-orange-50',
-              green: isActive ? 'bg-green-600 text-white' : 'bg-white text-gray-700 hover:bg-green-50',
-              purple: isActive ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 hover:bg-purple-50',
+              primary: isActive ? 'bg-dark-700 text-white' : 'bg-white text-dark-800 hover:bg-primary-100',
+              secondary: isActive ? 'bg-secondary-500 text-white' : 'bg-white text-dark-800 hover:bg-secondary-50',
+              accent: isActive ? 'bg-accent-600 text-white' : 'bg-white text-dark-800 hover:bg-accent-50',
+              warm: isActive ? 'bg-warm-600 text-white' : 'bg-white text-dark-800 hover:bg-warm-50',
             }[config.color];
 
             return (
