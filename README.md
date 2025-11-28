@@ -31,7 +31,7 @@ HausPet/
 │       ├── src/                 # Components and pages
 │       ├── Dockerfile.dev       # Dev container used by docker-compose.yaml
 │       └── vite/ts configs
-├── docker/                      # Docker Compose (dev, test, proxy) + nginx configs
+├── docker/                      # Docker environments (dev/test/prod) with compose files + configs
 ├── tests/functional/            # Playwright API tests
 ├── docs/                        # Project documentation
 ├── Makefile                     # Common orchestration commands
@@ -41,7 +41,7 @@ HausPet/
 **Key Points:**
 - Each app (`app/api`, `app/frontend`) keeps its own dependencies.
 - Prisma schema and migrations live in `app/api/prisma/`.
-- Docker Compose brings up API, worker, frontend, Postgres, Redis, MongoDB, and nginx for local dev. The same stack has a dedicated test variant in `docker/docker-compose.test.yaml`.
+- Docker Compose brings up API, worker, frontend, Postgres, Redis, MongoDB, and nginx for local dev. Each environment (dev/test/prod) has its own directory under `docker/` with dedicated compose files and service configurations.
 
 ## Quick Start
 
@@ -192,7 +192,7 @@ make up
 
 ### Nginx Configuration
 
-Located in `docker/nginx/nginx.dev.conf`:
+Located in `docker/dev/nginx/nginx.dev.conf`:
 
 - Routes `/` to frontend (port 5173)
 - Routes `/api/*` to backend API (port 3000)

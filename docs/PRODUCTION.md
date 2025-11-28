@@ -18,7 +18,7 @@ This guide covers strategies for deploying HausPet from development (Docker Comp
 
 ## Architecture Overview
 
-HausPet runs three app containers plus supporting data services. The same stack powers local dev (`docker/docker-compose.yaml`) and the test setup (`docker/docker-compose.test.yaml` with different ports/volumes).
+HausPet runs three app containers plus supporting data services. The same stack powers local dev (`docker/dev/docker-compose.yaml`) and the test setup (`docker/test/docker-compose.yaml` with different ports/volumes).
 
 ```
 ┌─────────────────┐
@@ -42,7 +42,7 @@ HausPet runs three app containers plus supporting data services. The same stack 
 **Application layout (repo):**
 - Frontend: `app/frontend` (Vite dev server, nginx proxy in Compose).
 - API + Worker: `app/api` (DDD folders `domain/`, `application/`, `infrastructure/`, `routes/`; entrypoints `index.ts` and `worker.ts`).
-- Infra configs: `docker/` (dev/test/proxy compose + nginx), `Makefile` (helpers), `docs/` (guides), `tests/functional` (Playwright).
+- Infra configs: `docker/dev/`, `docker/test/`, `docker/prod/` (each with docker-compose, Dockerfiles, and service-specific configs), `Makefile` (helpers), `docs/` (guides), `tests/functional` (Playwright).
 
 **Key Considerations**:
 - API and Worker share Redis queue
@@ -184,11 +184,11 @@ Start with **Option 1 (VPS)** or **Option 2 (Render)** based on:
 
 ## Production-Ready Docker Setup
 
-Use the provided production templates (`docker/Dockerfile.prod`, `docker/docker-compose.prod.yaml`, `app/frontend/Dockerfile.prod`, `app/frontend/nginx.conf`) and adjust environment variables, TLS paths, and domain names before deploying. The nginx container includes certbot + cron to auto-renew certificates (see nginx section).
+Use the provided production templates (`docker/prod/Dockerfile`, `docker/prod/docker-compose.yaml`, `docker/prod/nginx/`, `app/frontend/Dockerfile.prod`, `app/frontend/nginx.conf`) and adjust environment variables, TLS paths, and domain names before deploying. The nginx container includes certbot + cron to auto-renew certificates (see nginx section).
 
 ### 1. Production Dockerfile (Multi-Stage Build)
 
-Create `docker/Dockerfile.prod`:
+The production Dockerfile is located at `docker/prod/Dockerfile`:
 
 ```dockerfile
 # Stage 1: Build
@@ -266,14 +266,14 @@ CMD ["node", "dist/index.js"]
 
 ### 2. Production Docker Compose
 
-Create `docker/docker-compose.prod.yaml`:
+The production docker-compose is located at `docker/prod/docker-compose.yaml`:
 
 ```yaml
 services:
   hauspet_api:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile.prod
+      context: ../..
+      dockerfile: docker/prod/Dockerfile
     container_name: hauspet_api
     depends_on:
       hauspet_db:
@@ -304,8 +304,8 @@ services:
 
   hauspet_worker:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile.prod
+      context: ../..
+      dockerfile: docker/prod/Dockerfile
     container_name: hauspet_worker
     depends_on:
       hauspet_audit_db:
@@ -329,7 +329,7 @@ services:
 
   hauspet_gui:
     build:
-      context: ..
+      context: ../..
       dockerfile: app/frontend/Dockerfile.prod
     container_name: hauspet_gui
     environment:
@@ -353,7 +353,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
@@ -371,7 +371,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
     volumes:
-      - mongo_data:/data/db
+      - ./mongo/data:/data/db
     restart: unless-stopped
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh --quiet
@@ -394,10 +394,10 @@ services:
     networks:
       - hauspet-prod-network
     volumes:
-      - redis_data:/data
+      - ./redis/data:/data
 
   # Nginx reverse proxy (optional but recommended)
-  nginx:
+  hauspet_nginx:
     build:
       context: ./nginx
       dockerfile: Dockerfile.prod
@@ -407,6 +407,7 @@ services:
       - hauspet_gui
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
@@ -420,11 +421,6 @@ services:
 networks:
   hauspet-prod-network:
     driver: bridge
-
-volumes:
-  postgres_data:
-  mongo_data:
-  redis_data:
 ```
 
 ### 3. GUI Production Dockerfile
@@ -998,7 +994,7 @@ b2 sync /var/backups/hauspet/ b2://your-bucket/hauspet-backups/
    ```
 7. **Start services**:
    ```bash
-   docker compose -f docker/docker-compose.prod.yaml up -d
+   docker compose -f docker/prod/docker-compose.yaml up -d
    ```
 
 **Test Recovery Annually**
@@ -1090,7 +1086,7 @@ jobs:
           script: |
             cd /opt/hauspet
             docker compose -f docker/docker-compose.prod.yaml pull
-            docker compose -f docker/docker-compose.prod.yaml up -d
+            docker compose -f docker/prod/docker-compose.yaml up -d
             docker system prune -f
 ```
 
@@ -1190,7 +1186,7 @@ cp .env.example .env.production
 nano .env.production  # Edit with your values
 
 # 7. Build and start services
-docker compose -f docker/docker-compose.prod.yaml up -d --build
+docker compose -f docker/prod/docker-compose.yaml up -d --build
 
 # 8. Check logs
 docker compose -f docker/docker-compose.prod.yaml logs -f
@@ -1221,7 +1217,7 @@ Requires=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/opt/HausPet
-ExecStart=/usr/bin/docker compose -f docker/docker-compose.prod.yaml up -d
+ExecStart=/usr/bin/docker compose -f docker/prod/docker-compose.yaml up -d
 ExecStop=/usr/bin/docker compose -f docker/docker-compose.prod.yaml down
 User=hauspet
 
