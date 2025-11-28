@@ -1,38 +1,15 @@
 import { Router, Request, Response, NextFunction } from "express";
+import { container } from "../../infrastructure/di/container";
+import { TYPES } from "../../infrastructure/di/types";
 import { BreedController } from "../../infrastructure/http/controllers/breed.controller";
-import { BreedService } from "../../application/breed.service";
-import { createBreedRepository } from "../../infrastructure/repositories/repository.factory";
-import { AuditService } from "../../application/audit.service";
-import { MongoAuditRepository } from "../../infrastructure/repositories/mongo-audit.repository";
-import { AuditLoggingBreedServiceDecorator } from "../../application/audit-logging-breed.service.decorator";
-import { QueueService } from "../../infrastructure/queue/queue.service";
-import { RedisHealthService } from "../../infrastructure/queue/redis-health.service";
-import redisConnection from "../../infrastructure/queue/redis-connection";
 import { JwtService } from "../../infrastructure/auth/services/jwt.service";
 import { SessionService } from "../../infrastructure/auth/services/session.service";
 import { createAuthMiddleware } from "../../infrastructure/http/middleware/auth.middleware";
-import { PostgresBreedTypeRepository } from "../../infrastructure/repositories/postgres-breed-type.repository";
-import prisma from "../../infrastructure/database/prisma-client";
 
 const router = Router();
 
-// --- Dependency Injection / Composition Root ---
-
-const breedRepository = createBreedRepository();
-const breedTypeRepository = new PostgresBreedTypeRepository(prisma);
-const realBreedService = new BreedService(breedRepository, breedRepository, breedTypeRepository);
-// The MongoAuditRepository no longer needs a client passed to its constructor.
-const auditRepository = new MongoAuditRepository();
-const auditService = new AuditService(auditRepository);
-const queueService = new QueueService();
-const redisHealthService = new RedisHealthService(redisConnection);
-const decoratedBreedService = new AuditLoggingBreedServiceDecorator(
-  realBreedService,
-  auditService,
-  queueService,
-  redisHealthService
-);
-const breedController = new BreedController(decoratedBreedService);
+// --- Dependency Injection via Container ---
+const breedController = container.get<BreedController>(TYPES.BreedController);
 
 // Authentication middleware
 const jwtService = new JwtService();

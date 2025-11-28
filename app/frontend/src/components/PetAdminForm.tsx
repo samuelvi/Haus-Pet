@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { apiService } from '../services/api.service';
 import { petService } from '../services/pet.service';
 import { useAuth } from '../contexts/AuthContext';
 import type { CreatePetInput, Pet, PetType, UpdatePetInput } from '../types/pet.types';

@@ -14,6 +14,7 @@ import type {
   BreedFormData,
   BreedFilters,
   BreedType,
+  SystemCounters,
 } from '../types/api.types';
 
 const API_BASE_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -265,6 +266,22 @@ class ApiService {
   ): Promise<void> {
     await this.request<void>(`/api/admin/breed-types/${id}`, {
       method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'x-session-id': sessionId,
+      },
+    });
+  }
+
+  /**
+   * Get system counters (admin)
+   */
+  async getSystemCounters(
+    accessToken: string,
+    sessionId: string
+  ): Promise<SystemCounters> {
+    return this.request<SystemCounters>('/api/admin/counters', {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'x-session-id': sessionId,

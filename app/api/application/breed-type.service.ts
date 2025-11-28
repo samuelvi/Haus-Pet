@@ -1,9 +1,14 @@
 import { BreedTypeRepository } from "../domain/breed-type.repository";
 import { BreedType } from "../domain/breed";
 import { generateId } from "../infrastructure/utils/uuid";
+import { EventBus } from "../infrastructure/events/EventBus";
+import { BreedTypeCreatedEvent, BreedTypeDeletedEvent } from "../domain/events/DomainEvent";
 
 export class BreedTypeService {
-  constructor(private readonly breedTypeRepository: BreedTypeRepository) {}
+  constructor(
+    private readonly breedTypeRepository: BreedTypeRepository,
+    private readonly eventBus: EventBus
+  ) {}
 
   async list(): Promise<BreedType[]> {
     return this.breedTypeRepository.findAll();
@@ -18,7 +23,17 @@ export class BreedTypeService {
       id: generateId(),
       name,
     };
-    return this.breedTypeRepository.create(breedType);
+    const created = await this.breedTypeRepository.create(breedType);
+
+    // Emit domain event
+    await this.eventBus.publish(
+      new BreedTypeCreatedEvent({
+        breedTypeId: created.id!, // We know this exists after creation
+        name: created.name,
+      })
+    );
+
+    return created;
   }
 
   async update(id: string, name: string): Promise<BreedType> {
@@ -39,5 +54,12 @@ export class BreedTypeService {
       throw new Error("Cannot delete breed type with associated breeds");
     }
     await this.breedTypeRepository.delete(id);
+
+    // Emit domain event
+    await this.eventBus.publish(
+      new BreedTypeDeletedEvent({
+        breedTypeId: id,
+      })
+    );
   }
 }

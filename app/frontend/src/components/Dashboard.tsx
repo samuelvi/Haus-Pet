@@ -1,10 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import type { SystemCounters } from '../types/api.types';
+import { CountersService } from '../services/counters.service';
 
 export const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, tokens, sessionId, logout } = useAuth();
   const navigate = useNavigate();
+  const [counters, setCounters] = useState<SystemCounters | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCounters = async () => {
+      if (!tokens || !sessionId) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const data = await CountersService.getCounters(
+          tokens.accessToken,
+          sessionId
+        );
+        setCounters(data);
+      } catch (error) {
+        console.error('Error fetching counters:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCounters();
+  }, [tokens, sessionId]);
 
   const handleLogout = async (): Promise<void> => {
     await logout();
@@ -162,7 +190,9 @@ export const Dashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-blue-700 font-medium">Total Breeds</p>
-                    <p className="text-2xl font-bold text-blue-900 mt-1">-</p>
+                    <p className="text-2xl font-bold text-blue-900 mt-1">
+                      {loading ? '-' : counters?.totalBreeds ?? 0}
+                    </p>
                   </div>
                   <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +206,9 @@ export const Dashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-green-700 font-medium">Active Pets</p>
-                    <p className="text-2xl font-bold text-green-900 mt-1">-</p>
+                    <p className="text-2xl font-bold text-green-900 mt-1">
+                      {loading ? '-' : counters?.totalActivePets ?? 0}
+                    </p>
                   </div>
                   <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,11 +222,13 @@ export const Dashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-purple-700 font-medium">Breed Types</p>
-                    <p className="text-2xl font-bold text-purple-900 mt-1">-</p>
+                    <p className="text-2xl font-bold text-purple-900 mt-1">
+                      {loading ? '-' : counters?.totalBreedTypes ?? 0}
+                    </p>
                   </div>
                   <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 6v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
                   </div>
                 </div>
@@ -204,7 +238,9 @@ export const Dashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-orange-700 font-medium">Sponsorships</p>
-                    <p className="text-2xl font-bold text-orange-900 mt-1">-</p>
+                    <p className="text-2xl font-bold text-orange-900 mt-1">
+                      {loading ? '-' : counters?.totalSponsorships ?? 0}
+                    </p>
                   </div>
                   <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -64,3 +64,14 @@ export interface BreedType {
   id: string;
   name: string;
 }
+
+export interface SystemCounters {
+  id: string;
+  totalBreeds: number;
+  totalActivePets: number;
+  totalBreedTypes: number;
+  totalSponsorships: number;
+  totalUsers: number;
+  totalRevenue: number;
+  updatedAt: string;
+}

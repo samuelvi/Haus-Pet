@@ -1,17 +1,15 @@
 import { Router, Request, Response, NextFunction } from "express";
+import { container } from "../../../infrastructure/di/container";
+import { TYPES } from "../../../infrastructure/di/types";
+import { BreedTypeController } from "../../../infrastructure/http/controllers/breed-type.controller";
 import { JwtService } from "../../../infrastructure/auth/services/jwt.service";
 import { SessionService } from "../../../infrastructure/auth/services/session.service";
 import { createAuthMiddleware } from "../../../infrastructure/http/middleware/auth.middleware";
-import { BreedTypeController } from "../../../infrastructure/http/controllers/breed-type.controller";
-import { BreedTypeService } from "../../../application/breed-type.service";
-import prisma from "../../../infrastructure/database/prisma-client";
-import { PostgresBreedTypeRepository } from "../../../infrastructure/repositories/postgres-breed-type.repository";
 
 const router = Router();
 
-const breedTypeRepository = new PostgresBreedTypeRepository(prisma);
-const breedTypeService = new BreedTypeService(breedTypeRepository);
-const breedTypeController = new BreedTypeController(breedTypeService);
+// --- Dependency Injection via Container ---
+const breedTypeController = container.get<BreedTypeController>(TYPES.BreedTypeController);
 
 // Auth middleware
 const jwtService = new JwtService();

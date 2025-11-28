@@ -1,3 +1,6 @@
+-- Create readmodels schema if it doesn't exist
+CREATE SCHEMA IF NOT EXISTS "readmodels";
+
 -- Create table for breed types
 CREATE TABLE IF NOT EXISTS "breed_types" (
     "id" TEXT PRIMARY KEY,
@@ -43,14 +46,34 @@ ALTER TABLE "breed"
 -- Drop old enum column if it exists
 ALTER TABLE "breed" DROP COLUMN IF EXISTS "pet_type";
 
--- Update read model pets.type to text
-ALTER TABLE "readmodels"."pets"
-    ALTER COLUMN "type" TYPE TEXT USING "type"::text;
+-- Update read model pets.type to text (only if table exists)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = 'readmodels' AND table_name = 'pets'
+    ) THEN
+        ALTER TABLE "readmodels"."pets"
+            ALTER COLUMN "type" TYPE TEXT USING "type"::text;
+    END IF;
+END $$;
+
+-- Convert animals.type to text if it exists and uses PetType
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'animals' AND column_name = 'type'
+    ) THEN
+        ALTER TABLE "animals"
+            ALTER COLUMN "type" TYPE TEXT USING "type"::text;
+    END IF;
+END $$;
 
 -- Drop enum type if it still exists (should have no dependents now)
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PetType') THEN
-        DROP TYPE "PetType";
+        DROP TYPE "PetType" CASCADE;
     END IF;
 END $$;

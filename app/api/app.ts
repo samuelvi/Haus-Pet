@@ -3,6 +3,25 @@ import cors from "cors";
 import mainRouter from "./routes/main.router"; // Import the single main router
 import { auditMiddleware } from "./infrastructure/http/middleware/audit.middleware";
 
+// ========== Dependency Injection Setup ==========
+import 'reflect-metadata'; // Required for InversifyJS
+import { container } from "./infrastructure/di/container";
+import { TYPES } from "./infrastructure/di/types";
+import { getEventBus } from "./infrastructure/events/EventBus";
+import { setupEventHandlers } from "./infrastructure/events/setupEventHandlers";
+import { SystemCountersService } from "./application/SystemCountersService";
+
+// Initialize DI container (eager loading)
+// This ensures all singletons are created and the container is ready
+console.log('🔧 Initializing DI container...');
+
+// Initialize event system with services from container
+const eventBus = getEventBus();
+const countersService = container.get<SystemCountersService>(TYPES.SystemCountersService);
+setupEventHandlers(eventBus, countersService);
+
+console.log('✅ DI container initialized successfully');
+
 const app: Express = express();
 
 // CORS configuration for frontend integration

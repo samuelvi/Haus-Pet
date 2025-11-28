@@ -5,6 +5,8 @@ import { BreedAlreadyExistsError } from "../domain/errors/breed-already-exists.e
 import { FuzzySearchService } from "./fuzzy-search.service";
 import { generateId } from "../infrastructure/utils/uuid";
 import { BreedTypeRepository } from "../domain/breed-type.repository";
+import { EventBus } from "../infrastructure/events/EventBus";
+import { BreedCreatedEvent, BreedDeletedEvent } from "../domain/events/DomainEvent";
 
 export class BreedService {
   private fuzzySearchService: FuzzySearchService;
@@ -12,7 +14,8 @@ export class BreedService {
   constructor(
     private readonly breedReadRepository: BreedReadRepository,
     private readonly breedWriteRepository: BreedWriteRepository,
-    private readonly breedTypeRepository: BreedTypeRepository
+    private readonly breedTypeRepository: BreedTypeRepository,
+    private readonly eventBus: EventBus
   ) {
     this.fuzzySearchService = new FuzzySearchService();
   }
@@ -76,6 +79,16 @@ export class BreedService {
     };
 
     const savedBreed = await this.breedWriteRepository.save(newBreed);
+
+    // Emit domain event
+    await this.eventBus.publish(
+      new BreedCreatedEvent({
+        breedId: savedBreed.id!, // We know this exists after save
+        name: savedBreed.name,
+        breedTypeId: savedBreed.breedTypeId!, // We know this exists since we just set it
+      })
+    );
+
     return savedBreed;
   }
 
@@ -117,5 +130,12 @@ export class BreedService {
     }
 
     await this.breedWriteRepository.delete(id);
+
+    // Emit domain event
+    await this.eventBus.publish(
+      new BreedDeletedEvent({
+        breedId: id,
+      })
+    );
   }
 }

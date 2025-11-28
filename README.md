@@ -5,10 +5,12 @@ A full-stack pet breeds management system with authentication, built with Node.j
 ## Features
 
 - **Backend REST API** - Express + TypeScript with DDD architecture
+- **Dependency Injection** - InversifyJS for clean architecture and testability
 - **Authentication System** - JWT tokens + Redis sessions
 - **Frontend Admin Panel** - React + TypeScript + Vite (wireframe)
 - **Async Audit Logging** - BullMQ + MongoDB
 - **Pet Sponsorship System** - Event Sourcing architecture with public gallery
+- **System Counters** - Event-driven precalculated metrics dashboard
 - **Database** - PostgreSQL (Prisma ORM) + MongoDB (Audit logs)
 - **Message Queue** - Redis + BullMQ
 
@@ -23,6 +25,11 @@ HausPet/
 │   │   ├── domain/              # Entities, repositories, errors, eventsourcing
 │   │   ├── application/         # Services (auth, breeds, audit, sponsorship)
 │   │   ├── infrastructure/      # Prisma, HTTP controllers, queue, auth, repos
+│   │   │   ├── di/              # Dependency Injection (InversifyJS)
+│   │   │   ├── events/          # Event Bus and handlers
+│   │   │   ├── http/            # Controllers and middleware
+│   │   │   ├── persistence/     # Prisma repositories
+│   │   │   └── queue/           # BullMQ configuration
 │   │   ├── routes/              # Express routers (auth, breed, pet, admin)
 │   │   ├── prisma/              # Schema, migrations, seed
 │   │   ├── index.ts / worker.ts # API and BullMQ worker entrypoints
@@ -883,3 +890,20 @@ app/frontend/src/
 - JWT token validation on all protected API calls
 - Automatic token refresh
 - Session management with Redis
+
+## Documentation
+
+Detailed documentation is available in the `/docs` directory:
+
+- **[Dependency Injection (InversifyJS)](docs/DEPENDENCY_INJECTION.md)** - Complete guide to the DI system
+- **[System Counters Architecture](docs/SYSTEM_COUNTERS.md)** - Event-driven metrics system
+- **[Production Deployment](docs/PRODUCTION.md)** - Deployment guide
+
+### Key Architectural Patterns
+
+- **Dependency Injection**: InversifyJS for clean, testable code
+- **Domain-Driven Design**: Clear separation of domain, application, and infrastructure layers
+- **Event-Driven Architecture**: Event Bus for loosely coupled components
+- **Repository Pattern**: Abstract data access layer
+- **CQRS**: Separate read and write models for counters
+- **Event Sourcing**: Pet sponsorship system uses event store

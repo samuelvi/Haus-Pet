@@ -109,3 +109,19 @@ model Sponsorship {
   @@map("sponsorships")
   @@schema("readmodels")
 }
+
+// System Counters: Precalculated metrics for dashboard
+// Single row table with all system counters
+model SystemCounters {
+  id                String   @id @default("system") // Single row with fixed ID
+  totalBreeds       Int      @default(0) @map("total_breeds")
+  totalActivePets   Int      @default(0) @map("total_active_pets")
+  totalBreedTypes   Int      @default(0) @map("total_breed_types")
+  totalSponsorships Int      @default(0) @map("total_sponsorships")
+  totalUsers        Int      @default(0) @map("total_users")
+  totalRevenue      Decimal  @default(0) @map("total_revenue") @db.Decimal(10, 2)
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("system_counters")
+  @@schema("public")
+}
