@@ -3,35 +3,80 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 const pets = [
+  // Dogs
   {
     name: 'Max',
     type: 'dog',
-    breed: 'Labrador Retriever',
-    photoUrl: 'https://images.dog.ceo/breeds/labrador/n02099712_1094.jpg',
+    breed: 'Labrador',
+    photoUrl: '/img/dog1.png',
   },
   {
     name: 'Luna',
     type: 'dog',
     breed: 'Golden Retriever',
-    photoUrl: 'https://images.dog.ceo/breeds/retriever-golden/n02099601_1082.jpg',
+    photoUrl: '/img/dog2.png',
   },
+  {
+    name: 'Rocky',
+    type: 'dog',
+    breed: 'German Shepherd',
+    photoUrl: '/img/dog3.png',
+  },
+  {
+    name: 'Cooper',
+    type: 'dog',
+    breed: 'Beagle',
+    photoUrl: '/img/dog4.png',
+  },
+  // Cats
   {
     name: 'Whiskers',
     type: 'cat',
     breed: 'Persian',
-    photoUrl: 'https://cdn2.thecatapi.com/images/e9v.jpg',
+    photoUrl: '/img/cat1.png',
   },
   {
     name: 'Shadow',
     type: 'cat',
     breed: 'Siamese',
-    photoUrl: 'https://cdn2.thecatapi.com/images/ai6.jpg',
+    photoUrl: '/img/cat2.png',
   },
+  {
+    name: 'Mittens',
+    type: 'cat',
+    breed: 'Maine Coon',
+    photoUrl: '/img/cat3.png',
+  },
+  {
+    name: 'Oliver',
+    type: 'cat',
+    breed: 'Bengal',
+    photoUrl: '/img/cat4.png',
+  },
+  // Birds
   {
     name: 'Tweety',
     type: 'bird',
     breed: 'Canary',
-    photoUrl: 'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?w=400&h=400&fit=crop',
+    photoUrl: '/img/bird1.jpeg',
+  },
+  {
+    name: 'Rio',
+    type: 'bird',
+    breed: 'Macaw',
+    photoUrl: '/img/bird2.png',
+  },
+  {
+    name: 'Kiwi',
+    type: 'bird',
+    breed: 'Parakeet',
+    photoUrl: '/img/bird3.png',
+  },
+  {
+    name: 'Charlie',
+    type: 'bird',
+    breed: 'Cockatiel',
+    photoUrl: '/img/bird4.jpeg',
   },
 ];
 
