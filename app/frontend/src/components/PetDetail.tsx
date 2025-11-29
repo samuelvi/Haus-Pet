@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { petService } from '../services/pet.service';
 import type { Pet, Sponsorship, CreateSponsorshipDto } from '../types/pet.types';
+import { Navbar } from './Navbar';
 
 export const PetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -113,6 +114,9 @@ export const PetDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+      {/* Navigation */}
+      <Navbar />
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}
         <button

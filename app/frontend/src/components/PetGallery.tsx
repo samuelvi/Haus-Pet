@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { petService } from '../services/pet.service';
 import type { Pet, PetType } from '../types/pet.types';
+import { Navbar } from './Navbar';
 
 export const PetGallery: React.FC = () => {
   const [pets, setPets] = useState<Pet[]>([]);
@@ -67,8 +68,11 @@ export const PetGallery: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-100 via-primary-50 to-white">
+      {/* Navigation */}
+      <Navbar />
+
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-primary-200 sticky top-0 z-10 shadow-sm">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-primary-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center space-y-3">
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-secondary-500 to-accent-600 bg-clip-text text-transparent leading-tight">
