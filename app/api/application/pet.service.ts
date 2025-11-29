@@ -1,4 +1,4 @@
-import { PrismaClient, Pet } from '@prisma/client';
+import { PrismaClient, Pet, Prisma } from '@prisma/client';
 import { PetAggregate } from '../domain/pet';
 import { EventStoreRepository } from '../domain/eventsourcing';
 import { PetProjector } from '../infrastructure/projections';
@@ -125,10 +125,22 @@ export class PetService {
    */
   async findAll(): Promise<Pet[]> {
     // Use raw SQL for random ordering (PostgreSQL RANDOM())
-    return this.prisma.$queryRaw<Pet[]>`
+    const rawPets = await this.prisma.$queryRaw<any[]>`
       SELECT * FROM "readmodels"."pets"
       ORDER BY RANDOM()
     `;
+
+    // Map snake_case to camelCase and convert types
+    return rawPets.map(pet => ({
+      id: pet.id,
+      name: pet.name,
+      type: pet.type,
+      breed: pet.breed,
+      photoUrl: pet.photo_url,
+      totalSponsored: new Prisma.Decimal(pet.total_sponsored || 0),
+      createdAt: pet.created_at,
+      updatedAt: pet.updated_at,
+    }));
   }
 
   /**
@@ -137,11 +149,23 @@ export class PetService {
    */
   async findByType(type: PetType): Promise<Pet[]> {
     // Use raw SQL for random ordering (PostgreSQL RANDOM())
-    return this.prisma.$queryRaw<Pet[]>`
+    const rawPets = await this.prisma.$queryRaw<any[]>`
       SELECT * FROM "readmodels"."pets"
       WHERE type = ${type}
       ORDER BY RANDOM()
     `;
+
+    // Map snake_case to camelCase and convert types
+    return rawPets.map(pet => ({
+      id: pet.id,
+      name: pet.name,
+      type: pet.type,
+      breed: pet.breed,
+      photoUrl: pet.photo_url,
+      totalSponsored: new Prisma.Decimal(pet.total_sponsored || 0),
+      createdAt: pet.created_at,
+      updatedAt: pet.updated_at,
+    }));
   }
 
   /**
