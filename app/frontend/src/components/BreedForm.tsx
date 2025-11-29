@@ -122,22 +122,20 @@ export const BreedForm: React.FC = () => {
       } else {
         await apiService.createBreed(formData, tokens.accessToken, sessionId);
       }
+      // Only navigate if the API call succeeded
       navigate('/admin/breeds');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to save breed';
       setError(errorMessage);
-      setSubmitting(false);
 
       // If it's a duplicate error and modal was shown, close it to show the error clearly
       if (showConfirmModal && errorMessage.toLowerCase().includes('already exists')) {
         setShowConfirmModal(false);
       }
 
-      return; // Don't execute finally block navigation
+      // Don't navigate on error
     } finally {
-      if (!error) { // Only set submitting to false if no error occurred
-        setSubmitting(false);
-      }
+      setSubmitting(false);
     }
   };
 
