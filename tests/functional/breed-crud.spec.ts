@@ -104,6 +104,40 @@ test.describe('Breed CRUD Integration Tests', () => {
     });
   });
 
+  test.describe('GET /api/breeds/check-similar - Check similar breeds', () => {
+    test('should return similar breeds for a query', async ({ request }) => {
+      const response = await request.get(`${API_BASE}/api/breeds/check-similar?name=Labrador&petType=dog`);
+
+      expect(response.status()).toBe(200);
+
+      const data = await response.json();
+      expect(data.status).toBe('OK');
+      expect(data.data).toHaveProperty('query');
+      expect(data.data).toHaveProperty('similar');
+      expect(Array.isArray(data.data.similar)).toBe(true);
+    });
+
+    test('should return empty array for non-existent breed', async ({ request }) => {
+      const response = await request.get(`${API_BASE}/api/breeds/check-similar?name=NonExistentBreed12345`);
+
+      expect(response.status()).toBe(200);
+
+      const data = await response.json();
+      expect(data.status).toBe('OK');
+      expect(data.data.similar).toHaveLength(0);
+    });
+
+    test('should return 400 for missing name parameter', async ({ request }) => {
+      const response = await request.get(`${API_BASE}/api/breeds/check-similar`);
+
+      expect(response.status()).toBe(400);
+
+      const data = await response.json();
+      expect(data.status).toBe('ERROR');
+      expect(data.message).toContain('name');
+    });
+  });
+
   test.describe('POST /api/breeds/add - Create breed', () => {
     test('should create breed with valid data and authentication', async ({ request }) => {
       const newBreed = {
