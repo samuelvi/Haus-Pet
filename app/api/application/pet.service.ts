@@ -121,21 +121,27 @@ export class PetService {
 
   /**
    * Gets all pets (from read model)
+   * Returns pets in random order for gallery display
    */
   async findAll(): Promise<Pet[]> {
-    return this.prisma.pet.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    // Use raw SQL for random ordering (PostgreSQL RANDOM())
+    return this.prisma.$queryRaw<Pet[]>`
+      SELECT * FROM "readmodels"."pets"
+      ORDER BY RANDOM()
+    `;
   }
 
   /**
    * Gets pets by type (from read model)
+   * Returns pets in random order for gallery display
    */
   async findByType(type: PetType): Promise<Pet[]> {
-    return this.prisma.pet.findMany({
-      where: { type },
-      orderBy: { createdAt: 'desc' },
-    });
+    // Use raw SQL for random ordering (PostgreSQL RANDOM())
+    return this.prisma.$queryRaw<Pet[]>`
+      SELECT * FROM "readmodels"."pets"
+      WHERE type = ${type}
+      ORDER BY RANDOM()
+    `;
   }
 
   /**
