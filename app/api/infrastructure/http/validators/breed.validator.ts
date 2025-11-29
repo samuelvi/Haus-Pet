@@ -13,7 +13,10 @@ export const breedSchema = z.object({
   petType: z
     .string({ required_error: 'petType is required' })
     .trim()
-    .min(1, 'petType must be provided'),
+    .refine((val) => ['cat', 'dog', 'bird'].includes(val.toLowerCase()), {
+      message: 'Pet type must be one of: cat, dog, bird'
+    })
+    .transform((val) => val.toLowerCase()),
 });
 
 /**

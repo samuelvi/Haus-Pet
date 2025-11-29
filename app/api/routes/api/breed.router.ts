@@ -59,9 +59,10 @@ router.post("/:type/add", authMiddleware, validatePetType, (req: Request, res: R
 // GET by type or ID: if it's a valid type, handle as type; otherwise validate as ID
 router.get("/:idOrType", (req: Request, res: Response, next: NextFunction) => {
   const param = req.params.idOrType;
+  const validPetTypes = ['cat', 'dog', 'bird'];
 
-  // Check if it's a valid pet type
-  if (param && param.length > 0 && !param.includes("-")) {
+  // Check if it's a valid pet type (exact match)
+  if (validPetTypes.includes(param.toLowerCase())) {
     // Remap parameter for controller
     req.params.type = param;
     return breedController.getBreedsByType(req, res);

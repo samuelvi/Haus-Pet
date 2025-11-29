@@ -110,11 +110,7 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
     if (breedData.name !== undefined) {
       updateData.name = breedData.name;
     }
-    if (breedData.petType !== undefined) {
-      updateData.breedType = {
-        connect: { name: breedData.petType },
-      };
-    }
+    // Only use breedTypeId for updates (petType is just metadata, breedTypeId is the actual FK)
     if (breedData.breedTypeId !== undefined) {
       updateData.breedTypeId = breedData.breedTypeId;
     }

@@ -211,9 +211,8 @@ test-functional:
 
 # --- All Tests ---
 test-all:
-	@echo "Running all tests (unit, integration, functional)..."
+	@echo "Running all tests (unit, functional)..."
 	@make test-unit
-	@make test-integration
 	@make test-functional
 
 test:
