@@ -21,17 +21,7 @@ export const Navbar: React.FC = () => {
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex items-center gap-3">
-            <Link
-              to="/gallery"
-              className={`px-5 py-2 rounded-lg font-semibold transition-all duration-200 ${
-                isActive('/gallery')
-                  ? 'bg-gradient-to-r from-secondary-500 to-accent-600 text-white shadow-md'
-                  : 'text-gray-700 hover:bg-primary-50'
-              }`}
-            >
-              🏠 Home
-            </Link>
+          <div className="flex items-center">
             <Link
               to="/login"
               className={`px-5 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 ${
