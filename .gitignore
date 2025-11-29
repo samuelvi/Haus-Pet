@@ -30,3 +30,9 @@ playwright-report/
 test-results/
 app/api/dist/
 app/frontend/dist/
+
+# Local database binaries (MongoDB/PostgreSQL)
+docker/dev/mongo/data/
+docker/dev/postgres/data/
+docker/test/mongo/data/
+docker/test/postgres/data/
