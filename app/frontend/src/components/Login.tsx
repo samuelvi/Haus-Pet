@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Navbar } from './Navbar';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState<string>('');
@@ -27,8 +28,12 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f5ede7] via-[#faf7f4] to-white px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
+    <>
+      {/* Navigation */}
+      <Navbar />
+
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f5ede7] via-[#faf7f4] to-white px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md">
         {/* Logo/Brand Section */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-[#d67747] rounded-3xl mb-6 shadow-[0_8px_30px_0_rgba(58,40,18,0.16)]">
@@ -138,7 +143,8 @@ export const Login: React.FC = () => {
             support@hauspet.com
           </a>
         </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
