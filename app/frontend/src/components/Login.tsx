@@ -4,8 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navbar } from './Navbar';
 
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [email, setEmail] = useState<string>('admin@hauspet.com');
+  const [password, setPassword] = useState<string>('Admin123');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
