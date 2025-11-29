@@ -13,3 +13,10 @@ npm-debug.log*
 
 # Lockfiles
 package-lock.json
+
+# Large directories
+coverage/
+playwright-report/
+test-results/
+app/api/dist/
+app/frontend/dist/

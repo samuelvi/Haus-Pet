@@ -5,44 +5,9 @@ import { petService } from '../services/pet.service';
 import { useAuth } from '../contexts/AuthContext';
 import type { Pet, PetType } from '../types/pet.types';
 import type { BreedType } from '../types/api.types';
+import { fuzzyFilter } from '../utils/fuzzySearch';
 
 type SortField = 'name' | 'type' | 'breed' | 'totalSponsored';
-
-const levenshteinDistance = (a: string, b: string): number => {
-  const matrix: number[][] = Array.from({ length: b.length + 1 }, () => []);
-  for (let i = 0; i <= b.length; i++) {
-    matrix[i][0] = i;
-  }
-  for (let j = 0; j <= a.length; j++) {
-    matrix[0][j] = j;
-  }
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1, // insertion
-          matrix[i - 1][j] + 1 // deletion
-        );
-      }
-    }
-  }
-  return matrix[b.length][a.length];
-};
-
-const fuzzyScore = (source: string, query: string): number => {
-  const a = source.toLowerCase();
-  const b = query.toLowerCase();
-  if (!a || !b) return 0;
-  if (a.includes(b)) return 1; // best case quick path
-
-  const distance = levenshteinDistance(a, b);
-  const maxLen = Math.max(a.length, b.length);
-  const similarity = 1 - distance / maxLen;
-  return Math.max(0, similarity);
-};
 
 export const PetAdminList: React.FC = () => {
   const navigate = useNavigate();
@@ -88,35 +53,39 @@ export const PetAdminList: React.FC = () => {
   const filteredPets = useMemo(() => {
     const lowerSearch = search.trim().toLowerCase();
 
-    const withTypeFilter = pets.filter((pet) => !typeFilter || pet.type === typeFilter);
+    // Apply type filter first
+    const typeFiltered = pets.filter((pet) => !typeFilter || pet.type === typeFilter);
 
-    const withScores = withTypeFilter
-      .map((pet) => {
-        const score = lowerSearch
-          ? Math.max(fuzzyScore(pet.name, lowerSearch), fuzzyScore(pet.breed, lowerSearch))
-          : 1;
-        return { pet, score };
+    // Apply fuzzy search
+    const fuzzyFiltered = fuzzyFilter(
+      typeFiltered,
+      lowerSearch,
+      (pet) => [pet.name, pet.breed],
+      0.3
+    );
+
+    // Sort by score first (if searching), then by selected field
+    return fuzzyFiltered
+      .sort((a, b) => {
+        // If there's a search query, prioritize by score
+        if (lowerSearch && a.score !== b.score) {
+          return b.score - a.score;
+        }
+
+        // Otherwise sort by selected field
+        const valueA =
+          sortField === 'totalSponsored'
+            ? Number(a.item.totalSponsored)
+            : (a.item[sortField] as string | number);
+        const valueB =
+          sortField === 'totalSponsored'
+            ? Number(b.item.totalSponsored)
+            : (b.item[sortField] as string | number);
+        if (valueA < valueB) return sortDir === 'asc' ? -1 : 1;
+        if (valueA > valueB) return sortDir === 'asc' ? 1 : -1;
+        return 0;
       })
-      .filter(({ score }) => score > 0.3); // keep reasonably similar matches
-
-    const sorted = withScores.sort((a, b) => {
-      if (lowerSearch && a.score !== b.score) {
-        return b.score - a.score;
-      }
-      const valueA =
-        sortField === 'totalSponsored'
-          ? Number(a.pet.totalSponsored)
-          : (a.pet[sortField] as string | number);
-      const valueB =
-        sortField === 'totalSponsored'
-          ? Number(b.pet.totalSponsored)
-          : (b.pet[sortField] as string | number);
-      if (valueA < valueB) return sortDir === 'asc' ? -1 : 1;
-      if (valueA > valueB) return sortDir === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return sorted.map(({ pet }) => pet);
+      .map(({ item }) => item);
   }, [pets, search, typeFilter, sortField, sortDir]);
 
   const toggleSort = (field: SortField): void => {

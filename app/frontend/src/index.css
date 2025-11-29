@@ -1,6 +1,72 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/preflight.css";
+@import "tailwindcss/theme.css";
+@import "tailwindcss/utilities.css";
+@reference "tailwindcss";
+@source "../index.html";
+@source "./**/*.{js,ts,jsx,tsx}";
+
+@theme {
+  --color-primary-50: #faf7f4;
+  --color-primary-100: #f5ede7;
+  --color-primary-200: #e8cfc1;
+  --color-primary-300: #ddb8a3;
+  --color-primary-400: #d19d80;
+  --color-primary-500: #c4825d;
+  --color-primary-600: #b5673f;
+  --color-primary-700: #9a5434;
+  --color-primary-800: #7d452d;
+  --color-primary-900: #663827;
+
+  --color-secondary-50: #fdf6f0;
+  --color-secondary-100: #faeade;
+  --color-secondary-200: #f5d5bc;
+  --color-secondary-300: #efb890;
+  --color-secondary-400: #e79262;
+  --color-secondary-500: #d67747;
+  --color-secondary-600: #c45a2f;
+  --color-secondary-700: #a44726;
+  --color-secondary-800: #843a23;
+  --color-secondary-900: #6c3121;
+
+  --color-accent-50: #fefbf3;
+  --color-accent-100: #fdf5e1;
+  --color-accent-200: #fae9b8;
+  --color-accent-300: #f5d785;
+  --color-accent-400: #eec04a;
+  --color-accent-500: #a87008;
+  --color-accent-600: #8f5e07;
+  --color-accent-700: #774f06;
+  --color-accent-800: #634209;
+  --color-accent-900: #54380b;
+
+  --color-warm-50: #faf8f6;
+  --color-warm-100: #f3eeea;
+  --color-warm-200: #e4dcd3;
+  --color-warm-300: #cfc0b3;
+  --color-warm-400: #b5a08e;
+  --color-warm-500: #9d8570;
+  --color-warm-600: #6b553d;
+  --color-warm-700: #5a4733;
+  --color-warm-800: #4c3d2c;
+  --color-warm-900: #423527;
+
+  --color-dark-50: #f7f6f5;
+  --color-dark-100: #eae7e4;
+  --color-dark-200: #d3cdc7;
+  --color-dark-300: #b5aba2;
+  --color-dark-400: #978a7e;
+  --color-dark-500: #7d6f63;
+  --color-dark-600: #665850;
+  --color-dark-700: #534843;
+  --color-dark-800: #463d39;
+  --color-dark-900: #3a2812;
+
+  --font-sans: Inter, system-ui, sans-serif;
+
+  --shadow-soft: 0 2px 15px 0 rgba(58, 40, 18, 0.08);
+  --shadow-medium: 0 4px 20px 0 rgba(58, 40, 18, 0.12);
+  --shadow-large: 0 8px 30px 0 rgba(58, 40, 18, 0.16);
+}
 
 @layer base {
   body {
@@ -46,7 +112,7 @@
   }
 
   .card-body {
-    @apply p-6;
+    @apply p-6 sm:p-8;
   }
 
   /* Badge styles */

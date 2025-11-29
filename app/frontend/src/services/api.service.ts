@@ -205,6 +205,27 @@ class ApiService {
   }
 
   /**
+   * Check for similar breeds
+   */
+  async checkSimilarBreeds(
+    name: string,
+    petType?: string
+  ): Promise<Array<{ id: string; name: string; petType: string; similarity: number }>> {
+    const params = new URLSearchParams();
+    params.append('name', name);
+    if (petType) {
+      params.append('petType', petType);
+    }
+
+    const response = await this.request<{
+      query: string;
+      similar: Array<{ id: string; name: string; petType: string; similarity: number }>;
+    }>(`/api/breeds/check-similar?${params.toString()}`);
+
+    return response.similar;
+  }
+
+  /**
    * List breed types (admin)
    */
   async getBreedTypes(accessToken: string, sessionId: string): Promise<BreedType[]> {

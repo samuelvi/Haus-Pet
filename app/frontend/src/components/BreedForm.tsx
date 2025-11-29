@@ -4,6 +4,13 @@ import { apiService } from '../services/api.service';
 import type { BreedFormData, Breed, PetType, BreedType } from '../types/api.types';
 import { useAuth } from '../contexts/AuthContext';
 
+interface SimilarBreed {
+  id: string;
+  name: string;
+  petType: string;
+  similarity: number;
+}
+
 export const BreedForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = Boolean(id);
@@ -18,6 +25,9 @@ export const BreedForm: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(isEditMode);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [similarBreeds, setSimilarBreeds] = useState<SimilarBreed[]>([]);
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
+  const [checkingSimilar, setCheckingSimilar] = useState<boolean>(false);
 
   useEffect(() => {
     const loadTypes = async (): Promise<void> => {
@@ -52,14 +62,57 @@ export const BreedForm: React.FC = () => {
 
   const handleChange = (field: keyof BreedFormData, value: string): void => {
     setFormData((prev) => ({ ...prev, [field]: value as PetType }));
+
+    // Reset similar breeds when changing name or type
+    if (field === 'name' || field === 'petType') {
+      setSimilarBreeds([]);
+      setShowConfirmModal(false);
+    }
   };
 
-  const handleSubmit = async (event: React.FormEvent): Promise<void> => {
+  const checkForSimilarBreeds = async (): Promise<boolean> => {
+    if (!formData.name.trim()) {
+      return false;
+    }
+
+    try {
+      setCheckingSimilar(true);
+      const similar = await apiService.checkSimilarBreeds(formData.name, formData.petType);
+
+      // Filter out the current breed if editing
+      const filteredSimilar = isEditMode && id
+        ? similar.filter(breed => breed.id !== id)
+        : similar;
+
+      if (filteredSimilar.length > 0) {
+        setSimilarBreeds(filteredSimilar);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Error checking similar breeds:', err);
+      return false;
+    } finally {
+      setCheckingSimilar(false);
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent, forceCreate: boolean = false): Promise<void> => {
     event.preventDefault();
+    setError(null); // Clear previous errors
 
     if (!tokens || !sessionId) {
       setError('You must be logged in to manage breeds.');
       return;
+    }
+
+    // Check for similar breeds before creating (unless forcing creation or editing)
+    if (!forceCreate && !isEditMode) {
+      const hasSimilar = await checkForSimilarBreeds();
+      if (hasSimilar) {
+        setShowConfirmModal(true);
+        return;
+      }
     }
 
     try {
@@ -71,9 +124,30 @@ export const BreedForm: React.FC = () => {
       }
       navigate('/admin/breeds');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save breed');
-    } finally {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save breed';
+      setError(errorMessage);
       setSubmitting(false);
+
+      // If it's a duplicate error and modal was shown, close it to show the error clearly
+      if (showConfirmModal && errorMessage.toLowerCase().includes('already exists')) {
+        setShowConfirmModal(false);
+      }
+
+      return; // Don't execute finally block navigation
+    } finally {
+      if (!error) { // Only set submitting to false if no error occurred
+        setSubmitting(false);
+      }
+    }
+  };
+
+  const handleConfirmCreate = async (): Promise<void> => {
+    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+    await handleSubmit(fakeEvent, true);
+
+    // Only close modal if submission was successful (no error)
+    if (!error) {
+      setShowConfirmModal(false);
     }
   };
 
@@ -128,17 +202,88 @@ export const BreedForm: React.FC = () => {
                 type="button"
                 style={styles.secondaryButton}
                 onClick={() => navigate('/admin/breeds')}
-                disabled={submitting}
+                disabled={submitting || checkingSimilar}
               >
                 Cancel
               </button>
-              <button type="submit" style={styles.primaryButton} disabled={submitting}>
-                {submitting ? 'Saving...' : isEditMode ? 'Save changes' : 'Create breed'}
+              <button type="submit" style={styles.primaryButton} disabled={submitting || checkingSimilar}>
+                {checkingSimilar ? 'Checking...' : submitting ? 'Saving...' : isEditMode ? 'Save changes' : 'Create breed'}
               </button>
             </div>
           </form>
         )}
       </div>
+
+      {/* Confirmation Modal for Similar Breeds */}
+      {showConfirmModal && (
+        <div style={styles.modalOverlay} onClick={() => setShowConfirmModal(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Similar Breeds Found</h2>
+              <button
+                style={styles.modalCloseButton}
+                onClick={() => setShowConfirmModal(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={styles.modalBody}>
+              {similarBreeds.some(b => b.similarity === 100) ? (
+                <>
+                  <p style={styles.modalDescriptionError}>
+                    ⚠️ A breed with this exact name already exists!
+                  </p>
+                  <p style={styles.modalDescription}>
+                    You cannot create a duplicate breed. Please use a different name.
+                  </p>
+                </>
+              ) : (
+                <p style={styles.modalDescription}>
+                  The following similar breeds already exist. Are you sure you want to create "{formData.name}"?
+                </p>
+              )}
+
+              <div style={styles.similarBreedsList}>
+                {similarBreeds.map((breed) => (
+                  <div key={breed.id} style={styles.similarBreedItem}>
+                    <div style={styles.similarBreedInfo}>
+                      <span style={styles.similarBreedName}>{breed.name}</span>
+                      <span style={styles.similarBreedType}>{breed.petType}</span>
+                    </div>
+                    <div
+                      style={{
+                        ...styles.similarityBadge,
+                        ...(breed.similarity === 100 ? styles.similarityBadgeExact : {})
+                      }}
+                    >
+                      {breed.similarity === 100 ? 'EXACT MATCH' : `${breed.similarity}% match`}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={styles.modalFooter}>
+              <button
+                style={styles.secondaryButton}
+                onClick={() => setShowConfirmModal(false)}
+              >
+                {similarBreeds.some(b => b.similarity === 100) ? 'Close' : 'Cancel'}
+              </button>
+              {!similarBreeds.some(b => b.similarity === 100) && (
+                <button
+                  style={styles.primaryButton}
+                  onClick={() => void handleConfirmCreate()}
+                  disabled={submitting}
+                >
+                  {submitting ? 'Creating...' : 'Create Anyway'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -238,5 +383,121 @@ const styles: { [key: string]: React.CSSProperties } = {
     border: '1px solid #f5c2c2',
     color: '#b71c1c',
     borderRadius: '6px',
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+  },
+  modal: {
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    maxWidth: '500px',
+    width: '90%',
+    maxHeight: '80vh',
+    overflow: 'auto',
+    boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+  },
+  modalHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '20px 24px',
+    borderBottom: '1px solid #e0e0e0',
+  },
+  modalTitle: {
+    margin: 0,
+    fontSize: '20px',
+    fontWeight: 700,
+    color: '#222',
+  },
+  modalCloseButton: {
+    backgroundColor: 'transparent',
+    border: 'none',
+    fontSize: '28px',
+    color: '#666',
+    cursor: 'pointer',
+    lineHeight: 1,
+    padding: 0,
+    width: '32px',
+    height: '32px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBody: {
+    padding: '24px',
+  },
+  modalDescription: {
+    margin: '0 0 20px 0',
+    color: '#555',
+    fontSize: '15px',
+    lineHeight: '1.5',
+  },
+  modalDescriptionError: {
+    margin: '0 0 12px 0',
+    color: '#d32f2f',
+    fontSize: '16px',
+    fontWeight: 700,
+    lineHeight: '1.5',
+  },
+  similarBreedsList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  similarBreedItem: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 16px',
+    backgroundColor: '#f8f8f8',
+    borderRadius: '8px',
+    border: '1px solid #e0e0e0',
+  },
+  similarBreedInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+  },
+  similarBreedName: {
+    fontWeight: 600,
+    color: '#222',
+    fontSize: '15px',
+  },
+  similarBreedType: {
+    fontSize: '13px',
+    color: '#666',
+    textTransform: 'capitalize',
+  },
+  similarityBadge: {
+    backgroundColor: '#fff3cd',
+    color: '#856404',
+    padding: '6px 12px',
+    borderRadius: '20px',
+    fontSize: '13px',
+    fontWeight: 600,
+    border: '1px solid #ffc107',
+  },
+  similarityBadgeExact: {
+    backgroundColor: '#ffebee',
+    color: '#c62828',
+    border: '1px solid #ef5350',
+    fontWeight: 700,
+  },
+  modalFooter: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: '12px',
+    padding: '16px 24px',
+    borderTop: '1px solid #e0e0e0',
   },
 };

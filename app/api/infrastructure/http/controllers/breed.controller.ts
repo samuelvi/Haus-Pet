@@ -5,6 +5,7 @@ import type { PetType } from "../../../domain/breed";
 import { BreedFilters } from "../../../domain/breed-read.repository";
 import { breedSchema, breedIdSchema } from "../validators/breed.validator";
 import { z } from "zod";
+import { findSimilar } from "../../../utils/fuzzySearch";
 
 export class BreedController {
   constructor(private readonly breedService: AuditLoggingBreedServiceDecorator) {}
@@ -182,6 +183,50 @@ export class BreedController {
       } else {
         res.status(500).json({ status: "ERROR", message: "Error deleting breed" });
       }
+    }
+  }
+
+  public async checkSimilarBreeds(req: Request, res: Response): Promise<void> {
+    try {
+      const { name, petType } = req.query;
+
+      if (!name || typeof name !== 'string' || !name.trim()) {
+        res.status(400).json({ status: "ERROR", message: "Invalid input: 'name' is required" });
+        return;
+      }
+
+      // Get all breeds of the specified type (or all breeds if no type specified)
+      const filters: BreedFilters = {};
+      if (petType && typeof petType === 'string') {
+        filters.type = petType.toLowerCase();
+      }
+
+      const allBreeds = await this.breedService.getAllBreeds((req as any).auditContext ?? {}, filters);
+
+      // Find similar breeds using fuzzy matching (threshold 0.5 = 50% similarity)
+      // This catches variations like: test/tets, cat/cats, labrador/labradoor, etc.
+      const similarBreeds = findSimilar(
+        allBreeds,
+        name.trim(),
+        (breed) => breed.name,
+        0.5
+      );
+
+      // Return similar breeds with their similarity scores
+      res.status(200).json({
+        status: "OK",
+        data: {
+          query: name.trim(),
+          similar: similarBreeds.map(({ item, score }) => ({
+            id: item.id,
+            name: item.name,
+            petType: item.petType,
+            similarity: Math.round(score * 100) // Convert to percentage
+          }))
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ status: "ERROR", message: "Error checking similar breeds" });
     }
   }
 }

@@ -43,6 +43,7 @@ const validateBreedId = (req: Request, res: Response, next: NextFunction) => {
 // GET routes are PUBLIC (read-only access for everyone)
 router.get("/", (req: Request, res: Response) => breedController.getAllBreeds(req, res));
 router.get("/random-breed", (req: Request, res: Response) => breedController.getRandomBreed(req, res));
+router.get("/check-similar", (req: Request, res: Response) => breedController.checkSimilarBreeds(req, res));
 
 // POST routes are PROTECTED (admin only)
 router.post("/add", authMiddleware, (req: Request, res: Response) => breedController.addBreed(req, res));

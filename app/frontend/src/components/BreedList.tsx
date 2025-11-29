@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api.service';
 import type { Breed, PetType } from '../types/api.types';
 import { useAuth } from '../contexts/AuthContext';
+import { fuzzyFilter } from '../utils/fuzzySearch';
 
 type SortField = 'name' | 'petType';
 
@@ -37,22 +38,34 @@ export const BreedList: React.FC = () => {
 
   const filteredBreeds = useMemo(() => {
     const lowerSearch = search.trim().toLowerCase();
-    return breeds
-      .filter((breed) => {
-        const matchesSearch =
-          !lowerSearch ||
-          breed.name.toLowerCase().includes(lowerSearch) ||
-          breed.petType.toLowerCase().includes(lowerSearch);
-        const matchesType = !typeFilter || breed.petType === typeFilter;
-        return matchesSearch && matchesType;
-      })
+
+    // Apply type filter first
+    const typeFiltered = breeds.filter((breed) => !typeFilter || breed.petType === typeFilter);
+
+    // Apply fuzzy search
+    const fuzzyFiltered = fuzzyFilter(
+      typeFiltered,
+      lowerSearch,
+      (breed) => [breed.name, breed.petType],
+      0.3
+    );
+
+    // Sort by fuzzy score first (if searching), then by selected field
+    return fuzzyFiltered
       .sort((a, b) => {
-        const valueA = a[sortField];
-        const valueB = b[sortField];
+        // If there's a search query, prioritize by score
+        if (lowerSearch && a.score !== b.score) {
+          return b.score - a.score;
+        }
+
+        // Otherwise sort by selected field
+        const valueA = a.item[sortField];
+        const valueB = b.item[sortField];
         if (valueA < valueB) return sortDir === 'asc' ? -1 : 1;
         if (valueA > valueB) return sortDir === 'asc' ? 1 : -1;
         return 0;
-      });
+      })
+      .map(({ item }) => item);
   }, [breeds, search, typeFilter, sortField, sortDir]);
 
   const handleDelete = async (id: string): Promise<void> => {
