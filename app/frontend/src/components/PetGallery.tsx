@@ -69,12 +69,12 @@ export const PetGallery: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-100 via-primary-50 to-white">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-primary-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-secondary-500 to-accent-600 bg-clip-text text-transparent mb-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center space-y-3">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-secondary-500 to-accent-600 bg-clip-text text-transparent leading-tight">
               Pet Sponsorship Gallery
             </h1>
-            <p className="text-lg text-warm-700">
+            <p className="text-lg text-warm-700 leading-relaxed max-w-2xl mx-auto">
               Help our furry friends find their forever homes by sponsoring them today
             </p>
           </div>
@@ -84,12 +84,12 @@ export const PetGallery: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Error Message */}
         {error && (
-          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 p-4">
-            <div className="flex items-center gap-3">
+          <div className="mb-8 rounded-xl bg-red-50 border border-red-200 p-5">
+            <div className="flex items-center gap-4">
               <svg className="w-6 h-6 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
-              <p className="font-medium text-red-800">{error}</p>
+              <p className="font-semibold text-red-800 leading-relaxed">{error}</p>
             </div>
           </div>
         )}
@@ -111,7 +111,9 @@ export const PetGallery: React.FC = () => {
                 onClick={() => setTypeFilter(config.type as PetType | '')}
                 className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft hover:shadow-medium ${colorClasses} ${isActive ? 'scale-105' : ''}`}
               >
-                <span className="mr-2">{config.emoji}</span>
+                <span className={`mr-2 inline-block transition-all ${isActive && config.type === '' ? 'brightness-200 contrast-75' : ''}`}>
+                  {config.emoji}
+                </span>
                 {config.label}
               </button>
             );
@@ -148,19 +150,19 @@ export const PetGallery: React.FC = () => {
                 </div>
 
                 {/* Pet Info */}
-                <div className="card-body space-y-3">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors mb-1">
+                <div className="p-6 space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">
                       {pet.name}
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 leading-relaxed">
                       <span className="font-medium">Breed:</span> {pet.breed}
                     </p>
                   </div>
 
                   {/* Sponsorship Amount */}
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
-                    <p className="text-xs text-green-700 font-medium uppercase tracking-wide mb-1">
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-5 border border-green-200">
+                    <p className="text-xs text-green-700 font-medium uppercase tracking-wide mb-2">
                       Total Sponsored
                     </p>
                     <p className="text-2xl font-bold text-green-600">
@@ -174,7 +176,7 @@ export const PetGallery: React.FC = () => {
                       e.stopPropagation();
                       navigate(`/pets/${pet.id}`);
                     }}
-                    className="btn btn-danger w-full py-3 flex items-center justify-center gap-2 group-hover:scale-105 transition-transform"
+                    className="btn btn-danger w-full py-3.5 flex items-center justify-center gap-2 group-hover:scale-105 transition-transform mt-4"
                   >
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />

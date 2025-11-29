@@ -127,16 +127,16 @@ export const PetDetail: React.FC = () => {
 
         {/* Success Message */}
         {success && (
-          <div className="mb-6 rounded-xl bg-green-50 border border-green-200 p-6 shadow-soft">
+          <div className="mb-8 rounded-xl bg-green-50 border border-green-200 p-6 shadow-soft">
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-10 h-10 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
-              <div>
-                <p className="font-bold text-green-900 text-lg">Thank you for your sponsorship!</p>
-                <p className="text-green-800 mt-1">{pet.name} appreciates your support!</p>
+              <div className="space-y-1">
+                <p className="font-bold text-green-900 text-lg leading-tight">Thank you for your sponsorship!</p>
+                <p className="text-green-800 leading-relaxed">{pet.name} appreciates your support!</p>
               </div>
             </div>
           </div>
@@ -144,12 +144,12 @@ export const PetDetail: React.FC = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 p-4">
-            <div className="flex items-center gap-3">
+          <div className="mb-8 rounded-xl bg-red-50 border border-red-200 p-5">
+            <div className="flex items-center gap-4">
               <svg className="w-6 h-6 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
-              <p className="font-medium text-red-800">{error}</p>
+              <p className="font-semibold text-red-800 leading-relaxed">{error}</p>
             </div>
           </div>
         )}
@@ -169,27 +169,27 @@ export const PetDetail: React.FC = () => {
           </div>
 
           {/* Pet Info */}
-          <div className="space-y-6">
-            <div>
-              <span className={`${getTypeColor(pet.type)} text-white px-4 py-2 rounded-full text-sm font-bold uppercase inline-block mb-4`}>
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <span className={`${getTypeColor(pet.type)} text-white px-5 py-2.5 rounded-full text-sm font-bold uppercase inline-block`}>
                 {pet.type}
               </span>
-              <h1 className="text-4xl font-bold text-gray-900 mb-3">{pet.name}</h1>
-              <p className="text-xl text-gray-600">
-                <span className="font-medium">Breed:</span> {pet.breed}
+              <h1 className="text-4xl font-bold text-gray-900 leading-tight">{pet.name}</h1>
+              <p className="text-xl text-gray-600 leading-relaxed">
+                <span className="font-semibold">Breed:</span> {pet.breed}
               </p>
             </div>
 
             {/* Sponsorship Stats */}
             <div className="card shadow-soft bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-              <div className="card-body text-center">
-                <p className="text-sm text-green-700 font-medium uppercase tracking-wide mb-2">
+              <div className="p-8 text-center space-y-3">
+                <p className="text-sm text-green-700 font-semibold uppercase tracking-wide">
                   Total Sponsored
                 </p>
-                <p className="text-5xl font-bold text-green-600 mb-2">
+                <p className="text-5xl font-bold text-green-600">
                   ${Number(pet.totalSponsored).toFixed(2)}
                 </p>
-                <p className="text-sm text-green-700">
+                <p className="text-sm text-green-700 leading-relaxed">
                   from {sponsorships.length} generous sponsor{sponsorships.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -207,13 +207,24 @@ export const PetDetail: React.FC = () => {
                 Sponsor {pet.name}
               </button>
             ) : (
-              <div className="card shadow-medium">
-                <div className="card-body">
-                  <h3 className="text-xl font-bold text-gray-900 mb-6">Sponsor {pet.name}</h3>
-                  <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="card shadow-large bg-gradient-to-br from-white to-primary-50/30">
+                <div className="p-8">
+                  <div className="flex items-center gap-4 mb-8 pb-6 border-b border-gray-200">
+                    <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                      <svg className="w-7 h-7 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                      </svg>
+                    </div>
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                        Your Name *
+                      <h3 className="text-2xl font-bold text-gray-900 leading-tight">Sponsor {pet.name}</h3>
+                      <p className="text-sm text-gray-600 mt-1 leading-relaxed">Support {pet.name}'s care with your generous donation</p>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-7">
+                    <div className="space-y-2">
+                      <label htmlFor="name" className="block text-base font-semibold text-gray-800 mb-2">
+                        Your Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="name"
@@ -221,14 +232,14 @@ export const PetDetail: React.FC = () => {
                         value={formData.name}
                         onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                         required
-                        className="input"
+                        className="w-full px-5 py-3.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white shadow-sm hover:border-gray-400 text-base"
                         placeholder="John Doe"
                       />
                     </div>
 
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address *
+                    <div className="space-y-2">
+                      <label htmlFor="email" className="block text-base font-semibold text-gray-800 mb-2">
+                        Email Address <span className="text-red-500">*</span>
                       </label>
                       <input
                         id="email"
@@ -236,54 +247,72 @@ export const PetDetail: React.FC = () => {
                         value={formData.email}
                         onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                         required
-                        className="input"
+                        className="w-full px-5 py-3.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white shadow-sm hover:border-gray-400 text-base"
                         placeholder="john@example.com"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
-                        Amount (USD) *
+                    <div className="space-y-3">
+                      <label className="block text-base font-semibold text-gray-800 mb-2">
+                        Sponsorship Amount (USD) <span className="text-red-500">*</span>
                       </label>
-                      <div className="flex flex-wrap gap-2 mb-3">
+                      <div className="flex flex-wrap gap-3 mb-4">
                         {[5, 10, 25, 50, 100].map((amount) => (
                           <button
                             key={amount}
                             type="button"
                             onClick={() => setFormData((prev) => ({ ...prev, amount }))}
-                            className={`px-5 py-2.5 rounded-lg font-semibold transition-all ${
+                            className={`px-6 py-3.5 rounded-lg font-bold text-base transition-all duration-200 ${
                               formData.amount === amount
-                                ? 'bg-primary-600 text-white shadow-md'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-primary-600 text-white shadow-lg scale-105 border-2 border-primary-700'
+                                : 'bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-300 hover:border-primary-400'
                             }`}
                           >
                             ${amount}
                           </button>
                         ))}
                       </div>
-                      <input
-                        type="number"
-                        min="1"
-                        value={formData.amount}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, amount: Number(e.target.value) }))}
-                        required
-                        className="input"
-                        placeholder="Custom amount"
-                      />
+                      <div className="relative">
+                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-lg">$</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={formData.amount}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, amount: Number(e.target.value) }))}
+                          required
+                          className="w-full pl-10 pr-5 py-3.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all bg-white shadow-sm hover:border-gray-400 text-base"
+                          placeholder="Enter custom amount"
+                        />
+                      </div>
                     </div>
 
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row gap-4 pt-6 mt-2 border-t border-gray-200">
                       <button
                         type="submit"
                         disabled={submitting}
-                        className="btn btn-success flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="btn btn-success flex-1 py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all"
                       >
-                        {submitting ? 'Processing...' : 'Complete Sponsorship'}
+                        {submitting ? (
+                          <span className="flex items-center justify-center gap-3">
+                            <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            Processing...
+                          </span>
+                        ) : (
+                          <span className="flex items-center justify-center gap-3">
+                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                            </svg>
+                            Complete Sponsorship
+                          </span>
+                        )}
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowForm(false)}
-                        className="btn btn-secondary px-6 py-3"
+                        className="btn btn-secondary px-10 py-4 text-lg font-semibold"
                       >
                         Cancel
                       </button>
@@ -297,21 +326,21 @@ export const PetDetail: React.FC = () => {
 
         {/* Recent Sponsors */}
         {sponsorships.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Sponsors</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">Recent Sponsors</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {sponsorships.slice(0, 12).map((sponsorship) => (
                 <div key={sponsorship.id} className="card shadow-soft hover:shadow-medium transition-all">
-                  <div className="card-body">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-gray-900">
+                  <div className="p-6 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-bold text-gray-900 text-lg">
                         {sponsorship.user?.name || 'Anonymous'}
                       </h3>
                       <span className="text-xl font-bold text-green-600">
                         ${Number(sponsorship.amount).toFixed(2)}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 leading-relaxed">
                       {new Date(sponsorship.createdAt).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
