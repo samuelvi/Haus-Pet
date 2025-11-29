@@ -8,15 +8,13 @@
 */
 -- CreateSchema
 CREATE SCHEMA IF NOT EXISTS "eventstore";
+CREATE SCHEMA IF NOT EXISTS "readmodels";
 
 -- DropForeignKey
 ALTER TABLE "sponsorships" DROP CONSTRAINT "sponsorships_animal_id_fkey";
 
 -- DropForeignKey
 ALTER TABLE "sponsorships" DROP CONSTRAINT "sponsorships_user_id_fkey";
-
--- AlterTable
-ALTER TABLE "public"."breed_types" ALTER COLUMN "updated_at" DROP DEFAULT;
 
 -- DropTable
 DROP TABLE "animals";
