@@ -45,6 +45,15 @@ export const BreedTypeList: React.FC = () => {
       setError('Name is required');
       return;
     }
+
+    // Check if breed type already exists (case-insensitive)
+    const trimmedName = newType.trim().toLowerCase();
+    const existingType = types.find((t) => t.name.toLowerCase() === trimmedName);
+    if (existingType) {
+      setError(`Breed type "${existingType.name}" already exists`);
+      return;
+    }
+
     try {
       setBusyId('create');
       const created = await apiService.createBreedType(newType.trim(), tokens!.accessToken, sessionId!);
@@ -60,6 +69,15 @@ export const BreedTypeList: React.FC = () => {
 
   const handleUpdate = async (id: string): Promise<void> => {
     if (!guardAuth()) return;
+
+    // Check if new name already exists (case-insensitive) in another type
+    const trimmedName = editingName.trim().toLowerCase();
+    const existingType = types.find((t) => t.id !== id && t.name.toLowerCase() === trimmedName);
+    if (existingType) {
+      setError(`Breed type "${existingType.name}" already exists`);
+      return;
+    }
+
     try {
       setBusyId(id);
       const updated = await apiService.updateBreedType(id, editingName.trim(), tokens!.accessToken, sessionId!);
