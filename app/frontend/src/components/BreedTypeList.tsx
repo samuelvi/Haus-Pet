@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { apiService } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
 import type { BreedType } from '../types/api.types';
+import { AdminNav } from './AdminNav';
 
 export const BreedTypeList: React.FC = () => {
   const { tokens, sessionId } = useAuth();
@@ -110,13 +111,15 @@ export const BreedTypeList: React.FC = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>Breed Types</h1>
-          <p style={styles.subtitle}>Administer allowable types; deletion blocked if breeds exist.</p>
-        </div>
-      </header>
+    <>
+      <AdminNav />
+      <div style={styles.container}>
+        <header style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Breed Types</h1>
+            <p style={styles.subtitle}>Administer allowable types; deletion blocked if breeds exist.</p>
+          </div>
+        </header>
 
       {error && <div style={styles.error}>{error}</div>}
 
@@ -165,7 +168,8 @@ export const BreedTypeList: React.FC = () => {
                       <span>{type.name}</span>
                     )}
                   </td>
-                  <td style={{ ...styles.td, textAlign: 'right', gap: '8px' }}>
+                  <td style={styles.td}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', alignItems: 'center' }}>
                     {editing === type.id ? (
                       <>
                         <button
@@ -206,6 +210,7 @@ export const BreedTypeList: React.FC = () => {
                         </button>
                       </>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -220,21 +225,22 @@ export const BreedTypeList: React.FC = () => {
           </table>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
-    minHeight: '100vh',
+    minHeight: 'calc(100vh - 64px)',
     backgroundColor: '#f5f5f5',
-    padding: '30px 40px',
+    padding: '40px',
   },
   header: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: '20px',
+    marginBottom: '32px',
   },
   title: {
     margin: 0,
@@ -250,8 +256,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: '#fff',
     borderRadius: '8px',
     border: '1px solid #e0e0e0',
-    padding: '16px',
-    marginBottom: '16px',
+    padding: '24px',
+    marginBottom: '24px',
   },
   formRow: {
     display: 'flex',
@@ -259,7 +265,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: 'center',
   },
   input: {
-    padding: '10px 12px',
+    padding: '12px 14px',
     borderRadius: '6px',
     border: '1px solid #ccc',
     fontSize: '14px',
@@ -270,7 +276,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#fff',
     border: 'none',
     borderRadius: '6px',
-    padding: '10px 14px',
+    padding: '12px 18px',
     fontWeight: 600,
     cursor: 'pointer',
   },
@@ -279,7 +285,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: '#444',
     border: '1px solid #ccc',
     borderRadius: '6px',
-    padding: '10px 14px',
+    padding: '12px 18px',
     fontWeight: 600,
     cursor: 'pointer',
   },
@@ -295,12 +301,13 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   th: {
     textAlign: 'left',
-    padding: '12px 14px',
+    padding: '16px 20px',
     backgroundColor: '#fafafa',
     borderBottom: '1px solid #e0e0e0',
+    fontWeight: 600,
   },
   td: {
-    padding: '12px 14px',
+    padding: '16px 20px',
     borderBottom: '1px solid #f0f0f0',
   },
   linkButton: {
@@ -314,24 +321,24 @@ const styles: { [key: string]: React.CSSProperties } = {
     backgroundColor: '#f44336',
     color: '#fff',
     border: 'none',
-    borderRadius: '4px',
-    padding: '8px 12px',
+    borderRadius: '6px',
+    padding: '10px 16px',
     cursor: 'pointer',
     fontWeight: 600,
   },
   emptyCell: {
-    padding: '20px',
+    padding: '40px 20px',
     textAlign: 'center',
     color: '#777',
   },
   loading: {
-    padding: '20px',
+    padding: '40px 20px',
     textAlign: 'center',
     color: '#555',
   },
   error: {
-    padding: '12px 14px',
-    marginBottom: '12px',
+    padding: '14px 18px',
+    marginBottom: '20px',
     backgroundColor: '#ffe6e6',
     border: '1px solid #f5c2c2',
     color: '#b71c1c',

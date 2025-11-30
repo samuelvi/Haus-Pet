@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { apiService } from '../services/api.service';
 import type { BreedFormData, Breed, PetType, BreedType } from '../types/api.types';
 import { useAuth } from '../contexts/AuthContext';
+import { AdminNav } from './AdminNav';
 
 interface SimilarBreed {
   id: string;
@@ -150,8 +151,10 @@ export const BreedForm: React.FC = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
+    <>
+      <AdminNav />
+      <div style={styles.container}>
+        <header style={styles.header}>
         <div>
           <h1 style={styles.title}>{isEditMode ? 'Edit Breed' : 'Add Breed'}</h1>
           <p style={styles.subtitle}>
@@ -282,21 +285,22 @@ export const BreedForm: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
-    minHeight: '100vh',
+    minHeight: 'calc(100vh - 64px)',
     backgroundColor: '#f5f5f5',
-    padding: '30px 40px',
+    padding: '40px',
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '20px',
+    marginBottom: '24px',
   },
   title: {
     margin: 0,
@@ -325,14 +329,15 @@ const styles: { [key: string]: React.CSSProperties } = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px',
+    gap: '20px',
   },
   label: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: '10px',
     fontSize: '14px',
     color: '#333',
+    fontWeight: 500,
   },
   input: {
     padding: '12px',
@@ -349,8 +354,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   actions: {
     display: 'flex',
     justifyContent: 'flex-end',
-    gap: '10px',
-    marginTop: '10px',
+    gap: '12px',
+    marginTop: '16px',
   },
   primaryButton: {
     backgroundColor: '#007bff',
@@ -371,12 +376,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: 'pointer',
   },
   loading: {
-    padding: '12px',
+    padding: '40px 20px',
+    textAlign: 'center',
     color: '#555',
   },
   error: {
-    padding: '12px 14px',
-    marginBottom: '12px',
+    padding: '14px 18px',
+    marginBottom: '20px',
     backgroundColor: '#ffe6e6',
     border: '1px solid #f5c2c2',
     color: '#b71c1c',
@@ -407,7 +413,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '20px 24px',
+    padding: '24px',
     borderBottom: '1px solid #e0e0e0',
   },
   modalTitle: {

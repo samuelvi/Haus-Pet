@@ -112,7 +112,7 @@
   }
 
   .card-body {
-    @apply p-6 sm:p-8;
+    @apply p-8 sm:p-10;
   }
 
   /* Badge styles */

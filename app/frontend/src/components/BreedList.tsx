@@ -4,6 +4,7 @@ import { apiService } from '../services/api.service';
 import type { Breed, PetType } from '../types/api.types';
 import { useAuth } from '../contexts/AuthContext';
 import { fuzzyFilter } from '../utils/fuzzySearch';
+import { AdminNav } from './AdminNav';
 
 type SortField = 'name' | 'petType';
 
@@ -98,29 +99,31 @@ export const BreedList: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Breed Management</h1>
-              <p className="text-gray-600 mt-1">Create, edit, or remove breeds</p>
+    <>
+      <AdminNav />
+      <div className="min-h-screen bg-gray-50">
+        {/* Header Section */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Breed Management</h1>
+                <p className="text-gray-600 mt-2">Create, edit, or remove breeds</p>
+              </div>
+              <button
+                onClick={() => navigate('/admin/breeds/new')}
+                className="btn btn-primary px-6 py-3 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Breed
+              </button>
             </div>
-            <button
-              onClick={() => navigate('/admin/breeds/new')}
-              className="btn btn-primary px-6 py-3 flex items-center gap-2"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Breed
-            </button>
           </div>
         </div>
-      </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-10">
         {/* Filters */}
         <div className="card shadow-soft mb-6">
           <div className="card-body">
@@ -288,5 +291,6 @@ export const BreedList: React.FC = () => {
         </div>
       </main>
     </div>
+    </>
   );
 };

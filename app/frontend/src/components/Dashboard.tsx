@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import type { SystemCounters } from '../types/api.types';
 import { CountersService } from '../services/counters.service';
+import { AdminNav } from './AdminNav';
 
 export const Dashboard: React.FC = () => {
   const { user, tokens, sessionId, logout } = useAuth();
@@ -76,50 +77,24 @@ export const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-primary-50">
-      {/* Header */}
-      <header className="bg-white border-b border-primary-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-secondary-400 to-secondary-600 rounded-xl flex items-center justify-center shadow-md">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-dark-900">HausPet</h1>
-                <p className="text-xs text-warm-600">Admin Dashboard</p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="btn btn-secondary px-4 py-2 text-sm flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
+    <>
+      <AdminNav />
+      <div className="min-h-screen bg-primary-50">
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-10">
         {/* Welcome Card */}
         <div className="card shadow-soft mb-8">
           <div className="card-body">
-            <div className="flex items-start justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-gray-900 mb-3">
                   Welcome back, {user?.name}!
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-gray-600 text-base">
                   Manage your pet shelter efficiently from this dashboard
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 {user?.isActive ? (
                   <span className="badge badge-success">
                     <span className="w-2 h-2 bg-green-600 rounded-full mr-2"></span>
@@ -134,18 +109,18 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p className="text-sm text-gray-600 mb-1">Email</p>
-                <p className="font-medium text-gray-900">{user?.email}</p>
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                <p className="text-sm text-gray-600 mb-2 font-medium">Email</p>
+                <p className="font-semibold text-gray-900">{user?.email}</p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p className="text-sm text-gray-600 mb-1">Role</p>
-                <p className="font-medium text-gray-900">{user?.role}</p>
+              <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                <p className="text-sm text-gray-600 mb-2 font-medium">Role</p>
+                <p className="font-semibold text-gray-900">{user?.role}</p>
               </div>
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <p className="text-sm text-gray-600 mb-1">User ID</p>
-                <p className="font-medium text-gray-900 text-xs truncate">{user?.id}</p>
+              <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                <p className="text-sm text-gray-600 mb-2 font-medium">User ID</p>
+                <p className="font-semibold text-gray-900 text-xs truncate">{user?.id}</p>
               </div>
             </div>
           </div>
@@ -153,7 +128,7 @@ export const Dashboard: React.FC = () => {
 
         {/* Quick Actions */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-5">Quick Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {quickActions.map((action, index) => (
               <button
@@ -184,17 +159,17 @@ export const Dashboard: React.FC = () => {
         {/* Stats Overview */}
         <div className="card shadow-soft">
           <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">System Overview</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-5">System Overview</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-blue-700 font-medium">Total Breeds</p>
-                    <p className="text-2xl font-bold text-blue-900 mt-1">
+                    <p className="text-sm text-blue-700 font-semibold mb-1">Total Breeds</p>
+                    <p className="text-3xl font-bold text-blue-900 mt-2">
                       {loading ? '-' : counters?.totalBreeds ?? 0}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <div className="w-14 h-14 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                     </svg>
@@ -202,15 +177,15 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border border-green-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-green-700 font-medium">Active Pets</p>
-                    <p className="text-2xl font-bold text-green-900 mt-1">
+                    <p className="text-sm text-green-700 font-semibold mb-1">Active Pets</p>
+                    <p className="text-3xl font-bold text-green-900 mt-2">
                       {loading ? '-' : counters?.totalActivePets ?? 0}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                  <div className="w-14 h-14 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -218,15 +193,15 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5 border border-purple-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-purple-700 font-medium">Breed Types</p>
-                    <p className="text-2xl font-bold text-purple-900 mt-1">
+                    <p className="text-sm text-purple-700 font-semibold mb-1">Breed Types</p>
+                    <p className="text-3xl font-bold text-purple-900 mt-2">
                       {loading ? '-' : counters?.totalBreedTypes ?? 0}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <div className="w-14 h-14 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 6v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                     </svg>
@@ -234,15 +209,15 @@ export const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-5 border border-orange-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-orange-700 font-medium">Sponsorships</p>
-                    <p className="text-2xl font-bold text-orange-900 mt-1">
+                    <p className="text-sm text-orange-700 font-semibold mb-1">Sponsorships</p>
+                    <p className="text-3xl font-bold text-orange-900 mt-2">
                       {loading ? '-' : counters?.totalSponsorships ?? 0}
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
+                  <div className="w-14 h-14 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
@@ -253,6 +228,7 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </main>
-    </div>
+      </div>
+    </>
   );
 };
