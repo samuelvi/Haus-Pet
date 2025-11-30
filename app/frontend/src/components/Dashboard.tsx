@@ -86,7 +86,7 @@ export const Dashboard: React.FC = () => {
         <div className="card shadow-soft mb-8">
           <div className="card-body">
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
+              <div className="flex-1 pl-2">
                 <h2 className="text-2xl font-bold text-gray-900 mb-3">
                   Welcome back, {user?.name}!
                 </h2>
@@ -127,7 +127,7 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="mb-8">
+        <div className="mb-8 pl-2">
           <h3 className="text-lg font-semibold text-gray-900 mb-5">Quick Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {quickActions.map((action, index) => (
@@ -136,7 +136,7 @@ export const Dashboard: React.FC = () => {
                 onClick={() => navigate(action.route)}
                 className="group card hover:shadow-medium transition-all duration-200 text-left"
               >
-                <div className="card-body">
+                <div className="card-body pl-2 pt-2 pb-2">
                   <div className={`w-14 h-14 bg-gradient-to-br ${action.color} rounded-xl flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform duration-200 shadow-lg`}>
                     {action.icon}
                   </div>
@@ -159,7 +159,9 @@ export const Dashboard: React.FC = () => {
         {/* Stats Overview */}
         <div className="card shadow-soft">
           <div className="card-body">
-            <h3 className="text-lg font-semibold text-gray-900 mb-5">System Overview</h3>
+            <div className="pl-2">
+              <h3 className="text-lg font-semibold text-gray-900 mb-5">System Overview</h3>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border border-blue-200">
                 <div className="flex items-center justify-between">

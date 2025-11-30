@@ -133,7 +133,7 @@ export const BreedTypeList: React.FC = () => {
             style={styles.input}
           />
           <button
-            style={styles.primaryButton}
+            className="btn btn-primary px-4 py-2"
             onClick={() => void handleCreate()}
             disabled={busyId === 'create'}
           >
@@ -173,14 +173,14 @@ export const BreedTypeList: React.FC = () => {
                     {editing === type.id ? (
                       <>
                         <button
-                          style={styles.primaryButton}
+                          className="btn btn-primary px-4 py-2 text-sm"
                           onClick={() => void handleUpdate(type.id)}
                           disabled={busyId === type.id}
                         >
                           {busyId === type.id ? 'Saving...' : 'Save'}
                         </button>
                         <button
-                          style={styles.secondaryButton}
+                          className="btn btn-secondary px-4 py-2 text-sm"
                           onClick={() => {
                             setEditing(null);
                             setEditingName('');
@@ -193,7 +193,7 @@ export const BreedTypeList: React.FC = () => {
                     ) : (
                       <>
                         <button
-                          style={styles.linkButton}
+                          className="text-primary-600 hover:text-primary-900 font-semibold"
                           onClick={() => {
                             setEditing(type.id);
                             setEditingName(type.name);
@@ -202,7 +202,7 @@ export const BreedTypeList: React.FC = () => {
                           Edit
                         </button>
                         <button
-                          style={styles.dangerButton}
+                          className="btn btn-danger px-4 py-2 text-sm disabled:opacity-50"
                           onClick={() => void handleDelete(type.id)}
                           disabled={busyId === type.id}
                         >

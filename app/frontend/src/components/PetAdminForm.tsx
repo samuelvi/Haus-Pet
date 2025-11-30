@@ -214,7 +214,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   linkButton: {
     backgroundColor: 'transparent',
     border: 'none',
-    color: '#0d6efd',
+    color: '#6B553D',
     cursor: 'pointer',
     fontWeight: 600,
   },
@@ -257,7 +257,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginTop: '16px',
   },
   primaryButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#6B553D',
     color: '#fff',
     border: 'none',
     borderRadius: '6px',
@@ -282,9 +282,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   error: {
     padding: '14px 18px',
     marginBottom: '20px',
-    backgroundColor: '#ffe6e6',
-    border: '1px solid #f5c2c2',
-    color: '#b71c1c',
+    backgroundColor: '#fdf6f0',
+    border: '1px solid #f5d5bc',
+    color: '#843a23',
     borderRadius: '6px',
   },
 };

@@ -315,7 +315,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   linkButton: {
     backgroundColor: 'transparent',
     border: 'none',
-    color: '#0d6efd',
+    color: '#6B553D',
     cursor: 'pointer',
     fontWeight: 600,
   },
@@ -358,7 +358,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginTop: '16px',
   },
   primaryButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#6B553D',
     color: '#fff',
     border: 'none',
     borderRadius: '6px',
@@ -383,9 +383,9 @@ const styles: { [key: string]: React.CSSProperties } = {
   error: {
     padding: '14px 18px',
     marginBottom: '20px',
-    backgroundColor: '#ffe6e6',
-    border: '1px solid #f5c2c2',
-    color: '#b71c1c',
+    backgroundColor: '#fdf6f0',
+    border: '1px solid #f5d5bc',
+    color: '#843a23',
     borderRadius: '6px',
   },
   modalOverlay: {
@@ -447,7 +447,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   modalDescriptionError: {
     margin: '0 0 12px 0',
-    color: '#d32f2f',
+    color: '#c45a2f',
     fontSize: '16px',
     fontWeight: 700,
     lineHeight: '1.5',
@@ -482,18 +482,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     textTransform: 'capitalize',
   },
   similarityBadge: {
-    backgroundColor: '#fff3cd',
-    color: '#856404',
+    backgroundColor: '#fdf5e1',
+    color: '#774f06',
     padding: '6px 12px',
     borderRadius: '20px',
     fontSize: '13px',
     fontWeight: 600,
-    border: '1px solid #ffc107',
+    border: '1px solid #f5d785',
   },
   similarityBadgeExact: {
-    backgroundColor: '#ffebee',
-    color: '#c62828',
-    border: '1px solid #ef5350',
+    backgroundColor: '#faeade',
+    color: '#a44726',
+    border: '1px solid #efb890',
     fontWeight: 700,
   },
   modalFooter: {

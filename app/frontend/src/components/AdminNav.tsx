@@ -130,7 +130,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     transition: 'all 0.2s',
   },
   linkActive: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#6B553D',
     color: '#fff',
   },
   actions: {
@@ -141,11 +141,11 @@ const styles: { [key: string]: React.CSSProperties } = {
   viewSiteLink: {
     padding: '8px 16px',
     textDecoration: 'none',
-    color: '#007bff',
+    color: '#6B553D',
     fontWeight: 500,
     fontSize: '14px',
     borderRadius: '6px',
-    border: '1px solid #007bff',
+    border: '1px solid #6B553D',
     transition: 'all 0.2s',
   },
   logoutButton: {
@@ -153,7 +153,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '14px',
     fontWeight: 600,
     color: '#fff',
-    backgroundColor: '#dc3545',
+    backgroundColor: '#D67747',
     border: 'none',
     borderRadius: '6px',
     cursor: 'pointer',

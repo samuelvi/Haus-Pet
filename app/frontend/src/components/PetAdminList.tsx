@@ -130,8 +130,11 @@ export const PetAdminList: React.FC = () => {
             projected pets read model.
           </p>
         </div>
-        <button style={styles.primaryButton} onClick={() => navigate('/admin/pets/new')}>
-          + Add Pet
+        <button className="btn btn-primary px-6 py-3 flex items-center gap-2" onClick={() => navigate('/admin/pets/new')}>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add Pet
         </button>
       </header>
 
@@ -203,13 +206,13 @@ export const PetAdminList: React.FC = () => {
                   <td style={styles.cell}>${Number(pet.totalSponsored).toFixed(2)}</td>
                   <td style={styles.actionsCell}>
                     <button
-                      style={styles.linkButton}
+                      className="text-primary-600 hover:text-primary-900 font-semibold"
                       onClick={() => navigate(`/admin/pets/edit/${pet.id}`)}
                     >
                       Edit
                     </button>
                     <button
-                      style={styles.dangerButton}
+                      className="btn btn-danger px-4 py-2 text-sm disabled:opacity-50"
                       onClick={() => void handleDelete(pet.id)}
                       disabled={isDeleting === pet.id}
                     >
