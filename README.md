@@ -898,6 +898,11 @@ Detailed documentation is available in the `/docs` directory:
 - **[Dependency Injection (InversifyJS)](docs/DEPENDENCY_INJECTION.md)** - Complete guide to the DI system
 - **[System Counters Architecture](docs/SYSTEM_COUNTERS.md)** - Event-driven metrics system
 - **[Production Deployment](docs/PRODUCTION.md)** - Deployment guide
+- **[Architectural Decision Records (ADRs)](docs/adr/)** - Key architectural decisions and their rationale
+  - [Technology Stack](docs/adr/use-typescript-express-prisma-stack.md) - TypeScript, Express, Prisma, PostgreSQL, React
+  - [Clean Architecture](docs/adr/use-clean-architecture-layered-api.md) - Layered API structure and separation of concerns
+  - [Database Design](docs/adr/use-ulids-and-prisma-migrations.md) - ULIDs and Prisma migrations strategy
+  - [Testing Strategy](docs/adr/use-multi-level-testing-strategy.md) - Multi-level testing approach (unit, functional, e2e)
 
 ### Key Architectural Patterns
 
