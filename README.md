@@ -377,6 +377,117 @@ If you were to deploy this application manually (e.g., on a cloud server without
 
     *Note: The provided `docker-compose.yaml` already automates the `migrate deploy` step for you.*
 
+## Logging
+
+HausPet uses **Pino** for high-performance structured logging throughout the application.
+
+### Features
+
+- **Development**: Colorized, human-readable logs with `pino-pretty` at `debug` level
+- **Production**: Structured JSON logs at `info` level for easy parsing and analysis
+- **HTTP Logging**: Automatic logging of all HTTP requests/responses with status codes and response times
+- **Error Tracking**: Centralized error handler logs all exceptions with full context
+- **Worker Logging**: BullMQ job processing events are logged with structured data
+- **Request Tracing**: Each request gets a unique ID for tracing through the system
+
+### Log Levels
+
+- `fatal`: Application crashes, requires immediate attention
+- `error`: Errors that need investigation (failed requests, exceptions)
+- `warn`: Warnings (validation errors, deprecated usage)
+- `info`: General informational messages (startup, requests)
+- `debug`: Detailed debugging information (development only)
+- `trace`: Very detailed information (rarely used)
+
+### Log File Locations
+
+Logs are written to **both** stdout (Docker/console) and files simultaneously:
+
+**Directory structure:**
+```
+app/api/logs/
+├── dev/               # Development logs (NODE_ENV=development)
+│   ├── error.log      # Errors and fatal logs only
+│   ├── warn.log       # Warnings, errors, and fatal logs
+│   └── combined.log   # (not created in dev)
+├── prod/              # Production logs (NODE_ENV=production)
+│   ├── error.log      # Errors and fatal logs only
+│   ├── warn.log       # Warnings, errors, and fatal logs
+│   └── combined.log   # All logs (info and above)
+└── test/              # Test logs (NODE_ENV=test)
+    └── ...            # Same structure as dev
+```
+
+**Viewing logs:**
+
+```sh
+# View live Docker logs (stdout)
+docker logs hauspet_api -f
+docker logs hauspet_worker -f
+
+# View log files (persisted on disk)
+tail -f app/api/logs/dev/error.log
+tail -f app/api/logs/dev/warn.log
+
+# In production
+tail -f app/api/logs/prod/combined.log
+tail -f app/api/logs/prod/error.log
+```
+
+**Log format in development (colorized):**
+```
+[18:52:41 UTC] INFO: Server listening on http://localhost:3000
+    env: "development"
+    service: "hauspet-api"
+
+[18:52:45 UTC] INFO: GET /api/breeds completed
+    req: {
+      "method": "GET",
+      "url": "/api/breeds",
+      "statusCode": 200
+    }
+    responseTime: 45
+```
+
+**Log format in production (JSON):**
+```json
+{
+  "level": 30,
+  "time": 1701453161000,
+  "msg": "GET /api/breeds completed",
+  "req": {
+    "method": "GET",
+    "url": "/api/breeds"
+  },
+  "res": {
+    "statusCode": 200
+  },
+  "responseTime": 45,
+  "env": "production",
+  "service": "hauspet-api"
+}
+```
+
+### Configuration
+
+Logging behavior is automatically configured based on `NODE_ENV`:
+
+- **Development** (`NODE_ENV=development` or not set):
+  - Stdout: Pretty-printed, colorized logs at `debug` level
+  - Files: `error.log` and `warn.log` in `logs/dev/`
+
+- **Production** (`NODE_ENV=production`):
+  - Stdout: JSON structured logs at `info` level
+  - Files: `error.log`, `warn.log`, and `combined.log` in `logs/prod/`
+
+**Log persistence:** All environments write logs to files in addition to stdout. This enables:
+- Historical analysis and debugging
+- Auditing and compliance
+- Backup and archival
+- Works alongside Docker logs without interference
+
+For more details, see the [Logging ADR](docs/adr/use-pino-for-logging.md).
+
 ## Testing
 
 This project uses automated testing to ensure code quality and reliability.
@@ -903,6 +1014,7 @@ Detailed documentation is available in the `/docs` directory:
   - [Clean Architecture](docs/adr/use-clean-architecture-layered-api.md) - Layered API structure and separation of concerns
   - [Database Design](docs/adr/use-ulids-and-prisma-migrations.md) - ULIDs and Prisma migrations strategy
   - [Testing Strategy](docs/adr/use-multi-level-testing-strategy.md) - Multi-level testing approach (unit, functional, e2e)
+  - [Logging Strategy](docs/adr/use-pino-for-logging.md) - Pino for structured logging with error tracking
 
 ### Key Architectural Patterns
 

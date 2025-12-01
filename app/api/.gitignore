@@ -12,6 +12,11 @@ dist/
 # Logs
 *.log
 npm-debug.log*
+logs/**/*.log
+logs/**/combined.log
+logs/**/error.log
+logs/**/warn.log
+!logs/.gitkeep
 
 # Test results
 coverage/

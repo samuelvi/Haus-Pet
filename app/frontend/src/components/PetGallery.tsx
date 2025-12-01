@@ -140,7 +140,9 @@ export const PetGallery: React.FC = () => {
                     alt={pet.name}
                     className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-300"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = `https://placehold.co/400x300/e2e8f0/64748b?text=${pet.type}`;
+                      console.error(`Failed to load image for ${pet.name}: ${pet.photoUrl}`);
+                      // Fallback to a generic pet icon using data URI
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect fill="%23e2e8f0" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="%2364748b"%3E' + pet.type + '%3C/text%3E%3C/svg%3E';
                     }}
                   />
                   {/* Type Badge */}

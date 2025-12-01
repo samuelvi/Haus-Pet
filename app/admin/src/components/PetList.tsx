@@ -109,7 +109,9 @@ export const PetList: React.FC = () => {
               alt={pet.name}
               style={{ width: '100%', height: '200px', objectFit: 'cover' }}
               onError={(e) => {
-                (e.target as HTMLImageElement).src = `https://placehold.co/400x200/gray/white?text=${pet.type}`;
+                console.error(`Failed to load image for ${pet.name}: ${pet.photoUrl}`);
+                // Fallback to a generic pet icon using data URI
+                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="200" viewBox="0 0 400 200"%3E%3Crect fill="%23cccccc" width="400" height="200"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="%23ffffff"%3E' + pet.type + '%3C/text%3E%3C/svg%3E';
               }}
             />
             <div style={{ padding: '15px' }}>

@@ -2,10 +2,38 @@ import { Worker, Job } from "bullmq";
 import connection from "./infrastructure/queue/redis-connection";
 import { AuditService } from "./application/audit.service";
 import { MongoAuditRepository } from "./infrastructure/repositories/mongo-audit.repository";
+import logger from "./infrastructure/logger/logger";
 
 const AUDIT_QUEUE_NAME = "audit-log";
 
-console.log("Worker process started.");
+logger.info('Worker process started');
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error: Error) => {
+  logger.fatal(
+    {
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      },
+    },
+    'Uncaught Exception in worker - shutting down'
+  );
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+  logger.fatal(
+    {
+      reason,
+      promise,
+    },
+    'Unhandled Promise Rejection in worker - shutting down'
+  );
+  process.exit(1);
+});
 
 // --- Composition Root for the Worker ---
 // The MongoAuditRepository now uses Mongoose and doesn't need a client passed in.
@@ -16,11 +44,17 @@ const auditService = new AuditService(auditRepository);
 const worker = new Worker(
   AUDIT_QUEUE_NAME,
   async (job: Job) => {
-    console.log(`Processing job ${job.id} of type ${job.name}`);
+    logger.debug({ jobId: job.id, jobName: job.name }, 'Processing job');
     try {
       await auditService.log(job.data);
     } catch (error) {
-      console.error(`Error processing job ${job.id}:`, error);
+      logger.error(
+        {
+          jobId: job.id,
+          error: error instanceof Error ? error.message : error,
+        },
+        'Error processing job'
+      );
       throw error; // Re-throw to let BullMQ know the job failed.
     }
   },
@@ -28,13 +62,27 @@ const worker = new Worker(
 );
 
 worker.on("completed", (job) => {
-  console.log(`Job ${job.id} has completed!`);
+  logger.info({ jobId: job.id }, 'Job completed successfully');
 });
 
 worker.on("failed", (job, err) => {
-  console.error(`Job ${job?.id} has failed with ${err.message}. It will be moved to the failed queue.`);
+  logger.error(
+    {
+      jobId: job?.id,
+      error: err.message,
+      stack: err.stack,
+    },
+    'Job failed and moved to failed queue'
+  );
 });
 
 // Graceful shutdown
-process.on("SIGINT", () => worker.close());
-process.on("SIGTERM", () => worker.close());
+const shutdown = async () => {
+  logger.info('Shutting down worker gracefully...');
+  await worker.close();
+  logger.info('Worker closed successfully');
+  process.exit(0);
+};
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);

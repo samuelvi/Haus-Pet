@@ -1,7 +1,10 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
+import path from "path";
 import mainRouter from "./routes/main.router"; // Import the single main router
 import { auditMiddleware } from "./infrastructure/http/middleware/audit.middleware";
+import { errorHandler } from "./infrastructure/http/middleware/error-handler.middleware";
+import { httpLogger } from "./infrastructure/http/middleware/http-logger.middleware";
 
 // ========== Dependency Injection Setup ==========
 import 'reflect-metadata'; // Required for InversifyJS
@@ -10,17 +13,18 @@ import { TYPES } from "./infrastructure/di/types";
 import { getEventBus } from "./infrastructure/events/EventBus";
 import { setupEventHandlers } from "./infrastructure/events/setupEventHandlers";
 import { SystemCountersService } from "./application/SystemCountersService";
+import logger from "./infrastructure/logger/logger";
 
 // Initialize DI container (eager loading)
 // This ensures all singletons are created and the container is ready
-console.log('🔧 Initializing DI container...');
+logger.info('Initializing DI container...');
 
 // Initialize event system with services from container
 const eventBus = getEventBus();
 const countersService = container.get<SystemCountersService>(TYPES.SystemCountersService);
 setupEventHandlers(eventBus, countersService);
 
-console.log('✅ DI container initialized successfully');
+logger.info('DI container initialized successfully');
 
 const app: Express = express();
 
@@ -41,8 +45,19 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// HTTP request/response logging (should be early in middleware chain)
+app.use(httpLogger);
+
 // Middleware to capture audit context
 app.use(auditMiddleware);
+
+// Serve static files from frontend's public directory
+// In Docker, images are mounted at /app/frontend-images
+// In local development, they're at ../frontend/public/img
+const frontendImagesPath = process.env.NODE_ENV === 'development'
+  ? '/app/frontend-images'
+  : path.join(__dirname, '..', 'frontend', 'public', 'img');
+app.use('/img', express.static(frontendImagesPath));
 
 // Mount the main router. All path logic (like /api) is handled inside it.
 app.use(mainRouter);
@@ -51,5 +66,8 @@ app.use(mainRouter);
 app.get("/", (_req: Request, res: Response) => {
   res.send("HausPet is running!");
 });
+
+// Error handling middleware (must be last)
+app.use(errorHandler);
 
 export default app;
