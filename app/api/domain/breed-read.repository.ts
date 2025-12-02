@@ -6,9 +6,9 @@ export interface BreedFilters {
 }
 
 export interface BreedReadRepository {
-  findAll(filters?: BreedFilters): Promise<Breed[]>;
+  findAll(filters?: BreedFilters, page?: number, limit?: number): Promise<Breed[]>;
   findById(id: string): Promise<Breed | null>;
   findByName(name: string): Promise<Breed | null>;
-  findByType(type: PetType): Promise<Breed[]>;
+  findByType(type: PetType, page?: number, limit?: number): Promise<Breed[]>;
   countPetsUsingBreedName(name: string): Promise<number>;
 }

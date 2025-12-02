@@ -3,6 +3,7 @@ import { BreedType } from "../domain/breed";
 import { generateId } from "../infrastructure/utils/uuid";
 import { EventBus } from "../infrastructure/events/EventBus";
 import { BreedTypeCreatedEvent, BreedTypeDeletedEvent } from "../domain/events/DomainEvent";
+import { PaginatedResponse, normalizePaginationParams, calculatePaginationMeta } from "../domain/pagination";
 
 export class BreedTypeService {
   constructor(
@@ -10,8 +11,16 @@ export class BreedTypeService {
     private readonly eventBus: EventBus
   ) {}
 
-  async list(): Promise<BreedType[]> {
-    return this.breedTypeRepository.findAll();
+  async list(page: number = 1, limit?: number): Promise<PaginatedResponse<BreedType>> {
+    // Use ADMIN_PAGE_SIZE as default if limit not provided
+    const adminPageSize = parseInt(process.env.ADMIN_PAGE_SIZE || '10', 10);
+    const { page: normalizedPage, limit: normalizedLimit } = normalizePaginationParams({ page, limit: limit || adminPageSize });
+
+    // Fetch N+1 to detect if there are more pages
+    const types = await this.breedTypeRepository.findAll(normalizedPage, normalizedLimit + 1);
+
+    // Calculate pagination metadata
+    return calculatePaginationMeta(types, normalizedPage, normalizedLimit);
   }
 
   async create(name: string): Promise<BreedType> {

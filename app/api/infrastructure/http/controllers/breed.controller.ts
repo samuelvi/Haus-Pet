@@ -23,8 +23,12 @@ export class BreedController {
         filters.search = req.query.search.trim();
       }
 
-      const breeds = await this.breedService.getAllBreeds((req as any).auditContext ?? {}, filters);
-      res.status(200).json({ status: "OK", data: breeds });
+      // Extract pagination parameters
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+
+      const result = await this.breedService.getAllBreeds((req as any).auditContext ?? {}, filters, page, limit);
+      res.status(200).json({ status: "OK", data: result });
     } catch (error) {
       res.status(500).json({ status: "ERROR", message: "Error fetching breeds" });
     }
@@ -33,8 +37,12 @@ export class BreedController {
   public async getBreedsByType(req: Request, res: Response): Promise<void> {
     const type = req.params.type as PetType;
     try {
-      const breeds = await this.breedService.getBreedsByType(type, (req as any).auditContext ?? {});
-      res.status(200).json({ status: "OK", data: breeds });
+      // Extract pagination parameters
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+
+      const result = await this.breedService.getBreedsByType(type, (req as any).auditContext ?? {}, page, limit);
+      res.status(200).json({ status: "OK", data: result });
     } catch (error) {
       res.status(500).json({ status: "ERROR", message: `Error fetching ${type} breeds` });
     }
@@ -201,12 +209,13 @@ export class BreedController {
         filters.type = petType.toLowerCase();
       }
 
-      const allBreeds = await this.breedService.getAllBreeds((req as any).auditContext ?? {}, filters);
+      // For similarity check, we don't want pagination - fetch all breeds
+      const allBreedsResult = await this.breedService.getAllBreeds((req as any).auditContext ?? {}, filters, 1, 1000);
 
       // Find similar breeds using fuzzy matching (threshold 0.5 = 50% similarity)
       // This catches variations like: test/tets, cat/cats, labrador/labradoor, etc.
       const similarBreeds = findSimilar(
-        allBreeds,
+        allBreedsResult.items,
         name.trim(),
         (breed) => breed.name,
         0.5

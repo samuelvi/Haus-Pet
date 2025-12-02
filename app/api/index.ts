@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config(); // Load environment variables first
+
 import app from "./app";
 import logger from "./infrastructure/logger/logger";
 

@@ -132,7 +132,9 @@ class ApiService {
       }
     }
 
-    return this.request<Breed[]>(endpoint);
+    // Backend now returns paginated response: { items: Breed[], pagination: {...} }
+    const response = await this.request<{ items: Breed[]; pagination: any }>(endpoint);
+    return response.items;
   }
 
   /**
@@ -229,13 +231,15 @@ class ApiService {
    * List breed types (admin)
    */
   async getBreedTypes(accessToken: string, sessionId: string): Promise<BreedType[]> {
-    return this.request<BreedType[]>('/api/admin/breed-types', {
+    // Backend now returns paginated response: { items: BreedType[], pagination: {...} }
+    const response = await this.request<{ items: BreedType[]; pagination: any }>('/api/admin/breed-types', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'x-session-id': sessionId,
       },
     });
+    return response.items;
   }
 
   /**

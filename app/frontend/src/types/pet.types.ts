@@ -47,3 +47,15 @@ export interface UpdatePetInput {
   breed?: string;
   photoUrl?: string;
 }
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: PaginationMeta;
+}

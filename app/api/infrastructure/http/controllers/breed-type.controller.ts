@@ -4,10 +4,14 @@ import { BreedTypeService } from "../../../application/breed-type.service";
 export class BreedTypeController {
   constructor(private readonly service: BreedTypeService) {}
 
-  list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const types = await this.service.list();
-      res.json({ status: "OK", data: types });
+      // Extract pagination parameters
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : parseInt(process.env.ADMIN_PAGE_SIZE || '10', 10);
+
+      const result = await this.service.list(page, limit);
+      res.json({ status: "OK", data: result });
     } catch (error) {
       next(error);
     }

@@ -7,6 +7,7 @@ import { generateId } from "../infrastructure/utils/uuid";
 import { BreedTypeRepository } from "../domain/breed-type.repository";
 import { EventBus } from "../infrastructure/events/EventBus";
 import { BreedCreatedEvent, BreedDeletedEvent } from "../domain/events/DomainEvent";
+import { PaginatedResponse, normalizePaginationParams, calculatePaginationMeta } from "../domain/pagination";
 
 export class BreedService {
   private fuzzySearchService: FuzzySearchService;
@@ -20,7 +21,9 @@ export class BreedService {
     this.fuzzySearchService = new FuzzySearchService();
   }
 
-  public async getAllBreeds(filters?: BreedFilters): Promise<Breed[]> {
+  public async getAllBreeds(filters?: BreedFilters, page: number = 1, limit: number = 20): Promise<PaginatedResponse<Breed>> {
+    const { page: normalizedPage, limit: normalizedLimit } = normalizePaginationParams({ page, limit });
+
     // Separate fuzzy search from database filters
     const dbFilters: BreedFilters = {};
     if (filters?.type) {
@@ -28,18 +31,26 @@ export class BreedService {
     }
 
     // Get breeds from database (filtered by type if specified)
-    let breeds = await this.breedReadRepository.findAll(dbFilters);
+    // Fetch N+1 to detect if there are more pages
+    let breeds = await this.breedReadRepository.findAll(dbFilters, normalizedPage, normalizedLimit + 1);
 
     // Apply fuzzy search at application level if search term provided
     if (filters?.search) {
       breeds = this.fuzzySearchService.searchBreeds(breeds, filters.search);
     }
 
-    return breeds;
+    // Calculate pagination metadata
+    return calculatePaginationMeta(breeds, normalizedPage, normalizedLimit);
   }
 
-  public async getBreedsByType(type: PetType): Promise<Breed[]> {
-    return this.breedReadRepository.findByType(type);
+  public async getBreedsByType(type: PetType, page: number = 1, limit: number = 20): Promise<PaginatedResponse<Breed>> {
+    const { page: normalizedPage, limit: normalizedLimit } = normalizePaginationParams({ page, limit });
+
+    // Fetch N+1 to detect if there are more pages
+    const breeds = await this.breedReadRepository.findByType(type, normalizedPage, normalizedLimit + 1);
+
+    // Calculate pagination metadata
+    return calculatePaginationMeta(breeds, normalizedPage, normalizedLimit);
   }
 
   public async getRandomBreed(): Promise<Breed | null> {

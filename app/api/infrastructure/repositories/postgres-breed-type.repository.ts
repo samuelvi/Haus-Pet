@@ -12,10 +12,19 @@ export class PostgresBreedTypeRepository implements BreedTypeRepository {
     };
   }
 
-  async findAll(): Promise<BreedType[]> {
-    const rows = await this.prisma.breedType.findMany({
+  async findAll(page?: number, limit?: number): Promise<BreedType[]> {
+    const queryOptions: any = {
       orderBy: { name: "asc" },
-    });
+    };
+
+    // Apply pagination if provided
+    if (page !== undefined && limit !== undefined) {
+      const offset = (page - 1) * limit;
+      queryOptions.skip = offset;
+      queryOptions.take = limit;
+    }
+
+    const rows = await this.prisma.breedType.findMany(queryOptions);
     return rows.map((r) => this.toDomain(r));
   }
 

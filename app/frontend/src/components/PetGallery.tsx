@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { petService } from '../services/pet.service';
-import type { Pet, PetType } from '../types/pet.types';
+import type { Pet, PetType, PaginationMeta } from '../types/pet.types';
 import { Navbar } from './Navbar';
 
 export const PetGallery: React.FC = () => {
@@ -9,19 +9,23 @@ export const PetGallery: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<PetType | ''>('');
+  const [page, setPage] = useState<number>(1);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const navigate = useNavigate();
+  const PAGE_SIZE = 8; // Homepage gallery shows 8 items per page
 
   const loadPets = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
-      let data: Pet[];
+      let result;
       if (typeFilter) {
-        data = await petService.getPetsByType(typeFilter);
+        result = await petService.getPetsByType(typeFilter, page, PAGE_SIZE);
       } else {
-        data = await petService.getAllPets();
+        result = await petService.getAllPets(page, PAGE_SIZE);
       }
-      setPets(data);
+      setPets(result.items);
+      setPagination(result.pagination);
     } catch (err) {
       setError('Failed to load pets');
       console.error(err);
@@ -32,7 +36,26 @@ export const PetGallery: React.FC = () => {
 
   useEffect(() => {
     loadPets();
-  }, [typeFilter]);
+  }, [typeFilter, page]);
+
+  const handleFilterChange = (newFilter: PetType | '') => {
+    setTypeFilter(newFilter);
+    setPage(1); // Reset to first page when changing filter
+  };
+
+  const handleNextPage = () => {
+    if (pagination?.hasNext) {
+      setPage((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (pagination?.hasPrevious) {
+      setPage((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const petTypeConfig = [
     { type: '', label: 'All Pets', emoji: '🐾', color: 'primary' },
@@ -112,7 +135,7 @@ export const PetGallery: React.FC = () => {
             return (
               <button
                 key={config.type}
-                onClick={() => setTypeFilter(config.type as PetType | '')}
+                onClick={() => handleFilterChange(config.type as PetType | '')}
                 className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft hover:shadow-medium ${colorClasses} ${isActive ? 'scale-105' : ''}`}
               >
                 <span className={`mr-2 inline-block transition-all ${isActive && config.type === '' ? 'brightness-200 contrast-75' : ''}`}>
@@ -123,6 +146,15 @@ export const PetGallery: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Pagination Info */}
+        {pagination && (
+          <div className="text-center mb-4">
+            <p className="text-sm text-gray-600">
+              Page {pagination.page} • Showing {pets.length} pets
+            </p>
+          </div>
+        )}
 
         {/* Pet Grid */}
         {pets.length > 0 ? (
@@ -203,6 +235,45 @@ export const PetGallery: React.FC = () => {
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-2">No pets found</h3>
             <p className="text-gray-600">Check back soon for more adorable friends!</p>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {pagination && pets.length > 0 && (
+          <div className="flex justify-center items-center gap-4 mt-12 mb-8">
+            <button
+              onClick={handlePreviousPage}
+              disabled={!pagination.hasPrevious}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
+                pagination.hasPrevious
+                  ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Previous
+            </button>
+
+            <div className="px-4 py-3 bg-white rounded-xl shadow-soft">
+              <span className="text-dark-800 font-semibold">Page {pagination.page}</span>
+            </div>
+
+            <button
+              onClick={handleNextPage}
+              disabled={!pagination.hasNext}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
+                pagination.hasNext
+                  ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              Next
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         )}
       </main>

@@ -14,10 +14,14 @@ export class PetController {
   /**
    * GET /api/pets - List all pets
    */
-  findAll = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  findAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const pets = await this.petService.findAll();
-      res.json(pets);
+      // Extract pagination parameters
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+
+      const result = await this.petService.findAll(page, limit);
+      res.json({ status: "OK", data: result });
     } catch (error) {
       next(error);
     }
@@ -34,8 +38,12 @@ export class PetController {
         return;
       }
 
-      const pets = await this.petService.findByType(type);
-      res.json(pets);
+      // Extract pagination parameters
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+
+      const result = await this.petService.findByType(type, page, limit);
+      res.json({ status: "OK", data: result });
     } catch (error) {
       next(error);
     }

@@ -507,7 +507,7 @@ The project includes an MCP server for Claude Desktop integration:
 ### Core Documentation
 
 - **`README.md`**: General project overview, getting started, API endpoints, user guide
-- **`AGENTS.md`**: This file - comprehensive agent guidelines
+- **`docs/AGENTS.md`**: This file - comprehensive agent guidelines
 
 ### Technical Documentation
 

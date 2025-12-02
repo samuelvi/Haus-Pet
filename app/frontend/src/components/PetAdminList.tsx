@@ -28,7 +28,7 @@ export const PetAdminList: React.FC = () => {
       try {
         setLoading(true);
         const data = await petService.getAllPets();
-        setPets(data);
+        setPets(data.items); // Extract items from paginated response
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load pets');

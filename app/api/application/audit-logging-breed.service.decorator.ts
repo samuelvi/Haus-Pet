@@ -4,6 +4,7 @@ import { Breed, PetType } from "../domain/breed";
 import { BreedFilters } from "../domain/breed-read.repository";
 import { QueueService } from "../infrastructure/queue/queue.service";
 import { RedisHealthService } from "../infrastructure/queue/redis-health.service";
+import { PaginatedResponse } from "../domain/pagination";
 
 interface AuditContext {
   ipAddress?: string;
@@ -50,18 +51,18 @@ export class AuditLoggingBreedServiceDecorator {
     }
   }
 
-  public async getAllBreeds(auditContext: AuditContext, filters?: BreedFilters): Promise<Breed[]> {
+  public async getAllBreeds(auditContext: AuditContext, filters?: BreedFilters, page?: number, limit?: number): Promise<PaginatedResponse<Breed>> {
     const filterDesc = filters ? ` with filters: ${JSON.stringify(filters)}` : '';
     await this.audit("getAllBreeds", auditContext, `Attempting to get all breeds${filterDesc}.`);
-    const result = await this.decoratedService.getAllBreeds(filters);
-    await this.audit("getAllBreeds", auditContext, "", `Successfully retrieved ${result.length} breeds${filterDesc}.`);
+    const result = await this.decoratedService.getAllBreeds(filters, page, limit);
+    await this.audit("getAllBreeds", auditContext, "", `Successfully retrieved ${result.items.length} breeds${filterDesc}.`);
     return result;
   }
 
-  public async getBreedsByType(type: PetType, auditContext: AuditContext): Promise<Breed[]> {
+  public async getBreedsByType(type: PetType, auditContext: AuditContext, page?: number, limit?: number): Promise<PaginatedResponse<Breed>> {
     await this.audit("getBreedsByType", auditContext, `Attempting to get all breeds of type ${type}.`);
-    const result = await this.decoratedService.getBreedsByType(type);
-    await this.audit("getBreedsByType", auditContext, "", `Successfully retrieved ${result.length} breeds of type ${type}.`);
+    const result = await this.decoratedService.getBreedsByType(type, page, limit);
+    await this.audit("getBreedsByType", auditContext, "", `Successfully retrieved ${result.items.length} breeds of type ${type}.`);
     return result;
   }
 

@@ -16,7 +16,7 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
     };
   }
 
-  public async findAll(filters?: BreedFilters): Promise<DomainBreed[]> {
+  public async findAll(filters?: BreedFilters, page?: number, limit?: number): Promise<DomainBreed[]> {
     const where: any = {};
 
     // Only filter by type at database level
@@ -30,11 +30,20 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
       };
     }
 
-    const prismaBreeds = await this.prisma.breed.findMany({
+    const queryOptions: any = {
       where: where as any,
       orderBy: { name: 'asc' },
       include: { breedType: true } as any,
-    });
+    };
+
+    // Apply pagination if provided
+    if (page !== undefined && limit !== undefined) {
+      const offset = (page - 1) * limit;
+      queryOptions.skip = offset;
+      queryOptions.take = limit;
+    }
+
+    const prismaBreeds = await this.prisma.breed.findMany(queryOptions);
 
     return prismaBreeds.map(this.toDomain);
   }
@@ -72,8 +81,8 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
     return prismaBreed ? this.toDomain(prismaBreed) : null;
   }
 
-  public async findByType(type: DomainPetType): Promise<DomainBreed[]> {
-    const prismaBreeds = await this.prisma.breed.findMany({
+  public async findByType(type: DomainPetType, page?: number, limit?: number): Promise<DomainBreed[]> {
+    const queryOptions: any = {
       where: {
         breedType: {
           name: {
@@ -82,8 +91,18 @@ export class PostgresBreedRepository implements BreedReadRepository, BreedWriteR
           },
         },
       } as any,
+      orderBy: { name: 'asc' },
       include: { breedType: true } as any,
-    });
+    };
+
+    // Apply pagination if provided
+    if (page !== undefined && limit !== undefined) {
+      const offset = (page - 1) * limit;
+      queryOptions.skip = offset;
+      queryOptions.take = limit;
+    }
+
+    const prismaBreeds = await this.prisma.breed.findMany(queryOptions);
     return prismaBreeds.map(this.toDomain);
   }
 

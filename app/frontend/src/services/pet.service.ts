@@ -5,25 +5,28 @@ import type {
   PetType,
   CreatePetInput,
   UpdatePetInput,
+  PaginatedResponse,
 } from '../types/pet.types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export const petService = {
-  async getAllPets(): Promise<Pet[]> {
-    const response = await fetch(`${API_URL}/api/pets`);
+  async getAllPets(page: number = 1, limit: number = 8): Promise<PaginatedResponse<Pet>> {
+    const response = await fetch(`${API_URL}/api/pets?page=${page}&limit=${limit}`);
     if (!response.ok) {
       throw new Error('Failed to fetch pets');
     }
-    return response.json();
+    const json = await response.json();
+    return json.data; // Backend returns { status: "OK", data: { items, pagination } }
   },
 
-  async getPetsByType(type: PetType): Promise<Pet[]> {
-    const response = await fetch(`${API_URL}/api/pets/type/${type}`);
+  async getPetsByType(type: PetType, page: number = 1, limit: number = 8): Promise<PaginatedResponse<Pet>> {
+    const response = await fetch(`${API_URL}/api/pets/type/${type}?page=${page}&limit=${limit}`);
     if (!response.ok) {
       throw new Error('Failed to fetch pets');
     }
-    return response.json();
+    const json = await response.json();
+    return json.data; // Backend returns { status: "OK", data: { items, pagination } }
   },
 
   async getPetById(id: string): Promise<Pet> {

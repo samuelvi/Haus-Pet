@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: hauspet-postgres-test
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: hauspet_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - hauspet-test-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d hauspet_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mongodb-test:
+    image: mongo:7-jammy
+    container_name: hauspet-mongo-test
+    environment:
+      MONGO_INITDB_DATABASE: hauspet_audit
+    ports:
+      - "27017:27017"
+    volumes:
+      - hauspet-mongo-test-data:/data/db
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: hauspet-redis-test
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  hauspet-test-data:
+  hauspet-mongo-test-data:

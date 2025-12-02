@@ -5,6 +5,7 @@ import { PetProjector } from '../infrastructure/projections';
 import { PhotoService } from '../infrastructure/services';
 import { generateId } from '../infrastructure/utils/uuid';
 import type { PetType } from '../domain/breed';
+import { PaginatedResponse, normalizePaginationParams, calculatePaginationMeta } from '../domain/pagination';
 
 export interface CreatePetDto {
   name: string;
@@ -123,15 +124,21 @@ export class PetService {
    * Gets all pets (from read model)
    * Returns pets in random order for gallery display
    */
-  async findAll(): Promise<Pet[]> {
+  async findAll(page: number = 1, limit: number = 20): Promise<PaginatedResponse<Pet>> {
+    const { page: normalizedPage, limit: normalizedLimit } = normalizePaginationParams({ page, limit });
+    const offset = (normalizedPage - 1) * normalizedLimit;
+
+    // Fetch N+1 to detect if there are more pages
     // Use raw SQL for random ordering (PostgreSQL RANDOM())
     const rawPets = await this.prisma.$queryRaw<any[]>`
       SELECT * FROM "readmodels"."pets"
       ORDER BY RANDOM()
+      LIMIT ${normalizedLimit + 1}
+      OFFSET ${offset}
     `;
 
     // Map snake_case to camelCase and convert types
-    return rawPets.map(pet => ({
+    const pets = rawPets.map(pet => ({
       id: pet.id,
       name: pet.name,
       type: pet.type,
@@ -141,22 +148,31 @@ export class PetService {
       createdAt: pet.created_at,
       updatedAt: pet.updated_at,
     }));
+
+    // Calculate pagination metadata
+    return calculatePaginationMeta(pets, normalizedPage, normalizedLimit);
   }
 
   /**
    * Gets pets by type (from read model)
    * Returns pets in random order for gallery display
    */
-  async findByType(type: PetType): Promise<Pet[]> {
+  async findByType(type: PetType, page: number = 1, limit: number = 20): Promise<PaginatedResponse<Pet>> {
+    const { page: normalizedPage, limit: normalizedLimit } = normalizePaginationParams({ page, limit });
+    const offset = (normalizedPage - 1) * normalizedLimit;
+
+    // Fetch N+1 to detect if there are more pages
     // Use raw SQL for random ordering (PostgreSQL RANDOM())
     const rawPets = await this.prisma.$queryRaw<any[]>`
       SELECT * FROM "readmodels"."pets"
       WHERE type = ${type}
       ORDER BY RANDOM()
+      LIMIT ${normalizedLimit + 1}
+      OFFSET ${offset}
     `;
 
     // Map snake_case to camelCase and convert types
-    return rawPets.map(pet => ({
+    const pets = rawPets.map(pet => ({
       id: pet.id,
       name: pet.name,
       type: pet.type,
@@ -166,6 +182,9 @@ export class PetService {
       createdAt: pet.created_at,
       updatedAt: pet.updated_at,
     }));
+
+    // Calculate pagination metadata
+    return calculatePaginationMeta(pets, normalizedPage, normalizedLimit);
   }
 
   /**
