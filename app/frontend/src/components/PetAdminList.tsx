@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api.service';
 import { petService } from '../services/pet.service';
 import { useAuth } from '../contexts/AuthContext';
-import type { Pet, PetType } from '../types/pet.types';
+import type { Pet, PetType, PaginationMeta } from '../types/pet.types';
 import type { BreedType } from '../types/api.types';
 import { fuzzyFilter } from '../utils/fuzzySearch';
 import { AdminNav } from './AdminNav';
@@ -22,13 +22,22 @@ export const PetAdminList: React.FC = () => {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [breedTypes, setBreedTypes] = useState<BreedType[]>([]);
+  const [page, setPage] = useState<number>(1);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const PAGE_SIZE = 4; // Admin page size
 
   useEffect(() => {
     const fetchPets = async (): Promise<void> => {
       try {
         setLoading(true);
-        const data = await petService.getAllPets();
-        setPets(data.items); // Extract items from paginated response
+        let result;
+        if (typeFilter) {
+          result = await petService.getPetsByType(typeFilter, page, PAGE_SIZE);
+        } else {
+          result = await petService.getAllPets(page, PAGE_SIZE);
+        }
+        setPets(result.items);
+        setPagination(result.pagination);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load pets');
@@ -49,45 +58,54 @@ export const PetAdminList: React.FC = () => {
 
     void fetchPets();
     void fetchTypes();
-  }, [tokens, sessionId]);
+  }, [tokens, sessionId, page, typeFilter]);
 
   const filteredPets = useMemo(() => {
     const lowerSearch = search.trim().toLowerCase();
 
-    // Apply type filter first
-    const typeFiltered = pets.filter((pet) => !typeFilter || pet.type === typeFilter);
+    // Apply local search filter if needed
+    let filtered = pets;
+    if (lowerSearch) {
+      filtered = pets.filter((pet) =>
+        pet.name.toLowerCase().includes(lowerSearch) ||
+        pet.breed.toLowerCase().includes(lowerSearch)
+      );
+    }
 
-    // Apply fuzzy search
-    const fuzzyFiltered = fuzzyFilter(
-      typeFiltered,
-      lowerSearch,
-      (pet) => [pet.name, pet.breed],
-      0.3
-    );
+    // Sort by selected field
+    return filtered.sort((a, b) => {
+      const valueA =
+        sortField === 'totalSponsored'
+          ? Number(a.totalSponsored)
+          : (a[sortField] as string | number);
+      const valueB =
+        sortField === 'totalSponsored'
+          ? Number(b.totalSponsored)
+          : (b[sortField] as string | number);
+      if (valueA < valueB) return sortDir === 'asc' ? -1 : 1;
+      if (valueA > valueB) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [pets, search, sortField, sortDir]);
 
-    // Sort by score first (if searching), then by selected field
-    return fuzzyFiltered
-      .sort((a, b) => {
-        // If there's a search query, prioritize by score
-        if (lowerSearch && a.score !== b.score) {
-          return b.score - a.score;
-        }
+  const handleFilterChange = (newFilter: PetType | '') => {
+    setTypeFilter(newFilter);
+    setPage(1); // Reset to first page when changing filter
+  };
 
-        // Otherwise sort by selected field
-        const valueA =
-          sortField === 'totalSponsored'
-            ? Number(a.item.totalSponsored)
-            : (a.item[sortField] as string | number);
-        const valueB =
-          sortField === 'totalSponsored'
-            ? Number(b.item.totalSponsored)
-            : (b.item[sortField] as string | number);
-        if (valueA < valueB) return sortDir === 'asc' ? -1 : 1;
-        if (valueA > valueB) return sortDir === 'asc' ? 1 : -1;
-        return 0;
-      })
-      .map(({ item }) => item);
-  }, [pets, search, typeFilter, sortField, sortDir]);
+  const handleNextPage = () => {
+    if (pagination?.hasNext) {
+      setPage((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (pagination?.hasPrevious) {
+      setPage((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const toggleSort = (field: SortField): void => {
     if (field === sortField) {
@@ -148,7 +166,7 @@ export const PetAdminList: React.FC = () => {
         />
         <select
           value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value as PetType | '')}
+          onChange={(e) => handleFilterChange(e.target.value as PetType | '')}
           style={styles.select}
         >
           <option value="">All types</option>
@@ -232,6 +250,54 @@ export const PetAdminList: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination Info */}
+      {pagination && (
+        <div style={{ textAlign: 'center', marginTop: '16px', marginBottom: '8px' }}>
+          <p style={{ fontSize: '14px', color: '#666' }}>
+            Page {pagination.page} • Showing {filteredPets.length} pets
+          </p>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {pagination && filteredPets.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '24px', marginBottom: '24px' }}>
+          <button
+            onClick={handlePreviousPage}
+            disabled={!pagination.hasPrevious}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
+              pagination.hasPrevious
+                ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Previous
+          </button>
+
+          <div className="px-4 py-3 bg-white rounded-xl shadow-soft">
+            <span className="text-dark-800 font-semibold">Page {pagination.page}</span>
+          </div>
+
+          <button
+            onClick={handleNextPage}
+            disabled={!pagination.hasNext}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
+              pagination.hasNext
+                ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Next
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       )}
       </div>

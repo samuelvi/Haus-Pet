@@ -115,26 +115,33 @@ class ApiService {
   /**
    * Get all breeds with optional filters
    */
-  async getAllBreeds(filters?: BreedFilters): Promise<Breed[]> {
+  async getAllBreeds(filters?: BreedFilters, page?: number, limit?: number): Promise<{ items: Breed[]; pagination: any }> {
     let endpoint = '/api/breeds';
+    const params = new URLSearchParams();
 
     if (filters) {
-      const params = new URLSearchParams();
       if (filters.type) {
         params.append('type', filters.type);
       }
       if (filters.search) {
         params.append('search', filters.search);
       }
-      const queryString = params.toString();
-      if (queryString) {
-        endpoint += `?${queryString}`;
-      }
+    }
+
+    if (page) {
+      params.append('page', page.toString());
+    }
+    if (limit) {
+      params.append('limit', limit.toString());
+    }
+
+    const queryString = params.toString();
+    if (queryString) {
+      endpoint += `?${queryString}`;
     }
 
     // Backend now returns paginated response: { items: Breed[], pagination: {...} }
-    const response = await this.request<{ items: Breed[]; pagination: any }>(endpoint);
-    return response.items;
+    return this.request<{ items: Breed[]; pagination: any }>(endpoint);
   }
 
   /**

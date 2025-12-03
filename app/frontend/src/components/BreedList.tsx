@@ -8,6 +8,13 @@ import { AdminNav } from './AdminNav';
 
 type SortField = 'name' | 'petType';
 
+interface PaginationMeta {
+  page: number;
+  limit: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
 export const BreedList: React.FC = () => {
   const navigate = useNavigate();
   const { tokens, sessionId } = useAuth();
@@ -19,13 +26,18 @@ export const BreedList: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const PAGE_SIZE = 4; // Admin page size
 
   useEffect(() => {
     const fetchBreeds = async (): Promise<void> => {
       try {
         setLoading(true);
-        const data = await apiService.getAllBreeds();
-        setBreeds(data);
+        const filters = typeFilter ? { type: typeFilter } : undefined;
+        const result = await apiService.getAllBreeds(filters, page, PAGE_SIZE);
+        setBreeds(result.items);
+        setPagination(result.pagination);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load breeds');
@@ -35,39 +47,48 @@ export const BreedList: React.FC = () => {
     };
 
     void fetchBreeds();
-  }, []);
+  }, [page, typeFilter]);
 
   const filteredBreeds = useMemo(() => {
     const lowerSearch = search.trim().toLowerCase();
 
-    // Apply type filter first
-    const typeFiltered = breeds.filter((breed) => !typeFilter || breed.petType === typeFilter);
+    // Apply local search filter if needed
+    let filtered = breeds;
+    if (lowerSearch) {
+      filtered = breeds.filter((breed) =>
+        breed.name.toLowerCase().includes(lowerSearch) ||
+        breed.petType.toLowerCase().includes(lowerSearch)
+      );
+    }
 
-    // Apply fuzzy search
-    const fuzzyFiltered = fuzzyFilter(
-      typeFiltered,
-      lowerSearch,
-      (breed) => [breed.name, breed.petType],
-      0.3
-    );
+    // Sort by selected field
+    return filtered.sort((a, b) => {
+      const valueA = a[sortField];
+      const valueB = b[sortField];
+      if (valueA < valueB) return sortDir === 'asc' ? -1 : 1;
+      if (valueA > valueB) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [breeds, search, sortField, sortDir]);
 
-    // Sort by fuzzy score first (if searching), then by selected field
-    return fuzzyFiltered
-      .sort((a, b) => {
-        // If there's a search query, prioritize by score
-        if (lowerSearch && a.score !== b.score) {
-          return b.score - a.score;
-        }
+  const handleFilterChange = (newFilter: PetType | '') => {
+    setTypeFilter(newFilter);
+    setPage(1); // Reset to first page when changing filter
+  };
 
-        // Otherwise sort by selected field
-        const valueA = a.item[sortField];
-        const valueB = b.item[sortField];
-        if (valueA < valueB) return sortDir === 'asc' ? -1 : 1;
-        if (valueA > valueB) return sortDir === 'asc' ? 1 : -1;
-        return 0;
-      })
-      .map(({ item }) => item);
-  }, [breeds, search, typeFilter, sortField, sortDir]);
+  const handleNextPage = () => {
+    if (pagination?.hasNext) {
+      setPage((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (pagination?.hasPrevious) {
+      setPage((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleDelete = async (id: string): Promise<void> => {
     if (!tokens || !sessionId) {
@@ -155,7 +176,7 @@ export const BreedList: React.FC = () => {
                 <select
                   id="type-filter"
                   value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value as PetType | '')}
+                  onChange={(e) => handleFilterChange(e.target.value as PetType | '')}
                   className="input"
                 >
                   <option value="">All types</option>
@@ -274,6 +295,54 @@ export const BreedList: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {/* Pagination Info */}
+        {pagination && (
+          <div className="text-center mb-4 mt-6">
+            <p className="text-sm text-gray-600">
+              Page {pagination.page} • Showing {filteredBreeds.length} breeds
+            </p>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {pagination && filteredBreeds.length > 0 && (
+          <div className="flex justify-center items-center gap-4 mt-6 mb-6">
+            <button
+              onClick={handlePreviousPage}
+              disabled={!pagination.hasPrevious}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
+                pagination.hasPrevious
+                  ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Previous
+            </button>
+
+            <div className="px-4 py-3 bg-white rounded-xl shadow-soft">
+              <span className="text-dark-800 font-semibold">Page {pagination.page}</span>
+            </div>
+
+            <button
+              onClick={handleNextPage}
+              disabled={!pagination.hasNext}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
+                pagination.hasNext
+                  ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              Next
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         )}
 

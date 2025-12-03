@@ -25,7 +25,8 @@ export class BreedController {
 
       // Extract pagination parameters
       const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+      const defaultLimit = parseInt(process.env.ADMIN_PAGE_SIZE || '4', 10);
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : defaultLimit;
 
       const result = await this.breedService.getAllBreeds((req as any).auditContext ?? {}, filters, page, limit);
       res.status(200).json({ status: "OK", data: result });
@@ -39,7 +40,8 @@ export class BreedController {
     try {
       // Extract pagination parameters
       const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+      const defaultLimit = parseInt(process.env.ADMIN_PAGE_SIZE || '4', 10);
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : defaultLimit;
 
       const result = await this.breedService.getBreedsByType(type, (req as any).auditContext ?? {}, page, limit);
       res.status(200).json({ status: "OK", data: result });
