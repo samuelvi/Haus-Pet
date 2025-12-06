@@ -1,365 +1,353 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiService } from '../services/api.service';
-import type { Breed, PetType } from '../types/api.types';
 import { useAuth } from '../contexts/AuthContext';
-import { fuzzyFilter } from '../utils/fuzzySearch';
 import { AdminNav } from './AdminNav';
-
-type SortField = 'name' | 'petType';
-
-interface PaginationMeta {
-  page: number;
-  limit: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-}
+import { useBreeds } from '../hooks/useBreedQueries';
+import { useDeleteBreed } from '../hooks/useBreedMutations';
+import type { Breed, BreedFilters } from '../types/api.types';
 
 export const BreedList: React.FC = () => {
   const navigate = useNavigate();
   const { tokens, sessionId } = useAuth();
-  const [breeds, setBreeds] = useState<Breed[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<PetType | ''>('');
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [page, setPage] = useState<number>(1);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const PAGE_SIZE = 4; // Admin page size
+  const [filters, setFilters] = useState<BreedFilters | undefined>(undefined);
 
-  useEffect(() => {
-    const fetchBreeds = async (): Promise<void> => {
-      try {
-        setLoading(true);
-        const filters = typeFilter ? { type: typeFilter } : undefined;
-        const result = await apiService.getAllBreeds(filters, page, PAGE_SIZE);
-        setBreeds(result.items);
-        setPagination(result.pagination);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load breeds');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Use TanStack Query for data fetching with caching
+  const { data, isLoading, isError, error, refetch } = useBreeds(filters);
 
-    void fetchBreeds();
-  }, [page, typeFilter]);
+  // Delete mutation
+  const deleteMutation = useDeleteBreed({
+    accessToken: tokens?.accessToken || '',
+    sessionId: sessionId || '',
+  });
 
-  const filteredBreeds = useMemo(() => {
-    const lowerSearch = search.trim().toLowerCase();
-
-    // Apply local search filter if needed
-    let filtered = breeds;
-    if (lowerSearch) {
-      filtered = breeds.filter((breed) =>
-        breed.name.toLowerCase().includes(lowerSearch) ||
-        breed.petType.toLowerCase().includes(lowerSearch)
-      );
-    }
-
-    // Sort by selected field
-    return filtered.sort((a, b) => {
-      const valueA = a[sortField];
-      const valueB = b[sortField];
-      if (valueA < valueB) return sortDir === 'asc' ? -1 : 1;
-      if (valueA > valueB) return sortDir === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [breeds, search, sortField, sortDir]);
-
-  const handleFilterChange = (newFilter: PetType | '') => {
-    setTypeFilter(newFilter);
-    setPage(1); // Reset to first page when changing filter
-  };
-
-  const handleNextPage = () => {
-    if (pagination?.hasNext) {
-      setPage((prev) => prev + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (pagination?.hasPrevious) {
-      setPage((prev) => prev - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const handleDelete = async (id: string): Promise<void> => {
-    if (!tokens || !sessionId) {
-      setError('You must be logged in to manage breeds.');
+  const handleDelete = async (id: string, name: string): Promise<void> => {
+    if (!window.confirm(`Are you sure you want to delete "${name}"?`)) {
       return;
     }
 
-    const confirmDelete = window.confirm('Delete this breed?');
-    if (!confirmDelete) return;
-
     try {
-      setIsDeleting(id);
-      await apiService.deleteBreed(id, tokens.accessToken, sessionId);
-      setBreeds((prev) => prev.filter((breed) => breed.id !== id));
+      await deleteMutation.mutateAsync(id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete breed');
-    } finally {
-      setIsDeleting(null);
+      console.error('Failed to delete breed:', err);
+      alert('Failed to delete breed. Please try again.');
     }
   };
 
-  const toggleSort = (field: SortField): void => {
-    if (field === sortField) {
-      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+  const handleFilter = (petType: string | undefined): void => {
+    if (petType) {
+      setFilters({ petType });
     } else {
-      setSortField(field);
-      setSortDir('asc');
+      setFilters(undefined);
     }
   };
+
+  const breeds = data?.data?.items || [];
+  const pagination = data?.data?.pagination;
 
   return (
     <>
       <AdminNav />
-      <div className="min-h-screen bg-gray-50">
-        {/* Header Section */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Breed Management</h1>
-                <p className="text-gray-600 mt-2">Create, edit, or remove breeds</p>
-              </div>
-              <button
-                onClick={() => navigate('/admin/breeds/new')}
-                className="btn btn-primary px-6 py-3 flex items-center gap-2"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Breed
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <main className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-10">
-        {/* Filters */}
-        <div className="card shadow-soft mb-6">
-          <div className="card-body">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
-                  Search
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <input
-                    id="search"
-                    type="text"
-                    placeholder="Search by name or type..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="input pl-10"
-                  />
-                </div>
-              </div>
-              <div className="sm:w-48">
-                <label htmlFor="type-filter" className="block text-sm font-medium text-gray-700 mb-2">
-                  Filter by Type
-                </label>
-                <select
-                  id="type-filter"
-                  value={typeFilter}
-                  onChange={(e) => handleFilterChange(e.target.value as PetType | '')}
-                  className="input"
-                >
-                  <option value="">All types</option>
-                  <option value="dog">Dog</option>
-                  <option value="cat">Cat</option>
-                  <option value="bird">Bird</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4">
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <p className="text-sm font-medium text-red-800">{error}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Table */}
-        {loading ? (
-          <div className="card shadow-soft">
-            <div className="card-body text-center py-12">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-primary-100 rounded-full mb-4">
-                <svg className="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              </div>
-              <p className="text-gray-600">Loading breeds...</p>
-            </div>
-          </div>
-        ) : (
-          <div className="card shadow-soft overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      onClick={() => toggleSort('name')}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
-                    >
-                      <div className="flex items-center gap-2">
-                        Name
-                        {sortField === 'name' && (
-                          <svg className={`w-4 h-4 transition-transform ${sortDir === 'desc' ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </th>
-                    <th
-                      onClick={() => toggleSort('petType')}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
-                    >
-                      <div className="flex items-center gap-2">
-                        Type
-                        {sortField === 'petType' && (
-                          <svg className={`w-4 h-4 transition-transform ${sortDir === 'desc' ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredBreeds.map((breed) => (
-                    <tr key={breed.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{breed.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="badge badge-primary capitalize">{breed.petType}</span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-3">
-                          <button
-                            onClick={() => navigate(`/admin/breeds/edit/${breed.id}`)}
-                            className="text-primary-600 hover:text-primary-900 font-semibold"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => void handleDelete(breed.id)}
-                            disabled={isDeleting === breed.id}
-                            className="btn btn-danger px-4 py-2 text-sm disabled:opacity-50"
-                          >
-                            {isDeleting === breed.id ? 'Deleting...' : 'Delete'}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {filteredBreeds.length === 0 && (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-12 text-center">
-                        <div className="flex flex-col items-center">
-                          <svg className="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          <p className="text-gray-600 font-medium">No breeds found</p>
-                          <p className="text-sm text-gray-500 mt-1">Try adjusting your filters or create a new breed</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Pagination Info */}
-        {pagination && (
-          <div className="text-center mb-4 mt-6">
-            <p className="text-sm text-gray-600">
-              Page {pagination.page} • Showing {filteredBreeds.length} breeds
+      <div style={styles.container}>
+        <header style={styles.header}>
+          <div>
+            <h1 style={styles.title}>Breed Management</h1>
+            <p style={styles.subtitle}>
+              Manage all pet breeds in the system ({breeds.length} breeds)
             </p>
           </div>
-        )}
-
-        {/* Pagination Controls */}
-        {pagination && filteredBreeds.length > 0 && (
-          <div className="flex justify-center items-center gap-4 mt-6 mb-6">
-            <button
-              onClick={handlePreviousPage}
-              disabled={!pagination.hasPrevious}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
-                pagination.hasPrevious
-                  ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Previous
-            </button>
-
-            <div className="px-4 py-3 bg-white rounded-xl shadow-soft">
-              <span className="text-dark-800 font-semibold">Page {pagination.page}</span>
-            </div>
-
-            <button
-              onClick={handleNextPage}
-              disabled={!pagination.hasNext}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
-                pagination.hasNext
-                  ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              Next
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        )}
-
-        {/* Back Button */}
-        <div className="mt-6">
           <button
-            onClick={() => navigate('/admin/dashboard')}
-            className="btn btn-secondary px-4 py-2 flex items-center gap-2"
+            style={styles.primaryButton}
+            onClick={() => navigate('/admin/breeds/new')}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Dashboard
+            + Add Breed
+          </button>
+        </header>
+
+        {/* Filters */}
+        <div style={styles.filters}>
+          <button
+            style={!filters ? styles.filterButtonActive : styles.filterButton}
+            onClick={() => handleFilter(undefined)}
+          >
+            All
+          </button>
+          <button
+            style={filters?.petType === 'dog' ? styles.filterButtonActive : styles.filterButton}
+            onClick={() => handleFilter('dog')}
+          >
+            Dogs
+          </button>
+          <button
+            style={filters?.petType === 'cat' ? styles.filterButtonActive : styles.filterButton}
+            onClick={() => handleFilter('cat')}
+          >
+            Cats
+          </button>
+          <button
+            style={filters?.petType === 'bird' ? styles.filterButtonActive : styles.filterButton}
+            onClick={() => handleFilter('bird')}
+          >
+            Birds
           </button>
         </div>
-      </main>
-    </div>
+
+        <div style={styles.card}>
+          {isLoading && <div style={styles.loading}>Loading breeds...</div>}
+
+          {isError && (
+            <div style={styles.error}>
+              Error loading breeds: {error instanceof Error ? error.message : 'Unknown error'}
+              <button style={styles.retryButton} onClick={() => refetch()}>
+                Retry
+              </button>
+            </div>
+          )}
+
+          {!isLoading && !isError && breeds.length === 0 && (
+            <div style={styles.empty}>
+              No breeds found. {filters && 'Try removing filters or '}
+              <button
+                style={styles.linkButton}
+                onClick={() => navigate('/admin/breeds/new')}
+              >
+                add a new breed
+              </button>
+              .
+            </div>
+          )}
+
+          {!isLoading && !isError && breeds.length > 0 && (
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={styles.th}>Name</th>
+                  <th style={styles.th}>Type</th>
+                  <th style={styles.th}>ID</th>
+                  <th style={styles.thActions}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {breeds.map((breed: Breed) => (
+                  <tr key={breed.id} style={styles.tr}>
+                    <td style={styles.td}>
+                      <span style={styles.breedName}>{breed.name}</span>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={styles.badge}>{breed.petType}</span>
+                    </td>
+                    <td style={styles.td}>
+                      <span style={styles.idText}>{breed.id}</span>
+                    </td>
+                    <td style={styles.tdActions}>
+                      <button
+                        style={styles.editButton}
+                        onClick={() => navigate(`/admin/breeds/edit/${breed.id}`)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        style={styles.deleteButton}
+                        onClick={() => void handleDelete(breed.id, breed.name)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {pagination && (
+            <div style={styles.paginationInfo}>
+              Showing {breeds.length} of {pagination.pageCount || 'many'} total breeds
+              {pagination.hasNext && ' (more available)'}
+            </div>
+          )}
+        </div>
+      </div>
     </>
   );
+};
+
+const styles: { [key: string]: React.CSSProperties } = {
+  container: {
+    minHeight: 'calc(100vh - 64px)',
+    backgroundColor: '#f5f5f5',
+    padding: '40px',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '24px',
+  },
+  title: {
+    margin: 0,
+    fontSize: '24px',
+    color: '#222',
+  },
+  subtitle: {
+    margin: '6px 0 0 0',
+    color: '#666',
+    fontSize: '14px',
+  },
+  filters: {
+    display: 'flex',
+    gap: '12px',
+    marginBottom: '24px',
+  },
+  filterButton: {
+    backgroundColor: '#fff',
+    color: '#444',
+    border: '1px solid #ccc',
+    borderRadius: '6px',
+    padding: '8px 16px',
+    cursor: 'pointer',
+    fontWeight: 500,
+  },
+  filterButtonActive: {
+    backgroundColor: '#6B553D',
+    color: '#fff',
+    border: '1px solid #6B553D',
+    borderRadius: '6px',
+    padding: '8px 16px',
+    cursor: 'pointer',
+    fontWeight: 600,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: '8px',
+    border: '1px solid #e0e0e0',
+    overflow: 'hidden',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+  },
+  loading: {
+    padding: '60px 20px',
+    textAlign: 'center',
+    color: '#555',
+  },
+  error: {
+    padding: '40px 20px',
+    textAlign: 'center',
+    backgroundColor: '#fdf6f0',
+    color: '#843a23',
+  },
+  retryButton: {
+    marginLeft: '12px',
+    backgroundColor: '#6B553D',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '8px 16px',
+    cursor: 'pointer',
+    fontWeight: 600,
+  },
+  empty: {
+    padding: '60px 20px',
+    textAlign: 'center',
+    color: '#666',
+  },
+  linkButton: {
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: '#6B553D',
+    cursor: 'pointer',
+    fontWeight: 600,
+    textDecoration: 'underline',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+  },
+  th: {
+    textAlign: 'left',
+    padding: '16px 20px',
+    backgroundColor: '#f8f8f8',
+    borderBottom: '2px solid #e0e0e0',
+    fontWeight: 600,
+    fontSize: '13px',
+    color: '#666',
+    textTransform: 'uppercase',
+  },
+  thActions: {
+    textAlign: 'right',
+    padding: '16px 20px',
+    backgroundColor: '#f8f8f8',
+    borderBottom: '2px solid #e0e0e0',
+    fontWeight: 600,
+    fontSize: '13px',
+    color: '#666',
+    textTransform: 'uppercase',
+  },
+  tr: {
+    borderBottom: '1px solid #f0f0f0',
+  },
+  td: {
+    padding: '16px 20px',
+    fontSize: '14px',
+    color: '#333',
+  },
+  tdActions: {
+    padding: '16px 20px',
+    textAlign: 'right',
+  },
+  breedName: {
+    fontWeight: 600,
+    color: '#222',
+  },
+  badge: {
+    backgroundColor: '#fdf5e1',
+    color: '#774f06',
+    padding: '4px 12px',
+    borderRadius: '12px',
+    fontSize: '12px',
+    fontWeight: 600,
+    textTransform: 'capitalize',
+  },
+  idText: {
+    fontSize: '12px',
+    color: '#999',
+    fontFamily: 'monospace',
+  },
+  editButton: {
+    backgroundColor: 'transparent',
+    color: '#6B553D',
+    border: '1px solid #6B553D',
+    borderRadius: '6px',
+    padding: '6px 12px',
+    marginRight: '8px',
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: '13px',
+  },
+  deleteButton: {
+    backgroundColor: 'transparent',
+    color: '#c45a2f',
+    border: '1px solid #c45a2f',
+    borderRadius: '6px',
+    padding: '6px 12px',
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: '13px',
+  },
+  primaryButton: {
+    backgroundColor: '#6B553D',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '12px 20px',
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  paginationInfo: {
+    padding: '16px 20px',
+    borderTop: '1px solid #f0f0f0',
+    backgroundColor: '#f8f8f8',
+    fontSize: '13px',
+    color: '#666',
+    textAlign: 'center',
+  },
 };

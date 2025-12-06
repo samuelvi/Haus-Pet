@@ -57,6 +57,7 @@ export interface BreedFormData {
 
 export interface BreedFilters {
   type?: PetType;
+  petType?: PetType;
   search?: string;
 }
 

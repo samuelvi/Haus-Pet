@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { apiService } from '../services/api.service';
-import type { BreedFormData, Breed, PetType, BreedType } from '../types/api.types';
+import type { BreedFormData, PetType } from '../types/api.types';
 import { useAuth } from '../contexts/AuthContext';
 import { AdminNav } from './AdminNav';
+import { usePersistedForm } from '../hooks/usePersistedForm';
+import { useCreateBreed, useUpdateBreed } from '../hooks/useBreedMutations';
+import { useBreed, useSimilarBreeds, useBreedTypes } from '../hooks/useBreedQueries';
 
 interface SimilarBreed {
   id: string;
@@ -18,273 +20,293 @@ export const BreedForm: React.FC = () => {
   const navigate = useNavigate();
   const { tokens, sessionId } = useAuth();
 
+  // Form state
   const [formData, setFormData] = useState<BreedFormData>({
     name: '',
     petType: 'dog',
   });
-  const [breedTypes, setBreedTypes] = useState<BreedType[]>([]);
-  const [loading, setLoading] = useState<boolean>(isEditMode);
-  const [submitting, setSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [similarBreeds, setSimilarBreeds] = useState<SimilarBreed[]>([]);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
-  const [checkingSimilar, setCheckingSimilar] = useState<boolean>(false);
+  const [checkSimilar, setCheckSimilar] = useState<boolean>(false);
 
+  // Persisted form (auto-save to IndexedDB)
+  const formId = isEditMode ? `breed-form-edit-${id}` : 'breed-form-create';
+  const { draft, saveDraft, clearDraft, hasDraft } = usePersistedForm<BreedFormData>({
+    formId,
+    formType: 'breed',
+    enabled: !isEditMode, // Only persist for create mode
+  });
+
+  // Queries
+  const { data: breed, isLoading: loadingBreed } = useBreed(id || '');
+  const { data: breedTypes } = useBreedTypes(tokens?.accessToken, sessionId);
+  const { data: similarBreeds = [], isFetching: checkingSimilar } = useSimilarBreeds(
+    formData.name,
+    formData.petType,
+    checkSimilar
+  );
+
+  // Mutations
+  const createMutation = useCreateBreed({
+    accessToken: tokens?.accessToken || '',
+    sessionId: sessionId || '',
+  });
+  const updateMutation = useUpdateBreed({
+    accessToken: tokens?.accessToken || '',
+    sessionId: sessionId || '',
+  });
+
+  const submitting = createMutation.isPending || updateMutation.isPending;
+  const error = createMutation.error || updateMutation.error;
+
+  // Restore draft on mount (create mode only)
   useEffect(() => {
-    const loadTypes = async (): Promise<void> => {
-      if (!tokens || !sessionId) return;
-      try {
-        const types = await apiService.getBreedTypes(tokens.accessToken, sessionId);
-        setBreedTypes(types);
-      } catch (err) {
-        // silently ignore to avoid blocking the form; fallback to defaults
-        console.warn('Failed to load breed types', err);
-      }
-    };
-    void loadTypes();
+    if (!isEditMode && draft && !formData.name) {
+      setFormData(draft);
+    }
+  }, [draft, isEditMode]);
 
-    if (!isEditMode || !id) return;
+  // Load breed data in edit mode
+  useEffect(() => {
+    if (isEditMode && breed) {
+      setFormData({ name: breed.name, petType: breed.petType });
+    }
+  }, [breed, isEditMode]);
 
-    const fetchBreed = async (): Promise<void> => {
-      try {
-        setLoading(true);
-        const breed: Breed = await apiService.getBreedById(id);
-        setFormData({ name: breed.name, petType: breed.petType });
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load breed');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchBreed();
-  }, [id, isEditMode, tokens, sessionId]);
+  // Auto-save form data
+  useEffect(() => {
+    if (!isEditMode && formData.name) {
+      saveDraft(formData);
+    }
+  }, [formData, isEditMode, saveDraft]);
 
   const handleChange = (field: keyof BreedFormData, value: string): void => {
     setFormData((prev) => ({ ...prev, [field]: value as PetType }));
 
     // Reset similar breeds when changing name or type
     if (field === 'name' || field === 'petType') {
-      setSimilarBreeds([]);
+      setCheckSimilar(false);
       setShowConfirmModal(false);
-    }
-  };
-
-  const checkForSimilarBreeds = async (): Promise<boolean> => {
-    if (!formData.name.trim()) {
-      return false;
-    }
-
-    try {
-      setCheckingSimilar(true);
-      const similar = await apiService.checkSimilarBreeds(formData.name, formData.petType);
-
-      // Filter out the current breed if editing
-      const filteredSimilar = isEditMode && id
-        ? similar.filter(breed => breed.id !== id)
-        : similar;
-
-      if (filteredSimilar.length > 0) {
-        setSimilarBreeds(filteredSimilar);
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error('Error checking similar breeds:', err);
-      return false;
-    } finally {
-      setCheckingSimilar(false);
     }
   };
 
   const handleSubmit = async (event: React.FormEvent, forceCreate: boolean = false): Promise<void> => {
     event.preventDefault();
-    setError(null); // Clear previous errors
 
     if (!tokens || !sessionId) {
-      setError('You must be logged in to manage breeds.');
       return;
     }
 
     // Check for similar breeds before creating (unless forcing creation or editing)
-    if (!forceCreate && !isEditMode) {
-      const hasSimilar = await checkForSimilarBreeds();
-      if (hasSimilar) {
-        setShowConfirmModal(true);
-        return;
-      }
+    if (!forceCreate && !isEditMode && formData.name.trim()) {
+      setCheckSimilar(true);
+
+      // Wait a bit for query to complete
+      setTimeout(() => {
+        if (similarBreeds.length > 0) {
+          // Filter out current breed if editing
+          const filteredSimilar = isEditMode && id
+            ? similarBreeds.filter(b => b.id !== id)
+            : similarBreeds;
+
+          if (filteredSimilar.length > 0) {
+            setShowConfirmModal(true);
+            setCheckSimilar(false);
+            return;
+          }
+        }
+
+        // No similar breeds, proceed
+        submitForm();
+      }, 500);
+      return;
     }
 
+    await submitForm();
+  };
+
+  const submitForm = async (): Promise<void> => {
     try {
-      setSubmitting(true);
       if (isEditMode && id) {
-        await apiService.updateBreed(id, formData, tokens.accessToken, sessionId);
+        await updateMutation.mutateAsync({ id, data: formData });
       } else {
-        await apiService.createBreed(formData, tokens.accessToken, sessionId);
+        await createMutation.mutateAsync(formData);
+        await clearDraft(); // Clear draft after successful creation
       }
-      // Only navigate if the API call succeeded
       navigate('/admin/breeds');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to save breed';
-      setError(errorMessage);
+      // Error is already stored in mutation state
+      console.error('Failed to save breed:', err);
 
-      // If it's a duplicate error and modal was shown, close it to show the error clearly
-      if (showConfirmModal && errorMessage.toLowerCase().includes('already exists')) {
+      if (showConfirmModal) {
         setShowConfirmModal(false);
       }
-
-      // Don't navigate on error
-    } finally {
-      setSubmitting(false);
     }
   };
 
   const handleConfirmCreate = async (): Promise<void> => {
-    const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-    await handleSubmit(fakeEvent, true);
-
-    // Only close modal if submission was successful (no error)
-    if (!error) {
-      setShowConfirmModal(false);
-    }
+    setShowConfirmModal(false);
+    await submitForm();
   };
+
+  // Filter out current breed from similar results
+  const filteredSimilar = similarBreeds.filter(b => !id || b.id !== id);
 
   return (
     <>
       <AdminNav />
       <div style={styles.container}>
         <header style={styles.header}>
-        <div>
-          <h1 style={styles.title}>{isEditMode ? 'Edit Breed' : 'Add Breed'}</h1>
-          <p style={styles.subtitle}>
-            {isEditMode
-              ? 'Update the breed details'
-              : 'Create a new breed for HausPet'}
-          </p>
-        </div>
-        <button style={styles.linkButton} onClick={() => navigate('/admin/breeds')}>
-          ← Back to list
-        </button>
-      </header>
-
-      <div style={styles.card}>
-        {error && <div style={styles.error}>{error}</div>}
-        {loading ? (
-          <div style={styles.loading}>Loading...</div>
-        ) : (
-          <form onSubmit={handleSubmit} style={styles.form}>
-            <label style={styles.label}>
-              Name
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => handleChange('name', e.target.value)}
-                required
-                style={styles.input}
-              />
-            </label>
-
-            <label style={styles.label}>
-              Type
-              <select
-                value={formData.petType}
-                onChange={(e) => handleChange('petType', e.target.value)}
-                style={styles.select}
-              >
-                {(breedTypes.length ? breedTypes : [{ id: 'dog', name: 'dog' }, { id: 'cat', name: 'cat' }, { id: 'bird', name: 'bird' }]).map((type) => (
-                  <option key={type.id} value={type.name}>{type.name}</option>
-                ))}
-              </select>
-            </label>
-
-            <div style={styles.actions}>
-              <button
-                type="button"
-                style={styles.secondaryButton}
-                onClick={() => navigate('/admin/breeds')}
-                disabled={submitting || checkingSimilar}
-              >
-                Cancel
-              </button>
-              <button type="submit" style={styles.primaryButton} disabled={submitting || checkingSimilar}>
-                {checkingSimilar ? 'Checking...' : submitting ? 'Saving...' : isEditMode ? 'Save changes' : 'Create breed'}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-
-      {/* Confirmation Modal for Similar Breeds */}
-      {showConfirmModal && (
-        <div style={styles.modalOverlay} onClick={() => setShowConfirmModal(false)}>
-          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div style={styles.modalHeader}>
-              <h2 style={styles.modalTitle}>Similar Breeds Found</h2>
-              <button
-                style={styles.modalCloseButton}
-                onClick={() => setShowConfirmModal(false)}
-              >
-                ×
-              </button>
-            </div>
-
-            <div style={styles.modalBody}>
-              {similarBreeds.some(b => b.similarity === 100) ? (
-                <>
-                  <p style={styles.modalDescriptionError}>
-                    ⚠️ A breed with this exact name already exists!
-                  </p>
-                  <p style={styles.modalDescription}>
-                    You cannot create a duplicate breed. Please use a different name.
-                  </p>
-                </>
-              ) : (
-                <p style={styles.modalDescription}>
-                  The following similar breeds already exist. Are you sure you want to create "{formData.name}"?
-                </p>
+          <div>
+            <h1 style={styles.title}>{isEditMode ? 'Edit Breed' : 'Add Breed'}</h1>
+            <p style={styles.subtitle}>
+              {isEditMode
+                ? 'Update the breed details'
+                : 'Create a new breed for HausPet'}
+              {hasDraft && !isEditMode && (
+                <span style={styles.draftBadge}> (Draft restored)</span>
               )}
+            </p>
+          </div>
+          <button style={styles.linkButton} onClick={() => navigate('/admin/breeds')}>
+            ← Back to list
+          </button>
+        </header>
 
-              <div style={styles.similarBreedsList}>
-                {similarBreeds.map((breed) => (
-                  <div key={breed.id} style={styles.similarBreedItem}>
-                    <div style={styles.similarBreedInfo}>
-                      <span style={styles.similarBreedName}>{breed.name}</span>
-                      <span style={styles.similarBreedType}>{breed.petType}</span>
+        <div style={styles.card}>
+          {error && (
+            <div style={styles.error}>
+              {error instanceof Error ? error.message : 'Failed to save breed'}
+            </div>
+          )}
+          {loadingBreed ? (
+            <div style={styles.loading}>Loading...</div>
+          ) : (
+            <form onSubmit={handleSubmit} style={styles.form}>
+              <label style={styles.label}>
+                Name
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  required
+                  style={styles.input}
+                />
+              </label>
+
+              <label style={styles.label}>
+                Type
+                <select
+                  value={formData.petType}
+                  onChange={(e) => handleChange('petType', e.target.value)}
+                  style={styles.select}
+                >
+                  {(breedTypes?.length ? breedTypes : [
+                    { id: 'dog', name: 'dog' },
+                    { id: 'cat', name: 'cat' },
+                    { id: 'bird', name: 'bird' }
+                  ]).map((type) => (
+                    <option key={type.id} value={type.name}>{type.name}</option>
+                  ))}
+                </select>
+              </label>
+
+              <div style={styles.actions}>
+                <button
+                  type="button"
+                  style={styles.secondaryButton}
+                  onClick={() => navigate('/admin/breeds')}
+                  disabled={submitting || checkingSimilar}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={styles.primaryButton}
+                  disabled={submitting || checkingSimilar}
+                >
+                  {checkingSimilar
+                    ? 'Checking...'
+                    : submitting
+                    ? 'Saving...'
+                    : isEditMode
+                    ? 'Save changes'
+                    : 'Create breed'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+
+        {/* Confirmation Modal for Similar Breeds */}
+        {showConfirmModal && filteredSimilar.length > 0 && (
+          <div style={styles.modalOverlay} onClick={() => setShowConfirmModal(false)}>
+            <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+              <div style={styles.modalHeader}>
+                <h2 style={styles.modalTitle}>Similar Breeds Found</h2>
+                <button
+                  style={styles.modalCloseButton}
+                  onClick={() => setShowConfirmModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div style={styles.modalBody}>
+                {filteredSimilar.some(b => b.similarity === 100) ? (
+                  <>
+                    <p style={styles.modalDescriptionError}>
+                      ⚠️ A breed with this exact name already exists!
+                    </p>
+                    <p style={styles.modalDescription}>
+                      You cannot create a duplicate breed. Please use a different name.
+                    </p>
+                  </>
+                ) : (
+                  <p style={styles.modalDescription}>
+                    The following similar breeds already exist. Are you sure you want to create "{formData.name}"?
+                  </p>
+                )}
+
+                <div style={styles.similarBreedsList}>
+                  {filteredSimilar.map((breed) => (
+                    <div key={breed.id} style={styles.similarBreedItem}>
+                      <div style={styles.similarBreedInfo}>
+                        <span style={styles.similarBreedName}>{breed.name}</span>
+                        <span style={styles.similarBreedType}>{breed.petType}</span>
+                      </div>
+                      <div
+                        style={{
+                          ...styles.similarityBadge,
+                          ...(breed.similarity === 100 ? styles.similarityBadgeExact : {})
+                        }}
+                      >
+                        {breed.similarity === 100 ? 'EXACT MATCH' : `${breed.similarity}% match`}
+                      </div>
                     </div>
-                    <div
-                      style={{
-                        ...styles.similarityBadge,
-                        ...(breed.similarity === 100 ? styles.similarityBadgeExact : {})
-                      }}
-                    >
-                      {breed.similarity === 100 ? 'EXACT MATCH' : `${breed.similarity}% match`}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              <div style={styles.modalFooter}>
+                <button
+                  style={styles.secondaryButton}
+                  onClick={() => setShowConfirmModal(false)}
+                >
+                  {filteredSimilar.some(b => b.similarity === 100) ? 'Close' : 'Cancel'}
+                </button>
+                {!filteredSimilar.some(b => b.similarity === 100) && (
+                  <button
+                    style={styles.primaryButton}
+                    onClick={() => void handleConfirmCreate()}
+                    disabled={submitting}
+                  >
+                    {submitting ? 'Creating...' : 'Create Anyway'}
+                  </button>
+                )}
               </div>
             </div>
-
-            <div style={styles.modalFooter}>
-              <button
-                style={styles.secondaryButton}
-                onClick={() => setShowConfirmModal(false)}
-              >
-                {similarBreeds.some(b => b.similarity === 100) ? 'Close' : 'Cancel'}
-              </button>
-              {!similarBreeds.some(b => b.similarity === 100) && (
-                <button
-                  style={styles.primaryButton}
-                  onClick={() => void handleConfirmCreate()}
-                  disabled={submitting}
-                >
-                  {submitting ? 'Creating...' : 'Create Anyway'}
-                </button>
-              )}
-            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
     </>
   );
@@ -311,6 +333,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: '6px 0 0 0',
     color: '#666',
     fontSize: '14px',
+  },
+  draftBadge: {
+    color: '#6B553D',
+    fontWeight: 600,
+    fontSize: '12px',
   },
   linkButton: {
     backgroundColor: 'transparent',
