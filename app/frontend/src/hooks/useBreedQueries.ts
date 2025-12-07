@@ -5,7 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiService } from '../services/api.service';
-import type { Breed, BreedFilters } from '../types/api.types';
+import type { BreedFilters } from '../types/api.types';
 
 /**
  * Fetch all breeds with pagination
@@ -14,7 +14,7 @@ export function useBreeds(filters?: BreedFilters) {
   return useQuery({
     queryKey: ['breeds', filters],
     queryFn: async () => {
-      const response = await apiService.getBreeds(filters);
+      const response = await apiService.getAllBreeds(filters);
       return response;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -36,13 +36,13 @@ export function useBreed(id: string) {
 }
 
 /**
- * Fetch breeds by pet type
+ * Fetch breeds by pet type (using filter)
  */
 export function useBreedsByType(type: string) {
   return useQuery({
     queryKey: ['breeds', 'type', type],
     queryFn: async () => {
-      return apiService.getBreedsByType(type);
+      return apiService.getAllBreeds({ petType: type });
     },
     enabled: Boolean(type),
     staleTime: 1000 * 60 * 5,

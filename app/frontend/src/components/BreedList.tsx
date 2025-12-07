@@ -41,8 +41,8 @@ export const BreedList: React.FC = () => {
     }
   };
 
-  const breeds = data?.data?.items || [];
-  const pagination = data?.data?.pagination;
+  const breeds = data?.items || [];
+  const pagination = data?.pagination;
 
   return (
     <>

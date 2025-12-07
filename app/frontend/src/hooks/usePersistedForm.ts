@@ -3,7 +3,6 @@
  * Auto-saves form changes and restores on mount
  */
 
-import { useEffect } from 'react';
 import { db } from '../db/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 

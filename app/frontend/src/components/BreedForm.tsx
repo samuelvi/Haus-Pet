@@ -7,13 +7,6 @@ import { usePersistedForm } from '../hooks/usePersistedForm';
 import { useCreateBreed, useUpdateBreed } from '../hooks/useBreedMutations';
 import { useBreed, useSimilarBreeds, useBreedTypes } from '../hooks/useBreedQueries';
 
-interface SimilarBreed {
-  id: string;
-  name: string;
-  petType: string;
-  similarity: number;
-}
-
 export const BreedForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEditMode = Boolean(id);
@@ -38,7 +31,7 @@ export const BreedForm: React.FC = () => {
 
   // Queries
   const { data: breed, isLoading: loadingBreed } = useBreed(id || '');
-  const { data: breedTypes } = useBreedTypes(tokens?.accessToken, sessionId);
+  const { data: breedTypes } = useBreedTypes(tokens?.accessToken || undefined, sessionId || undefined);
   const { data: similarBreeds = [], isFetching: checkingSimilar } = useSimilarBreeds(
     formData.name,
     formData.petType,

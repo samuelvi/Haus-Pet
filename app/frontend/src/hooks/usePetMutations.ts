@@ -53,7 +53,7 @@ export function useCreatePet({ accessToken, sessionId }: UsePetMutationsOptions)
         type: newPet.type,
         breed: newPet.breed,
         photoUrl: newPet.photoUrl || '',
-        isSponsored: false,
+        totalSponsored: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -96,7 +96,7 @@ export function useCreatePet({ accessToken, sessionId }: UsePetMutationsOptions)
     },
 
     // Invalidate on success (wait for projection to update read model)
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       // Remove from outbox
       const commands = await db.pendingCommands
         .where('type')
@@ -180,7 +180,7 @@ export function useUpdatePet({ accessToken, sessionId }: UsePetMutationsOptions)
       }
     },
 
-    onSuccess: async (data, { id }) => {
+    onSuccess: async (_data, { id }) => {
       const commands = await db.pendingCommands
         .where('type')
         .equals('UPDATE_PET')
@@ -242,14 +242,14 @@ export function useDeletePet({ accessToken, sessionId }: UsePetMutationsOptions)
       return { previousPets };
     },
 
-    onError: (err, id, context) => {
+    onError: (err, _id, context) => {
       console.error('[useDeletePet] Error:', err);
       if (context?.previousPets) {
         queryClient.setQueryData(['pets'], context.previousPets);
       }
     },
 
-    onSuccess: async (data, id) => {
+    onSuccess: async (_data, id) => {
       const commands = await db.pendingCommands
         .where('type')
         .equals('DELETE_PET')

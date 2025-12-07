@@ -65,7 +65,7 @@ export function useCreateBreed({ accessToken, sessionId }: UseBreedMutationsOpti
     },
 
     // Revert on error
-    onError: (err, newBreed, context) => {
+    onError: (err, _newBreed, context) => {
       console.error('[useCreateBreed] Error:', err);
       if (context?.previousBreeds) {
         queryClient.setQueryData(['breeds'], context.previousBreeds);
@@ -73,7 +73,7 @@ export function useCreateBreed({ accessToken, sessionId }: UseBreedMutationsOpti
     },
 
     // Invalidate on success
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       // Remove successful command from outbox
       const commands = await db.pendingCommands
         .where('type')
@@ -158,7 +158,7 @@ export function useUpdateBreed({ accessToken, sessionId }: UseBreedMutationsOpti
       }
     },
 
-    onSuccess: async (data, { id }) => {
+    onSuccess: async (_data, { id }) => {
       // Remove from outbox
       const commands = await db.pendingCommands
         .where('type')
@@ -219,14 +219,14 @@ export function useDeleteBreed({ accessToken, sessionId }: UseBreedMutationsOpti
       return { previousBreeds };
     },
 
-    onError: (err, id, context) => {
+    onError: (err, _id, context) => {
       console.error('[useDeleteBreed] Error:', err);
       if (context?.previousBreeds) {
         queryClient.setQueryData(['breeds'], context.previousBreeds);
       }
     },
 
-    onSuccess: async (data, id) => {
+    onSuccess: async (_data, id) => {
       const commands = await db.pendingCommands
         .where('type')
         .equals('DELETE_BREED')

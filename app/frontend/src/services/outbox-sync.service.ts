@@ -16,7 +16,7 @@ interface SyncResult {
 }
 
 class OutboxSyncService {
-  private syncInterval: NodeJS.Timeout | null = null;
+  private syncInterval: number | null = null;
   private syncChannel: BroadcastChannel<{ type: 'sync-complete' }>;
   private isOnline: boolean = navigator.onLine;
   private isSyncing: boolean = false;
@@ -49,7 +49,7 @@ class OutboxSyncService {
     }
 
     // Sync every 30 seconds
-    this.syncInterval = setInterval(() => {
+    this.syncInterval = window.setInterval(() => {
       if (this.isOnline && !this.isSyncing) {
         void this.syncPendingCommands();
       }
@@ -182,37 +182,37 @@ class OutboxSyncService {
     // Execute based on command type
     switch (command.type) {
       case 'CREATE_PET':
-        await petService.createPet(command.payload, tokens.accessToken, sessionId);
+        await petService.createPet(command.payload as any, tokens.accessToken, sessionId);
         break;
 
       case 'UPDATE_PET':
         await petService.updatePet(
-          command.payload.id,
-          command.payload,
+          (command.payload as any).id,
+          command.payload as any,
           tokens.accessToken,
           sessionId
         );
         break;
 
       case 'DELETE_PET':
-        await petService.deletePet(command.payload.id, tokens.accessToken, sessionId);
+        await petService.deletePet((command.payload as any).id, tokens.accessToken, sessionId);
         break;
 
       case 'CREATE_BREED':
-        await apiService.createBreed(command.payload, tokens.accessToken, sessionId);
+        await apiService.createBreed(command.payload as any, tokens.accessToken, sessionId);
         break;
 
       case 'UPDATE_BREED':
         await apiService.updateBreed(
-          command.payload.id,
-          command.payload,
+          (command.payload as any).id,
+          command.payload as any,
           tokens.accessToken,
           sessionId
         );
         break;
 
       case 'DELETE_BREED':
-        await apiService.deleteBreed(command.payload.id, tokens.accessToken, sessionId);
+        await apiService.deleteBreed((command.payload as any).id, tokens.accessToken, sessionId);
         break;
 
       default:

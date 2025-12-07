@@ -6,7 +6,7 @@ import { CountersService } from '../services/counters.service';
 import { AdminNav } from './AdminNav';
 
 export const Dashboard: React.FC = () => {
-  const { user, tokens, sessionId, logout } = useAuth();
+  const { user, tokens, sessionId } = useAuth();
   const navigate = useNavigate();
   const [counters, setCounters] = useState<SystemCounters | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,10 +35,11 @@ export const Dashboard: React.FC = () => {
     fetchCounters();
   }, [tokens, sessionId]);
 
-  const handleLogout = async (): Promise<void> => {
-    await logout();
-    navigate('/login');
-  };
+  // Logout handler for future use
+  // const handleLogout = async (): Promise<void> => {
+  //   await logout();
+  //   navigate('/login');
+  // };
 
   const quickActions = [
     {

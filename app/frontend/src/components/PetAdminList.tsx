@@ -5,7 +5,7 @@ import { petService } from '../services/pet.service';
 import { useAuth } from '../contexts/AuthContext';
 import type { Pet, PetType, PaginationMeta } from '../types/pet.types';
 import type { BreedType } from '../types/api.types';
-import { fuzzyFilter } from '../utils/fuzzySearch';
+// import { fuzzyFilter } from '../utils/fuzzySearch';
 import { AdminNav } from './AdminNav';
 
 type SortField = 'name' | 'type' | 'breed' | 'totalSponsored';

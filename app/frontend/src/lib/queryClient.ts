@@ -4,28 +4,23 @@
  */
 
 import { QueryClient } from '@tanstack/react-query';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { createSyncStoragePersister } from '@tanstack/react-query-persist-client';
 import { get, set, del } from 'idb-keyval';
 
 /**
  * Create a persister that uses IndexedDB via idb-keyval
  * This provides better performance and capacity than localStorage
  */
-export const persister = createSyncStoragePersister({
-  storage: {
-    getItem: async (key: string) => {
-      const value = await get(key);
-      return value as string | null;
-    },
-    setItem: async (key: string, value: string) => {
-      await set(key, value);
-    },
-    removeItem: async (key: string) => {
-      await del(key);
-    },
+export const persister = {
+  persistClient: async (client: any) => {
+    await set('REACT_QUERY_OFFLINE_CACHE', client);
   },
-});
+  restoreClient: async () => {
+    return await get('REACT_QUERY_OFFLINE_CACHE');
+  },
+  removeClient: async () => {
+    await del('REACT_QUERY_OFFLINE_CACHE');
+  },
+};
 
 /**
  * Query Client with optimized defaults for offline-first architecture
