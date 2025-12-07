@@ -517,6 +517,25 @@ npm run test:unit:coverage  # With coverage
 **Current tests:**
 - Example utility function tests
 
+**Frontend Unit Tests (Vitest):**
+
+The frontend includes comprehensive unit and integration tests for offline functionality:
+
+```sh
+cd app/frontend
+npm test              # Run all frontend tests
+npm run test:ui       # Interactive test UI
+npm run test:coverage # Generate coverage report
+```
+
+**Test Coverage:**
+- ✅ 23 tests passing (100% success rate)
+- `usePersistedForm` hook (7 tests) - Auto-save functionality
+- `useBreedMutations` hook (4 tests) - Optimistic updates & outbox pattern
+- `OutboxSyncService` (12 tests) - Command queueing & sync logic
+
+**Documentation:** See `docs/TESTING-SUMMARY.md` and `docs/TESTING-OFFLINE-FEATURES.md`
+
 #### 2. Functional Tests (Playwright)
 End-to-end tests that verify complete user workflows and business processes against a real test environment.
 

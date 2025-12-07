@@ -257,3 +257,6 @@ class OutboxSyncService {
 
 // Singleton instance
 export const outboxSync = new OutboxSyncService();
+
+// Export class for testing
+export { OutboxSyncService };
