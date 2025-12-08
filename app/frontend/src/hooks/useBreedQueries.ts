@@ -10,11 +10,11 @@ import type { BreedFilters } from '../types/api.types';
 /**
  * Fetch all breeds with pagination
  */
-export function useBreeds(filters?: BreedFilters) {
+export function useBreeds(filters?: BreedFilters, page: number = 1, limit: number = 20) {
   return useQuery({
-    queryKey: ['breeds', filters],
+    queryKey: ['breeds', filters, page, limit],
     queryFn: async () => {
-      const response = await apiService.getAllBreeds(filters);
+      const response = await apiService.getAllBreeds(filters, page, limit);
       return response;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -66,14 +66,19 @@ export function useSimilarBreeds(name: string, petType: string, enabled = true) 
 /**
  * Fetch breed types
  */
-export function useBreedTypes(accessToken?: string, sessionId?: string) {
+export function useBreedTypes(
+  accessToken?: string,
+  sessionId?: string,
+  page: number = 1,
+  limit: number = 20
+) {
   return useQuery({
-    queryKey: ['breedTypes'],
+    queryKey: ['breedTypes', page, limit],
     queryFn: async () => {
       if (!accessToken || !sessionId) {
         throw new Error('Authentication required');
       }
-      return apiService.getBreedTypes(accessToken, sessionId);
+      return apiService.getBreedTypes(accessToken, sessionId, page, limit);
     },
     enabled: Boolean(accessToken) && Boolean(sessionId),
     staleTime: 1000 * 60 * 30, // 30 minutes (types don't change often)

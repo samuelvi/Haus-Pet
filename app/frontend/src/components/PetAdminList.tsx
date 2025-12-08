@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/api.service';
 import { petService } from '../services/pet.service';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,18 +13,42 @@ type SortField = 'name' | 'type' | 'breed' | 'totalSponsored';
 export const PetAdminList: React.FC = () => {
   const navigate = useNavigate();
   const { tokens, sessionId } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
-  const [typeFilter, setTypeFilter] = useState<PetType | ''>('');
+  const [typeFilter, setTypeFilter] = useState<PetType | ''>(() => {
+    const type = searchParams.get('type');
+    return (type as PetType) || '';
+  });
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [breedTypes, setBreedTypes] = useState<BreedType[]>([]);
-  const [page, setPage] = useState<number>(1);
+  const [page, setPage] = useState<number>(() => {
+    const pageParam = searchParams.get('page');
+    return pageParam ? parseInt(pageParam, 10) : 1;
+  });
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const PAGE_SIZE = 4; // Admin page size
+
+  // Sync page and type filter with URL
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const typeParam = searchParams.get('type');
+    const urlPage = pageParam ? parseInt(pageParam, 10) : 1;
+
+    if (urlPage !== page) {
+      setPage(urlPage);
+    }
+
+    if (typeParam && typeParam !== typeFilter) {
+      setTypeFilter(typeParam as PetType);
+    } else if (!typeParam && typeFilter) {
+      setTypeFilter('');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchPets = async (): Promise<void> => {
@@ -49,8 +73,8 @@ export const PetAdminList: React.FC = () => {
     const fetchTypes = async (): Promise<void> => {
       if (!tokens || !sessionId) return;
       try {
-        const types = await apiService.getBreedTypes(tokens.accessToken, sessionId);
-        setBreedTypes(types);
+        const response = await apiService.getBreedTypes(tokens.accessToken, sessionId);
+        setBreedTypes(response.items);
       } catch (err) {
         console.warn('Failed to load breed types', err);
       }
@@ -89,20 +113,37 @@ export const PetAdminList: React.FC = () => {
   }, [pets, search, sortField, sortDir]);
 
   const handleFilterChange = (newFilter: PetType | '') => {
+    const params: Record<string, string> = { page: '1' };
+    if (newFilter) {
+      params.type = newFilter;
+    }
+    setSearchParams(params);
     setTypeFilter(newFilter);
     setPage(1); // Reset to first page when changing filter
   };
 
   const handleNextPage = () => {
     if (pagination?.hasNext) {
-      setPage((prev) => prev + 1);
+      const newPage = page + 1;
+      const params: Record<string, string> = { page: newPage.toString() };
+      if (typeFilter) {
+        params.type = typeFilter;
+      }
+      setSearchParams(params);
+      setPage(newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handlePreviousPage = () => {
     if (pagination?.hasPrevious) {
-      setPage((prev) => prev - 1);
+      const newPage = page - 1;
+      const params: Record<string, string> = { page: newPage.toString() };
+      if (typeFilter) {
+        params.type = typeFilter;
+      }
+      setSearchParams(params);
+      setPage(newPage);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };

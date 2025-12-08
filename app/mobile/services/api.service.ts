@@ -1,8 +1,4 @@
-/**
- * API Service for backend communication
- * Handles all HTTP requests to the HausPet API
- */
-
+import Constants from 'expo-constants';
 import type {
   ApiResponse,
   User,
@@ -17,7 +13,13 @@ import type {
   SystemCounters,
 } from '../types/api.types';
 
-const API_BASE_URL: string = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const getBaseUrl = () => {
+  const debuggerHost = Constants.expoConfig?.hostUri;
+  const localhost = debuggerHost?.split(":")[0] || "localhost";
+  return `http://${localhost}:3000`;
+}
+
+const API_BASE_URL: string = getBaseUrl();
 
 class ApiService {
   /**
@@ -142,7 +144,6 @@ class ApiService {
       endpoint += `?${queryString}`;
     }
 
-    // Backend now returns paginated response: { items: Breed[], pagination: {...} }
     return this.request<{ items: Breed[]; pagination: any }>(endpoint);
   }
 
@@ -260,7 +261,6 @@ class ApiService {
       endpoint += `?${queryString}`;
     }
 
-    // Backend now returns paginated response: { items: BreedType[], pagination: {...} }
     return this.request<{ items: BreedType[]; pagination: any }>(endpoint, {
       method: 'GET',
       headers: {

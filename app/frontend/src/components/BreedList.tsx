@@ -1,18 +1,62 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AdminNav } from './AdminNav';
-import { useBreeds } from '../hooks/useBreedQueries';
+import { useBreeds, useBreedTypes } from '../hooks/useBreedQueries';
 import { useDeleteBreed } from '../hooks/useBreedMutations';
-import type { Breed, BreedFilters } from '../types/api.types';
+import type { Breed, BreedFilters, BreedType } from '../types/api.types';
 
 export const BreedList: React.FC = () => {
   const navigate = useNavigate();
   const { tokens, sessionId } = useAuth();
-  const [filters, setFilters] = useState<BreedFilters | undefined>(undefined);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filters, setFilters] = useState<BreedFilters | undefined>(() => {
+    const petType = searchParams.get('petType');
+    const search = searchParams.get('search');
+    const result: BreedFilters = {};
+    if (petType) result.petType = petType;
+    if (search) result.search = search;
+    return Object.keys(result).length > 0 ? result : undefined;
+  });
+  const [page, setPage] = useState<number>(() => {
+    const pageParam = searchParams.get('page');
+    return pageParam ? parseInt(pageParam, 10) : 1;
+  });
+  const [limit] = useState<number>(4); // ADMIN_PAGE_SIZE from .env
+
+  // Load breed types dynamically
+  const { data: breedTypesData } = useBreedTypes(tokens?.accessToken, sessionId, 1, 50);
+
+  // Sync page and filters with URL
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const petType = searchParams.get('petType');
+    const search = searchParams.get('search');
+    const urlPage = pageParam ? parseInt(pageParam, 10) : 1;
+
+    if (urlPage !== page) {
+      setPage(urlPage);
+    }
+
+    const newFilters: BreedFilters = {};
+    if (petType) newFilters.petType = petType;
+    if (search) newFilters.search = search;
+
+    const hasFilters = Object.keys(newFilters).length > 0;
+    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(hasFilters ? newFilters : undefined);
+
+    if (filtersChanged) {
+      setFilters(hasFilters ? newFilters : undefined);
+    }
+
+    if (search !== searchTerm) {
+      setSearchTerm(search || '');
+    }
+  }, [searchParams]);
 
   // Use TanStack Query for data fetching with caching
-  const { data, isLoading, isError, error, refetch } = useBreeds(filters);
+  const { data, isLoading, isError, error, refetch } = useBreeds(filters, page, limit);
 
   // Delete mutation
   const deleteMutation = useDeleteBreed({
@@ -33,11 +77,57 @@ export const BreedList: React.FC = () => {
     }
   };
 
+  const buildParams = (pageNum: number, currentFilters?: BreedFilters): Record<string, string> => {
+    const params: Record<string, string> = { page: pageNum.toString() };
+    if (currentFilters?.petType) {
+      params.petType = currentFilters.petType;
+    }
+    if (currentFilters?.search) {
+      params.search = currentFilters.search;
+    }
+    return params;
+  };
+
   const handleFilter = (petType: string | undefined): void => {
-    if (petType) {
-      setFilters({ petType });
-    } else {
-      setFilters(undefined);
+    const newFilters: BreedFilters = {};
+    if (petType) newFilters.petType = petType;
+    if (searchTerm) newFilters.search = searchTerm;
+
+    const params = buildParams(1, Object.keys(newFilters).length > 0 ? newFilters : undefined);
+    setSearchParams(params);
+    setFilters(Object.keys(newFilters).length > 0 ? newFilters : undefined);
+    setPage(1);
+  };
+
+  const handleSearch = (search: string): void => {
+    const newFilters: BreedFilters = {};
+    if (filters?.petType) newFilters.petType = filters.petType;
+    if (search) newFilters.search = search;
+
+    const params = buildParams(1, Object.keys(newFilters).length > 0 ? newFilters : undefined);
+    setSearchParams(params);
+    setFilters(Object.keys(newFilters).length > 0 ? newFilters : undefined);
+    setSearchTerm(search);
+    setPage(1);
+  };
+
+  const handlePreviousPage = (): void => {
+    if (page > 1) {
+      const newPage = page - 1;
+      const params = buildParams(newPage, filters);
+      setSearchParams(params);
+      setPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleNextPage = (): void => {
+    if (pagination?.hasNext) {
+      const newPage = page + 1;
+      const params = buildParams(newPage, filters);
+      setSearchParams(params);
+      setPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -63,32 +153,53 @@ export const BreedList: React.FC = () => {
           </button>
         </header>
 
+        {/* Search Bar */}
+        <div style={{ marginBottom: '16px' }}>
+          <input
+            type="text"
+            placeholder="Search breeds by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch(searchTerm);
+              }
+            }}
+            style={styles.searchInput}
+          />
+          <button
+            style={styles.searchButton}
+            onClick={() => handleSearch(searchTerm)}
+          >
+            Search
+          </button>
+          {searchTerm && (
+            <button
+              style={styles.clearButton}
+              onClick={() => handleSearch('')}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
         {/* Filters */}
         <div style={styles.filters}>
           <button
-            style={!filters ? styles.filterButtonActive : styles.filterButton}
+            style={!filters?.petType ? styles.filterButtonActive : styles.filterButton}
             onClick={() => handleFilter(undefined)}
           >
             All
           </button>
-          <button
-            style={filters?.petType === 'dog' ? styles.filterButtonActive : styles.filterButton}
-            onClick={() => handleFilter('dog')}
-          >
-            Dogs
-          </button>
-          <button
-            style={filters?.petType === 'cat' ? styles.filterButtonActive : styles.filterButton}
-            onClick={() => handleFilter('cat')}
-          >
-            Cats
-          </button>
-          <button
-            style={filters?.petType === 'bird' ? styles.filterButtonActive : styles.filterButton}
-            onClick={() => handleFilter('bird')}
-          >
-            Birds
-          </button>
+          {breedTypesData?.items.map((breedType: BreedType) => (
+            <button
+              key={breedType.id}
+              style={filters?.petType === breedType.name ? styles.filterButtonActive : styles.filterButton}
+              onClick={() => handleFilter(breedType.name)}
+            >
+              {breedType.name.charAt(0).toUpperCase() + breedType.name.slice(1)}
+            </button>
+          ))}
         </div>
 
         <div style={styles.card}>
@@ -160,10 +271,51 @@ export const BreedList: React.FC = () => {
             </table>
           )}
 
+          {/* Pagination Info */}
           {pagination && (
-            <div style={styles.paginationInfo}>
-              Showing {breeds.length} of {pagination.pageCount || 'many'} total breeds
-              {pagination.hasNext && ' (more available)'}
+            <div style={{ textAlign: 'center', marginTop: '16px', marginBottom: '8px' }}>
+              <p style={{ fontSize: '14px', color: '#666' }}>
+                Page {pagination.page} • Showing {breeds.length} breeds
+              </p>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {pagination && breeds.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '24px', marginBottom: '24px' }}>
+              <button
+                onClick={handlePreviousPage}
+                disabled={!pagination.hasPrevious}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
+                  pagination.hasPrevious
+                    ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                Previous
+              </button>
+
+              <div className="px-4 py-3 bg-white rounded-xl shadow-soft">
+                <span className="text-dark-800 font-semibold">Page {pagination.page}</span>
+              </div>
+
+              <button
+                onClick={handleNextPage}
+                disabled={!pagination.hasNext}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
+                  pagination.hasNext
+                    ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                Next
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
           )}
         </div>
@@ -193,6 +345,33 @@ const styles: { [key: string]: React.CSSProperties } = {
     margin: '6px 0 0 0',
     color: '#666',
     fontSize: '14px',
+  },
+  searchInput: {
+    padding: '10px 14px',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+    fontSize: '14px',
+    minWidth: '300px',
+    marginRight: '8px',
+  },
+  searchButton: {
+    backgroundColor: '#6B553D',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '10px 20px',
+    cursor: 'pointer',
+    fontWeight: 600,
+    marginRight: '8px',
+  },
+  clearButton: {
+    backgroundColor: '#fff',
+    color: '#666',
+    border: '1px solid #ccc',
+    borderRadius: '6px',
+    padding: '10px 20px',
+    cursor: 'pointer',
+    fontWeight: 600,
   },
   filters: {
     display: 'flex',
@@ -341,13 +520,5 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '12px 20px',
     fontWeight: 600,
     cursor: 'pointer',
-  },
-  paginationInfo: {
-    padding: '16px 20px',
-    borderTop: '1px solid #f0f0f0',
-    backgroundColor: '#f8f8f8',
-    fontSize: '13px',
-    color: '#666',
-    textAlign: 'center',
   },
 };

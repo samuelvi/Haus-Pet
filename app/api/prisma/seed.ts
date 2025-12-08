@@ -4,27 +4,53 @@ import { uuidv7 } from 'uuidv7';
 
 const prisma = new PrismaClient();
 
-const breedTypesToCreate = ['dog', 'cat', 'bird'] as const;
+const breedTypesToCreate = ['dog', 'cat', 'bird', 'fish', 'rabbit', 'hamster', 'guinea pig', 'turtle'] as const;
 
 const breedsToCreate = [
-  // Dogs
+  // Dogs - 10 breeds
   { name: 'Labrador', petType: 'dog' },
   { name: 'Beagle', petType: 'dog' },
   { name: 'Poodle', petType: 'dog' },
   { name: 'Golden Retriever', petType: 'dog' },
   { name: 'German Shepherd', petType: 'dog' },
+  { name: 'Bulldog', petType: 'dog' },
+  { name: 'Chihuahua', petType: 'dog' },
+  { name: 'Dachshund', petType: 'dog' },
+  { name: 'Boxer', petType: 'dog' },
+  { name: 'Husky', petType: 'dog' },
 
-  // Cats
+  // Cats - 10 breeds
   { name: 'Siamese', petType: 'cat' },
   { name: 'Persian', petType: 'cat' },
   { name: 'Sphynx', petType: 'cat' },
   { name: 'Maine Coon', petType: 'cat' },
   { name: 'Bengal', petType: 'cat' },
+  { name: 'Ragdoll', petType: 'cat' },
+  { name: 'British Shorthair', petType: 'cat' },
+  { name: 'Abyssinian', petType: 'cat' },
+  { name: 'Scottish Fold', petType: 'cat' },
+  { name: 'Russian Blue', petType: 'cat' },
 
-  // Birds
+  // Birds - 6 breeds
   { name: 'Parakeet', petType: 'bird' },
   { name: 'Cockatiel', petType: 'bird' },
   { name: 'Macaw', petType: 'bird' },
+  { name: 'Canary', petType: 'bird' },
+  { name: 'Lovebird', petType: 'bird' },
+  { name: 'Parrot', petType: 'bird' },
+
+  // Fish - 5 breeds
+  { name: 'Goldfish', petType: 'fish' },
+  { name: 'Betta', petType: 'fish' },
+  { name: 'Guppy', petType: 'fish' },
+  { name: 'Angelfish', petType: 'fish' },
+  { name: 'Tetra', petType: 'fish' },
+
+  // Rabbits - 4 breeds
+  { name: 'Holland Lop', petType: 'rabbit' },
+  { name: 'Netherland Dwarf', petType: 'rabbit' },
+  { name: 'Lionhead', petType: 'rabbit' },
+  { name: 'Flemish Giant', petType: 'rabbit' },
 ];
 
 async function main() {
@@ -50,16 +76,31 @@ async function main() {
   console.log(`Created or found admin user: ${adminUser.email} (ID: ${adminUser.id})`);
   console.log(`  Login credentials: ${adminEmail} / ${adminPassword}`);
 
-  // Seed breeds
-  for (const b of breedsToCreate) {
+  // Seed all breed types first
+  console.log('\nSeeding breed types...');
+  for (const typeName of breedTypesToCreate) {
     const breedType = await prisma.breedType.upsert({
-      where: { name: b.petType },
+      where: { name: typeName },
       update: {},
       create: {
         id: uuidv7(),
-        name: b.petType,
+        name: typeName,
       },
     });
+    console.log(`Created or found breed type: ${breedType.name} (ID: ${breedType.id})`);
+  }
+
+  // Seed breeds
+  console.log('\nSeeding breeds...');
+  for (const b of breedsToCreate) {
+    const breedType = await prisma.breedType.findUnique({
+      where: { name: b.petType },
+    });
+
+    if (!breedType) {
+      console.warn(`Warning: Breed type '${b.petType}' not found, skipping breed '${b.name}'`);
+      continue;
+    }
 
     const breed = await prisma.breed.upsert({
       where: { name: b.name }, // Unique identifier

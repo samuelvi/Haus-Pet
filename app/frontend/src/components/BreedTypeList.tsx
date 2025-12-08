@@ -1,18 +1,44 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/api.service';
 import { useAuth } from '../contexts/AuthContext';
 import type { BreedType } from '../types/api.types';
 import { AdminNav } from './AdminNav';
+import { useBreedTypes } from '../hooks/useBreedQueries';
 
 export const BreedTypeList: React.FC = () => {
   const { tokens, sessionId } = useAuth();
-  const [types, setTypes] = useState<BreedType[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [page, setPage] = useState<number>(() => {
+    const pageParam = searchParams.get('page');
+    return pageParam ? parseInt(pageParam, 10) : 1;
+  });
+  const [limit] = useState<number>(4); // ADMIN_PAGE_SIZE from .env
+
+  // Sync page with URL
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const urlPage = pageParam ? parseInt(pageParam, 10) : 1;
+    if (urlPage !== page) {
+      setPage(urlPage);
+    }
+  }, [searchParams]);
   const [error, setError] = useState<string | null>(null);
   const [newType, setNewType] = useState<string>('');
   const [editing, setEditing] = useState<string | null>(null);
   const [editingName, setEditingName] = useState<string>('');
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  // Use TanStack Query for data fetching with caching
+  const { data, isLoading: loading, refetch } = useBreedTypes(
+    tokens?.accessToken,
+    sessionId,
+    page,
+    limit
+  );
+
+  const types = data?.items || [];
+  const pagination = data?.pagination;
 
   const guardAuth = (): boolean => {
     if (!tokens || !sessionId) {
@@ -21,24 +47,6 @@ export const BreedTypeList: React.FC = () => {
     }
     return true;
   };
-
-  const loadTypes = async (): Promise<void> => {
-    if (!guardAuth()) return;
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await apiService.getBreedTypes(tokens!.accessToken, sessionId!);
-      setTypes(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load breed types');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadTypes();
-  }, [tokens, sessionId]);
 
   const handleCreate = async (): Promise<void> => {
     if (!guardAuth()) return;
@@ -57,10 +65,10 @@ export const BreedTypeList: React.FC = () => {
 
     try {
       setBusyId('create');
-      const created = await apiService.createBreedType(newType.trim(), tokens!.accessToken, sessionId!);
-      setTypes((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      await apiService.createBreedType(newType.trim(), tokens!.accessToken, sessionId!);
       setNewType('');
       setError(null);
+      await refetch(); // Refetch data after creation
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create breed type');
     } finally {
@@ -81,13 +89,11 @@ export const BreedTypeList: React.FC = () => {
 
     try {
       setBusyId(id);
-      const updated = await apiService.updateBreedType(id, editingName.trim(), tokens!.accessToken, sessionId!);
-      setTypes((prev) =>
-        prev.map((t) => (t.id === id ? updated : t)).sort((a, b) => a.name.localeCompare(b.name))
-      );
+      await apiService.updateBreedType(id, editingName.trim(), tokens!.accessToken, sessionId!);
       setEditing(null);
       setEditingName('');
       setError(null);
+      await refetch(); // Refetch data after update
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update breed type');
     } finally {
@@ -102,11 +108,29 @@ export const BreedTypeList: React.FC = () => {
     try {
       setBusyId(id);
       await apiService.deleteBreedType(id, tokens!.accessToken, sessionId!);
-      setTypes((prev) => prev.filter((t) => t.id !== id));
+      await refetch(); // Refetch data after deletion
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete breed type');
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const handlePreviousPage = (): void => {
+    if (pagination?.hasPrevious) {
+      const newPage = page - 1;
+      setSearchParams({ page: newPage.toString() });
+      setPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleNextPage = (): void => {
+    if (pagination?.hasNext) {
+      const newPage = page + 1;
+      setSearchParams({ page: newPage.toString() });
+      setPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -223,6 +247,54 @@ export const BreedTypeList: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination Info */}
+      {pagination && (
+        <div style={{ textAlign: 'center', marginTop: '16px', marginBottom: '8px' }}>
+          <p style={{ fontSize: '14px', color: '#666' }}>
+            Page {pagination.page} • Showing {types.length} breed types
+          </p>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {pagination && types.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '24px', marginBottom: '24px' }}>
+          <button
+            onClick={handlePreviousPage}
+            disabled={!pagination.hasPrevious}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
+              pagination.hasPrevious
+                ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Previous
+          </button>
+
+          <div className="px-4 py-3 bg-white rounded-xl shadow-soft">
+            <span className="text-dark-800 font-semibold">Page {pagination.page}</span>
+          </div>
+
+          <button
+            onClick={handleNextPage}
+            disabled={!pagination.hasNext}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-soft flex items-center gap-2 ${
+              pagination.hasNext
+                ? 'bg-white text-dark-800 hover:bg-primary-100 hover:shadow-medium'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Next
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       )}
       </div>
