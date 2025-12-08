@@ -10,20 +10,14 @@ services:
         condition: service_healthy
     container_name: hauspet_api
     working_dir: /app
+    env_file:
+      - ../../app/api/.env.development
     environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - PERSISTENCE_TYPE=postgres
-      # The DATABASE_URL for the container, using the service name as the host.
+      # Override only the variables that need to be different in Docker
+      # (using Docker service names instead of localhost)
       - DATABASE_URL=postgresql://user:password@hauspet_db:5432/hauspet_db
       - REDIS_HOST=hauspet_redis
-      - REDIS_PORT=6379
       - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db:27017/audit_log_db?authSource=admin
-      - MCP_API_TOKEN=mcp-dev-token-admin-hauspet-2024
-      # Pagination
-      - DEFAULT_PAGE_SIZE=5
-      - ADMIN_PAGE_SIZE=4
-      - MAX_PAGE_SIZE=20
     ports:
       - "3000:3000"
     volumes:
@@ -47,11 +41,12 @@ services:
         condition: service_healthy
     container_name: hauspet_worker
     working_dir: /app
+    env_file:
+      - ../../app/api/.env.development
     environment:
-      - NODE_ENV=development
+      # Override only the variables that need to be different in Docker
       - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db:27017/audit_log_db?authSource=admin
       - REDIS_HOST=hauspet_redis
-      - REDIS_PORT=6379
     volumes:
       - ../../app/api:/app
       - /app/node_modules
@@ -66,9 +61,11 @@ services:
       dockerfile: Dockerfile.dev
     container_name: hauspet_gui
     working_dir: /app
+    env_file:
+      - ../../app/frontend/.env.development
     environment:
+      # Override API URL to use empty string (proxy through nginx)
       - VITE_API_URL=
-      - VITE_DISABLE_CLIENT_VALIDATION=false
     ports:
       - "5173:5173"
     volumes:

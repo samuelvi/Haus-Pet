@@ -12,23 +12,15 @@ services:
         condition: service_healthy
     container_name: hauspet_api_test
     working_dir: /app/api
+    env_file:
+      - ../../app/api/.env.test
     environment:
-      - NODE_ENV=test
-      - PORT=3000
-      - PERSISTENCE_TYPE=postgres
+      # Override only the variables that need to be different in Docker
       - DATABASE_URL=postgresql://user:password@hauspet_db_test:5432/hauspet_test_db
       - DB_HOST=hauspet_db_test
-      - DB_USER=user
-      - DB_PASSWORD=password
       - DB_NAME=hauspet_test_db
-      - DB_PORT=5432
       - REDIS_HOST=hauspet_redis_test
-      - REDIS_PORT=6379
       - AUDIT_DB_URI=mongodb://audit_user:audit_pass@hauspet_audit_db_test:27017/audit_log_db?authSource=admin
-      # Pagination
-      - DEFAULT_PAGE_SIZE=5
-      - ADMIN_PAGE_SIZE=4
-      - MAX_PAGE_SIZE=100
     ports:
       - "3000:3000"
     volumes:

@@ -11,11 +11,22 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment variables
+# IMPORTANT: Only .example files should be committed
+# Development and test .env files are safe to commit (no real secrets)
+# Production .env files must NEVER be committed (contain real secrets)
+
+# Root level (legacy, can be removed after migration)
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+
+# Backend (.env.development and .env.test are safe to commit)
+app/api/.env
+app/api/.env.production
+app/api/.env.*.local
+
+# Frontend (.env.development, .env.test, .env.production are safe to commit for Vite)
+app/frontend/.env
+app/frontend/.env.*.local
 
 # IDE configuration
 .idea/
