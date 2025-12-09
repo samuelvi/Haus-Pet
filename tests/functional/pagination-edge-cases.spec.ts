@@ -11,7 +11,7 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200);
 
       const data = await response.json();
-      expect(data.pagination.page).toBe(1); // Should default to 1
+      expect(data.data.pagination.page).toBe(1); // Should default to 1
     });
 
     test('should handle negative page number and default to page=1', async ({ request }) => {
@@ -19,7 +19,7 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200);
 
       const data = await response.json();
-      expect(data.pagination.page).toBe(1); // Should default to 1
+      expect(data.data.pagination.page).toBe(1); // Should default to 1
     });
 
     test('should handle page beyond total items', async ({ request }) => {
@@ -27,9 +27,9 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200);
 
       const data = await response.json();
-      expect(data.items).toEqual([]); // Empty results
-      expect(data.pagination.hasNext).toBe(false);
-      expect(data.pagination.hasPrevious).toBe(true);
+      expect(data.data.items).toEqual([]); // Empty results
+      expect(data.data.pagination.hasNext).toBe(false);
+      expect(data.data.pagination.hasPrevious).toBe(true);
     });
 
     test('should handle limit=0', async ({ request }) => {
@@ -38,8 +38,8 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
 
       const data = await response.json();
       // Should use default limit (5)
-      expect(data.items.length).toBeGreaterThan(0);
-      expect(data.items.length).toBeLessThanOrEqual(5);
+      expect(data.data.items.length).toBeGreaterThan(0);
+      expect(data.data.items.length).toBeLessThanOrEqual(5);
     });
 
     test('should cap limit to maximum (MAX_PAGE_SIZE=20)', async ({ request }) => {
@@ -48,8 +48,8 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
 
       const data = await response.json();
       // Should be capped to max (20)
-      expect(data.items.length).toBeLessThanOrEqual(20);
-      expect(data.pagination.limit).toBeLessThanOrEqual(20);
+      expect(data.data.items.length).toBeLessThanOrEqual(20);
+      expect(data.data.pagination.limit).toBeLessThanOrEqual(20);
     });
 
     test('should handle negative limit', async ({ request }) => {
@@ -58,8 +58,8 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
 
       const data = await response.json();
       // Should use default limit
-      expect(data.items.length).toBeGreaterThan(0);
-      expect(data.pagination.limit).toBeGreaterThan(0);
+      expect(data.data.items.length).toBeGreaterThan(0);
+      expect(data.data.pagination.limit).toBeGreaterThan(0);
     });
 
     test('should handle non-numeric page parameter', async ({ request }) => {
@@ -67,7 +67,7 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200);
 
       const data = await response.json();
-      expect(data.pagination.page).toBe(1); // Should default to 1
+      expect(data.data.pagination.page).toBe(1); // Should default to 1
     });
 
     test('should handle non-numeric limit parameter', async ({ request }) => {
@@ -76,7 +76,7 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
 
       const data = await response.json();
       // Should use default limit
-      expect(data.pagination.limit).toBeGreaterThan(0);
+      expect(data.data.pagination.limit).toBeGreaterThan(0);
     });
 
     test('should handle float values for page and limit', async ({ request }) => {
@@ -85,8 +85,8 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
 
       const data = await response.json();
       // Should convert to integers
-      expect(data.pagination.page).toBe(1);
-      expect(Number.isInteger(data.pagination.limit)).toBe(true);
+      expect(data.data.pagination.page).toBe(1);
+      expect(Number.isInteger(data.data.pagination.limit)).toBe(true);
     });
   });
 
@@ -100,14 +100,14 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       const data = await response.json();
 
       // Should return exactly 5 items (not 6)
-      expect(data.items).toHaveLength(5);
+      expect(data.data.items).toHaveLength(5);
 
       // hasNext should be true if there's a 6th item (detected by n+1 fetch)
-      expect(data.pagination).toHaveProperty('hasNext');
-      expect(typeof data.pagination.hasNext).toBe('boolean');
+      expect(data.data.pagination).toHaveProperty('hasNext');
+      expect(typeof data.data.pagination.hasNext).toBe('boolean');
 
       // If hasNext is true, next page should have items
-      if (data.pagination.hasNext) {
+      if (data.data.pagination.hasNext) {
         const nextPageResponse = await request.get(`${API_BASE}/api/breeds?page=2&limit=5`);
         const nextPageData = await nextPageResponse.json();
         expect(nextPageData.items.length).toBeGreaterThan(0);
@@ -150,12 +150,12 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       const data = await response.json();
 
       // Verify n+1 pattern: should fetch 6, return max 5, detect if there's a 6th
-      expect(data.items.length).toBeLessThanOrEqual(5);
+      expect(data.data.items.length).toBeLessThanOrEqual(5);
 
       // hasNext logic should work correctly even when count is exact multiple
-      if (data.items.length === 5) {
+      if (data.data.items.length === 5) {
         // If we got exactly 5 items, hasNext should reflect if there's actually more
-        expect(typeof data.pagination.hasNext).toBe('boolean');
+        expect(typeof data.data.pagination.hasNext).toBe('boolean');
       }
     });
 
@@ -215,7 +215,7 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       // Verify pagination consistency
       const dataArray = await Promise.all(responses.map(r => r.json()));
       dataArray.forEach((data, index) => {
-        expect(data.pagination.page).toBe(index + 1);
+        expect(data.data.pagination.page).toBe(index + 1);
       });
     });
 
@@ -242,8 +242,8 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200); // Should not crash
 
       const data = await response.json();
-      expect(data).toHaveProperty('items');
-      expect(data).toHaveProperty('pagination');
+      expect(data.data).toHaveProperty('items');
+      expect(data.data).toHaveProperty('pagination');
     });
 
     test('should handle special characters in query parameters', async ({ request }) => {
@@ -252,7 +252,7 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
 
       const data = await response.json();
       // Should sanitize or safely handle special characters
-      expect(data.items).toBeDefined();
+      expect(data.data.items).toBeDefined();
     });
 
     test('should handle very long search strings', async ({ request }) => {
@@ -261,7 +261,7 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200);
 
       const data = await response.json();
-      expect(data.items).toBeDefined();
+      expect(data.data.items).toBeDefined();
     });
 
     test('should handle SQL injection attempts in search', async ({ request }) => {
@@ -270,7 +270,7 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200);
 
       const data = await response.json();
-      expect(data.items).toBeDefined();
+      expect(data.data.items).toBeDefined();
 
       // Verify breeds table still exists by fetching again
       const verifyResponse = await request.get(`${API_BASE}/api/breeds?page=1&limit=5`);
@@ -283,7 +283,7 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200);
 
       const data = await response.json();
-      expect(data.items).toBeDefined();
+      expect(data.data.items).toBeDefined();
     });
   });
 
@@ -293,14 +293,14 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       const response = await request.get(`${API_BASE}/api/breeds?page=1&limit=5`);
       const data = await response.json();
 
-      expect(data.pagination.hasPrevious).toBe(false);
+      expect(data.data.pagination.hasPrevious).toBe(false);
     });
 
     test('should set hasPrevious=true on pages after first', async ({ request }) => {
       const response = await request.get(`${API_BASE}/api/breeds?page=2&limit=5`);
       const data = await response.json();
 
-      expect(data.pagination.hasPrevious).toBe(true);
+      expect(data.data.pagination.hasPrevious).toBe(true);
     });
 
     test('should maintain correct hasPrevious across pagination', async ({ request }) => {
@@ -311,9 +311,9 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
         const data = await response.json();
 
         if (page === 1) {
-          expect(data.pagination.hasPrevious).toBe(false);
+          expect(data.data.pagination.hasPrevious).toBe(false);
         } else {
-          expect(data.pagination.hasPrevious).toBe(true);
+          expect(data.data.pagination.hasPrevious).toBe(true);
         }
       }
     });
@@ -326,12 +326,12 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200);
 
       const data = await response.json();
-      expect(data.items.length).toBeLessThanOrEqual(5); // n+1 should return max 5
-      expect(data.pagination).toHaveProperty('hasNext');
+      expect(data.data.items.length).toBeLessThanOrEqual(5); // n+1 should return max 5
+      expect(data.data.pagination).toHaveProperty('hasNext');
 
       // All items should be dogs
-      data.items.forEach((breed: any) => {
-        expect(breed.type.toLowerCase()).toBe('dog');
+      data.data.items.forEach((breed: any) => {
+        expect(breed.petType.toLowerCase()).toBe('dog');
       });
     });
 
@@ -340,8 +340,8 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200);
 
       const data = await response.json();
-      expect(data.items.length).toBeLessThanOrEqual(3); // n+1 should return max 3
-      expect(data.pagination).toHaveProperty('hasNext');
+      expect(data.data.items.length).toBeLessThanOrEqual(3); // n+1 should return max 3
+      expect(data.data.pagination).toHaveProperty('hasNext');
     });
 
     test('should handle pagination when filters return no results', async ({ request }) => {
@@ -349,9 +349,9 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       expect(response.status()).toBe(200);
 
       const data = await response.json();
-      expect(data.items).toEqual([]);
-      expect(data.pagination.hasNext).toBe(false);
-      expect(data.pagination.hasPrevious).toBe(false);
+      expect(data.data.items).toEqual([]);
+      expect(data.data.pagination.hasNext).toBe(false);
+      expect(data.data.pagination.hasPrevious).toBe(false);
     });
 
     test('should handle pagination when filters return exact page size', async ({ request }) => {
@@ -361,18 +361,18 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
 
       const data = await response.json();
 
-      if (data.items.length === 5) {
+      if (data.data.items.length === 5) {
         // If we got exactly 5, hasNext should be true/false based on if there's more
-        expect(typeof data.pagination.hasNext).toBe('boolean');
+        expect(typeof data.data.pagination.hasNext).toBe('boolean');
 
         // Verify by checking next page
         const nextResponse = await request.get(`${API_BASE}/api/breeds?page=2&limit=5&type=dog`);
         const nextData = await nextResponse.json();
 
-        if (data.pagination.hasNext) {
-          expect(nextData.items.length).toBeGreaterThan(0);
+        if (data.data.pagination.hasNext) {
+          expect(nextData.data.items.length).toBeGreaterThan(0);
         } else {
-          expect(nextData.items).toEqual([]);
+          expect(nextData.data.items).toEqual([]);
         }
       }
     });
@@ -384,27 +384,27 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       const response = await request.get(`${API_BASE}/api/breeds?page=1&limit=5`);
       const data = await response.json();
 
-      expect(data).toHaveProperty('items');
-      expect(data).toHaveProperty('pagination');
-      expect(data.pagination).toHaveProperty('page');
-      expect(data.pagination).toHaveProperty('limit');
-      expect(data.pagination).toHaveProperty('hasNext');
-      expect(data.pagination).toHaveProperty('hasPrevious');
+      expect(data.data).toHaveProperty('items');
+      expect(data.data).toHaveProperty('pagination');
+      expect(data.data.pagination).toHaveProperty('page');
+      expect(data.data.pagination).toHaveProperty('limit');
+      expect(data.data.pagination).toHaveProperty('hasNext');
+      expect(data.data.pagination).toHaveProperty('hasPrevious');
 
-      expect(Array.isArray(data.items)).toBe(true);
-      expect(typeof data.pagination.page).toBe('number');
-      expect(typeof data.pagination.limit).toBe('number');
-      expect(typeof data.pagination.hasNext).toBe('boolean');
-      expect(typeof data.pagination.hasPrevious).toBe('boolean');
+      expect(Array.isArray(data.data.items)).toBe(true);
+      expect(typeof data.data.pagination.page).toBe('number');
+      expect(typeof data.data.pagination.limit).toBe('number');
+      expect(typeof data.data.pagination.hasNext).toBe('boolean');
+      expect(typeof data.data.pagination.hasPrevious).toBe('boolean');
     });
 
     test('should maintain structure even with empty results', async ({ request }) => {
       const response = await request.get(`${API_BASE}/api/breeds?page=9999&limit=5`);
       const data = await response.json();
 
-      expect(data.items).toEqual([]);
-      expect(data.pagination).toBeDefined();
-      expect(data.pagination.hasNext).toBe(false);
+      expect(data.data.items).toEqual([]);
+      expect(data.data.pagination).toBeDefined();
+      expect(data.data.pagination.hasNext).toBe(false);
     });
   });
 });
