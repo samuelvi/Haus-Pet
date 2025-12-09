@@ -61,19 +61,19 @@ jobs:
 
       - name: Start database services
         run: |
-          docker compose -f docker/docker-compose.test.yaml up -d hauspet_db_test hauspet_redis_test hauspet_audit_db_test
+          docker compose -f docker/test/docker-compose.yaml up -d hauspet_db_test hauspet_redis_test hauspet_audit_db_test
 
       - name: Wait for database to be healthy
         run: |
           echo "Waiting for database to be healthy..."
           for i in {1..30}; do
-            if docker compose -f docker/docker-compose.test.yaml ps | grep -q "hauspet_db_test.*healthy"; then
+            if docker compose -f docker/test/docker-compose.yaml ps | grep -q "hauspet_db_test.*healthy"; then
               echo "Database is healthy!"
               break
             fi
             if [ $i -eq 30 ]; then
               echo "Database failed to become healthy"
-              docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test
+              docker compose -f docker/test/docker-compose.yaml logs hauspet_db_test
               exit 1
             fi
             echo "Database not ready, waiting... (Attempt $i/30)"
@@ -82,7 +82,7 @@ jobs:
 
       - name: Start API service (with migrations)
         run: |
-          docker compose -f docker/docker-compose.test.yaml up -d hauspet_api_test
+          docker compose -f docker/test/docker-compose.yaml up -d hauspet_api_test
 
       - name: Wait for API to be ready
         run: |
@@ -95,9 +95,9 @@ jobs:
             if [ $i -eq 60 ]; then
               echo "API failed to start after 120 seconds"
               echo "=== API Logs ==="
-              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+              docker compose -f docker/test/docker-compose.yaml logs hauspet_api_test
               echo "=== Database Logs ==="
-              docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test
+              docker compose -f docker/test/docker-compose.yaml logs hauspet_db_test
               exit 1
             fi
             echo "API not ready, waiting... (Attempt $i/60)"
@@ -118,7 +118,7 @@ jobs:
 
       - name: Stop test services
         if: always()
-        run: docker compose -f docker/docker-compose.test.yaml down
+        run: docker compose -f docker/test/docker-compose.yaml down
 
       - name: Upload functional test results
         if: always()
