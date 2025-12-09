@@ -557,8 +557,11 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       });
       const signupData = await signupResponse.json();
 
-      // Refresh token
+      // Refresh token (requires x-session-id header)
       const refreshResponse = await request.post(`${API_BASE}/api/auth/refresh`, {
+        headers: {
+          'x-session-id': signupData.data.sessionId
+        },
         data: {
           refreshToken: signupData.data.tokens.refreshToken
         }
