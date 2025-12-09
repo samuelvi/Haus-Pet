@@ -26,7 +26,7 @@ export const BreedList: React.FC = () => {
   const [limit] = useState<number>(4); // ADMIN_PAGE_SIZE from .env
 
   // Load breed types dynamically
-  const { data: breedTypesData } = useBreedTypes(tokens?.accessToken, sessionId, 1, 50);
+  const { data: breedTypesData } = useBreedTypes(tokens?.accessToken, sessionId || undefined, 1, 50);
 
   // Sync page and filters with URL
   useEffect(() => {

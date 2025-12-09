@@ -28,8 +28,8 @@ export const PetAdminForm: React.FC = () => {
     const loadTypes = async (): Promise<void> => {
       if (!tokens || !sessionId) return;
       try {
-        const types = await apiService.getBreedTypes(tokens.accessToken, sessionId);
-        setBreedTypes(types);
+        const response = await apiService.getBreedTypes(tokens.accessToken, sessionId);
+        setBreedTypes(response.items);
       } catch (err) {
         console.warn('Failed to load breed types', err);
       }

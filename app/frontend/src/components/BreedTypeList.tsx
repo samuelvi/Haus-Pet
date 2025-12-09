@@ -32,12 +32,12 @@ export const BreedTypeList: React.FC = () => {
   // Use TanStack Query for data fetching with caching
   const { data, isLoading: loading, refetch } = useBreedTypes(
     tokens?.accessToken,
-    sessionId,
+    sessionId || undefined,
     page,
     limit
   );
 
-  const types = data?.items || [];
+  const types: BreedType[] = data?.items || [];
   const pagination = data?.pagination;
 
   const guardAuth = (): boolean => {

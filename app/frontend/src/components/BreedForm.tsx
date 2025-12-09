@@ -31,7 +31,8 @@ export const BreedForm: React.FC = () => {
 
   // Queries
   const { data: breed, isLoading: loadingBreed } = useBreed(id || '');
-  const { data: breedTypes } = useBreedTypes(tokens?.accessToken || undefined, sessionId || undefined);
+  const { data: breedTypesData } = useBreedTypes(tokens?.accessToken, sessionId || undefined);
+  const breedTypes = breedTypesData?.items || [];
   const { data: similarBreeds = [], isFetching: checkingSimilar } = useSimilarBreeds(
     formData.name,
     formData.petType,
