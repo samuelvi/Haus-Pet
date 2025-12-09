@@ -173,8 +173,8 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
 
       const signupData = await signupResponse.json();
       const authHeaders = {
-        'Authorization': `Bearer ${signupData.accessToken}`,
-        'x-session-id': signupData.sessionId
+        'Authorization': `Bearer ${signupData.data.tokens.accessToken}`,
+        'x-session-id': signupData.data.sessionId
       };
 
       // Test breed-types endpoint
@@ -183,8 +183,8 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       });
       expect(breedTypesResponse.status()).toBe(200);
       const breedTypesData = await breedTypesResponse.json();
-      expect(breedTypesData.items.length).toBeLessThanOrEqual(4); // Should return max 4, not 5
-      expect(breedTypesData.pagination).toHaveProperty('hasNext');
+      expect(breedTypesData.data.items.length).toBeLessThanOrEqual(4); // Should return max 4, not 5
+      expect(breedTypesData.data.pagination).toHaveProperty('hasNext');
 
       // Test pets endpoint
       const petsResponse = await request.get(`${API_BASE}/api/admin/pets?page=1&limit=4`, {
@@ -192,8 +192,8 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       });
       expect(petsResponse.status()).toBe(200);
       const petsData = await petsResponse.json();
-      expect(petsData.items.length).toBeLessThanOrEqual(4); // Should return max 4, not 5
-      expect(petsData.pagination).toHaveProperty('hasNext');
+      expect(petsData.data.items.length).toBeLessThanOrEqual(4); // Should return max 4, not 5
+      expect(petsData.data.pagination).toHaveProperty('hasNext');
     });
   });
 

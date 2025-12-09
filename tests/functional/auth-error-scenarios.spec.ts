@@ -16,7 +16,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
 
       expect(response.status()).toBe(401);
       const data = await response.json();
-      expect(data.error).toMatch(/unauthorized|token|authentication/i);
+      expect(data.message).toMatch(/unauthorized|token|authentication/i);
     });
 
     test('should reject request with malformed token', async ({ request }) => {
@@ -76,7 +76,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       // Try to use token without session ID
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
-          'Authorization': `Bearer ${signupData.accessToken}`
+          'Authorization': `Bearer ${signupData.data.tokens.accessToken}`
           // Missing x-session-id header
         },
         data: {
@@ -103,7 +103,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       // Use valid token but invalid session ID
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
-          'Authorization': `Bearer ${signupData.accessToken}`,
+          'Authorization': `Bearer ${signupData.data.tokens.accessToken}`,
           'x-session-id': 'invalid-session-id-12345'
         },
         data: {
@@ -158,8 +158,8 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       // Try to access admin-only endpoint
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
-          'Authorization': `Bearer ${signupData.accessToken}`,
-          'x-session-id': signupData.sessionId
+          'Authorization': `Bearer ${signupData.data.tokens.accessToken}`,
+          'x-session-id': signupData.data.sessionId
         },
         data: {
           name: 'Test Breed',
@@ -169,7 +169,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
 
       expect(response.status()).toBe(403); // Forbidden
       const data = await response.json();
-      expect(data.error).toMatch(/forbidden|permission|access denied/i);
+      expect(data.message).toMatch(/forbidden|permission|access denied/i);
     });
 
     test('should allow ADMIN user to access admin endpoints', async ({ request }) => {
@@ -188,8 +188,8 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       // Access admin endpoint
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
-          'Authorization': `Bearer ${signupData.accessToken}`,
-          'x-session-id': signupData.sessionId
+          'Authorization': `Bearer ${signupData.data.tokens.accessToken}`,
+          'x-session-id': signupData.data.sessionId
         },
         data: {
           name: `Admin Breed ${Date.now()}`,
@@ -218,8 +218,8 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       // Logout
       const logoutResponse = await request.post(`${API_BASE}/api/auth/logout`, {
         headers: {
-          'Authorization': `Bearer ${signupData.accessToken}`,
-          'x-session-id': signupData.sessionId
+          'Authorization': `Bearer ${signupData.data.tokens.accessToken}`,
+          'x-session-id': signupData.data.sessionId
         }
       });
       expect(logoutResponse.status()).toBe(200);
@@ -227,8 +227,8 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       // Try to use token after logout
       const response = await request.post(`${API_BASE}/api/breeds/add`, {
         headers: {
-          'Authorization': `Bearer ${signupData.accessToken}`,
-          'x-session-id': signupData.sessionId
+          'Authorization': `Bearer ${signupData.data.tokens.accessToken}`,
+          'x-session-id': signupData.data.sessionId
         },
         data: {
           name: 'Test Breed',
@@ -265,16 +265,16 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       // Both sessions should work independently
       const response1 = await request.get(`${API_BASE}/api/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${session1.accessToken}`,
-          'x-session-id': session1.sessionId
+          'Authorization': `Bearer ${session1.data.tokens.accessToken}`,
+          'x-session-id': session1.data.sessionId
         }
       });
       expect(response1.status()).toBe(200);
 
       const response2 = await request.get(`${API_BASE}/api/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${session2.accessToken}`,
-          'x-session-id': session2.sessionId
+          'Authorization': `Bearer ${session2.data.tokens.accessToken}`,
+          'x-session-id': session2.data.sessionId
         }
       });
       expect(response2.status()).toBe(200);
@@ -282,16 +282,16 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       // Logout session1
       await request.post(`${API_BASE}/api/auth/logout`, {
         headers: {
-          'Authorization': `Bearer ${session1.accessToken}`,
-          'x-session-id': session1.sessionId
+          'Authorization': `Bearer ${session1.data.tokens.accessToken}`,
+          'x-session-id': session1.data.sessionId
         }
       });
 
       // Session1 should be invalid
       const testSession1 = await request.get(`${API_BASE}/api/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${session1.accessToken}`,
-          'x-session-id': session1.sessionId
+          'Authorization': `Bearer ${session1.data.tokens.accessToken}`,
+          'x-session-id': session1.data.sessionId
         }
       });
       expect(testSession1.status()).toBe(401);
@@ -299,8 +299,8 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       // Session2 should still work
       const testSession2 = await request.get(`${API_BASE}/api/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${session2.accessToken}`,
-          'x-session-id': session2.sessionId
+          'Authorization': `Bearer ${session2.data.tokens.accessToken}`,
+          'x-session-id': session2.data.sessionId
         }
       });
       expect(testSession2.status()).toBe(200);
@@ -335,7 +335,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
 
       expect(response2.status()).toBe(400);
       const data = await response2.json();
-      expect(data.error).toMatch(/email.*already.*exist|duplicate|conflict/i);
+      expect(data.message).toMatch(/email.*already.*exist|duplicate|conflict/i);
     });
 
     test('should reject signup with invalid email format', async ({ request }) => {
@@ -350,7 +350,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
 
       expect(response.status()).toBe(400);
       const data = await response.json();
-      expect(data.error).toMatch(/email.*invalid|invalid.*email/i);
+      expect(data.message).toMatch(/email.*invalid|invalid.*email/i);
     });
 
     test('should reject signup with weak password', async ({ request }) => {
@@ -365,7 +365,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
 
       expect(response.status()).toBe(400);
       const data = await response.json();
-      expect(data.error).toMatch(/password.*weak|password.*short|password.*invalid/i);
+      expect(data.message).toMatch(/password.*weak|password.*short|password.*invalid/i);
     });
 
     test('should reject signup with missing required fields', async ({ request }) => {
@@ -433,7 +433,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
 
       expect(response.status()).toBe(201);
       const data = await response.json();
-      expect(data.user.email).toBe(data.user.email.toLowerCase());
+      expect(data.data.user.email).toBe(data.data.user.email.toLowerCase());
     });
 
     test('should reject invalid role values', async ({ request }) => {
@@ -476,7 +476,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
 
       expect(response.status()).toBe(401);
       const data = await response.json();
-      expect(data.error).toMatch(/invalid.*credentials|incorrect.*password/i);
+      expect(data.message).toMatch(/invalid.*credentials|incorrect.*password/i);
     });
 
     test('should reject login with non-existent email', async ({ request }) => {
@@ -489,7 +489,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
 
       expect(response.status()).toBe(401);
       const data = await response.json();
-      expect(data.error).toMatch(/invalid.*credentials|user.*not.*found/i);
+      expect(data.message).toMatch(/invalid.*credentials|user.*not.*found/i);
     });
 
     test('should reject login with missing credentials', async ({ request }) => {
@@ -560,14 +560,15 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       // Refresh token
       const refreshResponse = await request.post(`${API_BASE}/api/auth/refresh`, {
         data: {
-          refreshToken: signupData.refreshToken
+          refreshToken: signupData.data.tokens.refreshToken
         }
       });
 
       expect(refreshResponse.status()).toBe(200);
       const refreshData = await refreshResponse.json();
-      expect(refreshData).toHaveProperty('accessToken');
-      expect(refreshData.accessToken).not.toBe(signupData.accessToken); // Should be new token
+      expect(refreshData.data).toHaveProperty('tokens');
+      expect(refreshData.data.tokens).toHaveProperty('accessToken');
+      expect(refreshData.data.tokens.accessToken).not.toBe(signupData.data.tokens.accessToken); // Should be new token
     });
   });
 
@@ -600,7 +601,7 @@ test.describe('Authentication & Authorization Error Scenarios', () => {
       if (response.status() === 201) {
         const data = await response.json();
         // Name should be sanitized or escaped
-        expect(data.user.name).not.toContain('<script>');
+        expect(data.data.user.name).not.toContain('<script>');
       }
     });
   });

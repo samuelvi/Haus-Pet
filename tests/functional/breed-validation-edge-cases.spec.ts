@@ -17,8 +17,8 @@ test.beforeAll(async ({ request }) => {
 
   const signupData = await signupResponse.json();
   authHeaders = {
-    'Authorization': `Bearer ${signupData.accessToken}`,
-    'x-session-id': signupData.sessionId
+    'Authorization': `Bearer ${signupData.data.tokens.accessToken}`,
+    'x-session-id': signupData.data.sessionId
   };
 });
 
@@ -37,7 +37,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
 
       expect(response.status()).toBe(400);
       const data = await response.json();
-      expect(data.error).toMatch(/name.*too.*short|name.*minimum|name.*at least 2/i);
+      expect(data.message).toMatch(/name.*too.*short|name.*minimum|name.*at least 2/i);
     });
 
     test('should reject breed name longer than 50 characters', async ({ request }) => {
@@ -53,7 +53,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
 
       expect(response.status()).toBe(400);
       const data = await response.json();
-      expect(data.error).toMatch(/name.*too.*long|name.*maximum|name.*50/i);
+      expect(data.message).toMatch(/name.*too.*long|name.*maximum|name.*50/i);
     });
 
     test('should accept breed name exactly 2 characters', async ({ request }) => {
@@ -119,7 +119,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
 
       expect(response.status()).toBe(400);
       const data = await response.json();
-      expect(data.error).toMatch(/invalid.*character|only.*letters|name.*format/i);
+      expect(data.message).toMatch(/invalid.*character|only.*letters|name.*format/i);
     });
 
     test('should reject breed name with special characters', async ({ request }) => {
@@ -210,7 +210,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
 
       expect(response.status()).toBe(400);
       const data = await response.json();
-      expect(data.error).toMatch(/type.*not.*exist|invalid.*type|unknown.*type/i);
+      expect(data.message).toMatch(/type.*not.*exist|invalid.*type|unknown.*type/i);
     });
 
     test('should reject missing type', async ({ request }) => {
@@ -310,7 +310,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
 
       expect(response2.status()).toBe(409);
       const data = await response2.json();
-      expect(data.error).toMatch(/already.*exist|duplicate|conflict/i);
+      expect(data.message).toMatch(/already.*exist|duplicate|conflict/i);
     });
 
     test('should detect case-insensitive duplicates', async ({ request }) => {
@@ -378,7 +378,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
 
       expect(response.status()).toBe(400);
       const data = await response.json();
-      expect(data.error).toMatch(/invalid.*id|uuid.*invalid/i);
+      expect(data.message).toMatch(/invalid.*id|uuid.*invalid/i);
     });
 
     test('should reject update for non-existent breed', async ({ request }) => {
@@ -536,7 +536,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         // Should either succeed (no pets) or fail with constraint error
         if (response.status() === 400) {
           const data = await response.json();
-          expect(data.error).toMatch(/cannot.*delete|pets.*using|constraint/i);
+          expect(data.message).toMatch(/cannot.*delete|pets.*using|constraint/i);
         }
       }
     });

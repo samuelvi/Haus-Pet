@@ -52,8 +52,8 @@ test.describe('Admin Pagination Tests', () => {
 
       const data1 = await response1.json();
       expect(data1.status).toBe('OK');
-      expect(data1.data.data.items).toHaveLength(4);
-      expect(data1.data.data.pagination).toEqual({
+      expect(data1.data.items).toHaveLength(4);
+      expect(data1.data.pagination).toEqual({
         page: 1,
         limit: 4,
         hasNext: true,
@@ -66,14 +66,14 @@ test.describe('Admin Pagination Tests', () => {
 
       const data2 = await response2.json();
       expect(data2.status).toBe('OK');
-      expect(data2.data.data.items.length).toBeGreaterThan(0);
-      expect(data2.data.data.items.length).toBeLessThanOrEqual(4);
-      expect(data2.data.data.pagination.page).toBe(2);
-      expect(data2.data.data.pagination.hasPrevious).toBe(true);
+      expect(data2.data.items.length).toBeGreaterThan(0);
+      expect(data2.data.items.length).toBeLessThanOrEqual(4);
+      expect(data2.data.pagination.page).toBe(2);
+      expect(data2.data.pagination.hasPrevious).toBe(true);
 
       // Verify items are different between pages
-      const page1Ids = data1.data.data.items.map((item: any) => item.id);
-      const page2Ids = data2.data.data.items.map((item: any) => item.id);
+      const page1Ids = data1.data.items.map((item: any) => item.id);
+      const page2Ids = data2.data.items.map((item: any) => item.id);
       const intersection = page1Ids.filter((id: string) => page2Ids.includes(id));
       expect(intersection).toHaveLength(0); // No overlap
     });
@@ -159,13 +159,13 @@ test.describe('Admin Pagination Tests', () => {
 
       const data1 = await response1.json();
       expect(data1.status).toBe('OK');
-      expect(data1.data.data.items.length).toBeGreaterThan(0);
-      expect(data1.data.data.items.length).toBeLessThanOrEqual(4);
-      expect(data1.data.data.pagination.page).toBe(1);
-      expect(data1.data.data.pagination.limit).toBe(4);
+      expect(data1.data.items.length).toBeGreaterThan(0);
+      expect(data1.data.items.length).toBeLessThanOrEqual(4);
+      expect(data1.data.pagination.page).toBe(1);
+      expect(data1.data.pagination.limit).toBe(4);
 
       // If there's a next page, test it
-      if (data1.data.data.pagination.hasNext) {
+      if (data1.data.pagination.hasNext) {
         const response2 = await request.get(`${API_BASE}/api/admin/breed-types?page=2&limit=4`, {
           headers: {
             'Authorization': `Bearer ${authTokens.accessToken}`,
@@ -175,12 +175,12 @@ test.describe('Admin Pagination Tests', () => {
         expect(response2.status()).toBe(200);
 
         const data2 = await response2.json();
-        expect(data2.data.data.pagination.page).toBe(2);
-        expect(data2.data.data.pagination.hasPrevious).toBe(true);
+        expect(data2.data.pagination.page).toBe(2);
+        expect(data2.data.pagination.hasPrevious).toBe(true);
 
         // Verify different items
-        const page1Ids = data1.data.data.items.map((item: any) => item.id);
-        const page2Ids = data2.data.data.items.map((item: any) => item.id);
+        const page1Ids = data1.data.items.map((item: any) => item.id);
+        const page2Ids = data2.data.items.map((item: any) => item.id);
         const intersection = page1Ids.filter((id: string) => page2Ids.includes(id));
         expect(intersection).toHaveLength(0);
       }
@@ -224,18 +224,18 @@ test.describe('Admin Pagination Tests', () => {
       const data1 = await response1.json();
       expect(data1.status).toBe('OK');
 
-      if (data1.data.data.items && data1.data.data.items.length > 0) {
-        expect(data1.data.data.items.length).toBeLessThanOrEqual(4);
-        expect(data1.data.data.pagination.page).toBe(1);
-        expect(data1.data.data.pagination.limit).toBe(4);
+      if (data1.data.items && data1.data.items.length > 0) {
+        expect(data1.data.items.length).toBeLessThanOrEqual(4);
+        expect(data1.data.pagination.page).toBe(1);
+        expect(data1.data.pagination.limit).toBe(4);
 
         // If there's a next page, test it
-        if (data1.data.data.pagination.hasNext) {
+        if (data1.data.pagination.hasNext) {
           const response2 = await request.get(`${API_BASE}/api/pets/read-model?page=2&limit=4`);
           const data2 = await response2.json();
 
-          expect(data2.data.data.pagination.page).toBe(2);
-          expect(data2.data.data.pagination.hasPrevious).toBe(true);
+          expect(data2.data.pagination.page).toBe(2);
+          expect(data2.data.pagination.hasPrevious).toBe(true);
         }
       }
     });
