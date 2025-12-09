@@ -33,8 +33,8 @@ test.describe('Breed CRUD Integration Tests', () => {
     // Get a valid breed ID from the database for UUID-based tests
     const response = await fetch(`${API_BASE}/api/breeds`);
     const data = await response.json();
-    if (data.data && data.data.items && data.data.items.length > 0) {
-      validBreedId = data.data.items[0].id;
+    if (data.data && data.data.data.items && data.data.data.items.length > 0) {
+      validBreedId = data.data.data.items[0].id;
     }
   });
 
@@ -48,11 +48,11 @@ test.describe('Breed CRUD Integration Tests', () => {
       expect(data.status).toBe('OK');
       expect(data.data).toHaveProperty('items');
       expect(data.data).toHaveProperty('pagination');
-      expect(Array.isArray(data.data.items)).toBe(true);
-      expect(data.data.items.length).toBeGreaterThan(0);
+      expect(Array.isArray(data.data.data.items)).toBe(true);
+      expect(data.data.data.items.length).toBeGreaterThan(0);
 
       // Verify breed structure
-      const breed = data.data.items[0];
+      const breed = data.data.data.items[0];
       expect(breed).toHaveProperty('id');
       expect(breed).toHaveProperty('name');
       expect(breed).toHaveProperty('petType');
