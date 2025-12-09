@@ -31,7 +31,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: 'A', // Only 1 character
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -47,7 +47,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: longName,
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -61,7 +61,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `AB${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -75,7 +75,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: exactName,
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -87,7 +87,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: '     ',
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -99,7 +99,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `  Trimmed Breed ${Date.now()}  `,
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -113,7 +113,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: 'Breed123',
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -130,7 +130,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
           headers: authHeaders,
           data: {
             name: `${name}${Date.now()}`,
-            type: 'dog'
+            petType: 'dog'
           }
         });
 
@@ -150,7 +150,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
           headers: authHeaders,
           data: {
             name,
-            type: 'dog'
+            petType: 'dog'
           }
         });
 
@@ -163,7 +163,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Double  Space ${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -175,7 +175,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Breed犬猫${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -188,7 +188,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Breed🐕${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -204,7 +204,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Test Breed ${Date.now()}`,
-          type: 'dragon' // Invalid type
+          petType: 'dragon' // Invalid type
         }
       });
 
@@ -230,7 +230,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Test Breed ${Date.now()}`,
-          type: ''
+          petType: ''
         }
       });
 
@@ -242,7 +242,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Test Breed ${Date.now()}`,
-          type: null
+          petType: null
         }
       });
 
@@ -257,12 +257,12 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
       const typesData = await typesResponse.json();
 
       // Test creating breed for each type
-      for (const breedType of typesData.items) {
+      for (const breedType of typesData.data.items) {
         const response = await request.post(`${API_BASE}/api/breeds/add`, {
           headers: authHeaders,
           data: {
             name: `Test ${breedType.name} ${Date.now()}`,
-            type: breedType.name
+            petType: breedType.name
           }
         });
 
@@ -275,7 +275,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Test Breed ${Date.now()}`,
-          type: 'DOG' // Uppercase
+          petType: 'DOG' // Uppercase
         }
       });
 
@@ -294,7 +294,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: breedName,
-          type: 'dog'
+          petType: 'dog'
         }
       });
       expect(response1.status()).toBe(201);
@@ -304,7 +304,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: breedName,
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -321,7 +321,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: baseName.toLowerCase(),
-          type: 'dog'
+          petType: 'dog'
         }
       });
       expect(response1.status()).toBe(201);
@@ -331,7 +331,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: baseName.toUpperCase(),
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -346,7 +346,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: breedName,
-          type: 'dog'
+          petType: 'dog'
         }
       });
       expect(response1.status()).toBe(201);
@@ -356,7 +356,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: breedName,
-          type: 'cat'
+          petType: 'cat'
         }
       });
 
@@ -372,7 +372,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: 'Updated Name',
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -388,7 +388,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: 'Updated Name',
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -401,7 +401,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Original Breed ${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
       const breed1 = await breed1Response.json();
@@ -410,7 +410,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Target Breed ${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
       const breed2 = await breed2Response.json();
@@ -420,7 +420,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: breed1.breed.name,
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -433,7 +433,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Idempotent Breed ${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
       const createData = await createResponse.json();
@@ -443,7 +443,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: createData.breed.name,
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -456,7 +456,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Valid Name ${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
       const createData = await createResponse.json();
@@ -466,7 +466,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: 'A', // Too short
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -479,7 +479,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Valid Name ${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
       const createData = await createResponse.json();
@@ -489,7 +489,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: createData.breed.name,
-          type: 'dragon' // Invalid
+          petType: 'dragon' // Invalid
         }
       });
 
@@ -547,7 +547,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Deletable Breed ${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
       const createData = await createResponse.json();
@@ -570,7 +570,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Double Delete ${Date.now()}`,
-          type: 'dog'
+          petType: 'dog'
         }
       });
       const createData = await createResponse.json();
@@ -663,7 +663,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: `Extra Fields ${Date.now()}`,
-          type: 'dog',
+          petType: 'dog',
           unexpectedField1: 'value1',
           unexpectedField2: 'value2',
           malicious: '<script>alert(1)</script>'
@@ -681,7 +681,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
           name: {
             nested: 'Invalid Structure'
           },
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
@@ -693,7 +693,7 @@ test.describe('Breed Validation & Data Integrity Edge Cases', () => {
         headers: authHeaders,
         data: {
           name: ['Array', 'Value'],
-          type: 'dog'
+          petType: 'dog'
         }
       });
 
