@@ -110,7 +110,7 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       if (data.data.pagination.hasNext) {
         const nextPageResponse = await request.get(`${API_BASE}/api/breeds?page=2&limit=5`);
         const nextPageData = await nextPageResponse.json();
-        expect(nextPageData.items.length).toBeGreaterThan(0);
+        expect(nextPageData.data.items.length).toBeGreaterThan(0);
       }
     });
 
@@ -127,15 +127,15 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       const lastPageData = await lastPageResponse.json();
 
       // If this is truly the last page
-      if (!lastPageData.pagination.hasNext) {
+      if (!lastPageData.data.pagination.hasNext) {
         // Items should be <= limit
-        expect(lastPageData.items.length).toBeLessThanOrEqual(5);
+        expect(lastPageData.data.items.length).toBeLessThanOrEqual(5);
 
         // Next page should be empty
         const beyondLastResponse = await request.get(`${API_BASE}/api/breeds?page=4&limit=5`);
         const beyondLastData = await beyondLastResponse.json();
-        expect(beyondLastData.items).toEqual([]);
-        expect(beyondLastData.pagination.hasNext).toBe(false);
+        expect(beyondLastData.data.items).toEqual([]);
+        expect(beyondLastData.data.pagination.hasNext).toBe(false);
       }
     });
 
@@ -230,8 +230,8 @@ test.describe('Pagination Edge Cases & Boundary Conditions', () => {
       const data2 = await response2.json();
 
       // Results should be identical
-      expect(data1.items).toEqual(data2.items);
-      expect(data1.pagination).toEqual(data2.pagination);
+      expect(data1.data.items).toEqual(data2.data.items);
+      expect(data1.data.pagination).toEqual(data2.data.pagination);
     });
   });
 
