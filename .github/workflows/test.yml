@@ -86,29 +86,25 @@ jobs:
 
       - name: Wait for API to be ready
         run: |
-          echo "Waiting for API to be ready..."
-          for i in {1..60}; do
+          echo "Waiting for API to be ready (allowing up to 5 minutes for npm install + migrations + seeding)..."
+          for i in {1..150}; do
             if curl -s -f -o /dev/null http://localhost:3000/api/breeds; then
               echo "API is ready!"
+              echo "Checking API container logs..."
+              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | tail -50
               break
             fi
-            if [ $i -eq 60 ]; then
-              echo "API failed to start after 120 seconds"
+            if [ $i -eq 150 ]; then
+              echo "API failed to start after 300 seconds (5 minutes)"
               echo "=== API Logs ==="
               docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
               echo "=== Database Logs ==="
               docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test
               exit 1
             fi
-            echo "API not ready, waiting... (Attempt $i/60)"
+            echo "API not ready, waiting... (Attempt $i/150)"
             sleep 2
           done
-
-          echo "Waiting additional 20 seconds for database seeding to complete..."
-          sleep 20
-
-          echo "Checking API container logs for seed completion..."
-          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | tail -30
 
           echo "Verifying database has data..."
           BREEDS_RESPONSE=$(curl -s http://localhost:3000/api/breeds)
