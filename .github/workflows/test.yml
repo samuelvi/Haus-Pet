@@ -95,53 +95,62 @@ jobs:
 
       - name: Wait for API to be ready
         run: |
+          set +e  # Don't exit on error - we handle errors explicitly
           echo "Waiting for API to be ready (allowing up to 5 minutes)..."
+
           READY=false
           for i in {1..150}; do
-            if curl -s -f -o /dev/null http://localhost:3000/api/breeds 2>&1; then
-              echo "✓ API is ready after $((i*2)) seconds!"
+            # Try to reach the API
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/breeds 2>/dev/null || echo "000")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✓ API is ready after $((i*2)) seconds! (HTTP $HTTP_CODE)"
               READY=true
               break
             fi
 
-            # Show progress every 30 attempts (60 seconds)
-            if [ $((i % 30)) -eq 0 ]; then
-              echo "Still waiting... ($((i*2))s / 300s)"
+            # Show progress every 15 attempts (30 seconds)
+            if [ $((i % 15)) -eq 0 ]; then
+              echo "Still waiting... ($((i*2))s / 300s) - Last HTTP code: $HTTP_CODE"
             fi
 
             sleep 2
           done
 
-          if [ "$READY" = false ]; then
+          if [ "$READY" = "false" ]; then
+            echo ""
             echo "✗ API failed to start after 300 seconds"
             echo ""
+            echo "=== CONTAINER STATUS ==="
+            docker compose -f docker/docker-compose.test.yaml ps || true
+            echo ""
             echo "=== FULL API LOGS ==="
-            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test || true
             echo ""
             echo "=== DATABASE LOGS ==="
-            docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test
-            echo ""
-            echo "=== CONTAINER STATUS ==="
-            docker compose -f docker/docker-compose.test.yaml ps
+            docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test || true
             exit 1
           fi
 
+          echo ""
           echo "Verifying database has data..."
-          BREEDS_RESPONSE=$(curl -s http://localhost:3000/api/breeds)
-          echo "API Response: $BREEDS_RESPONSE"
+          BREEDS_RESPONSE=$(curl -s http://localhost:3000/api/breeds 2>/dev/null)
+          echo "API Response (first 200 chars): ${BREEDS_RESPONSE:0:200}"
 
-          BREED_COUNT=$(echo "$BREEDS_RESPONSE" | grep -o '"id"' | wc -l)
+          BREED_COUNT=$(echo "$BREEDS_RESPONSE" | grep -o '"id"' | wc -l | tr -d ' ')
           echo "Found $BREED_COUNT breeds in database"
 
           if [ "$BREED_COUNT" -lt 5 ]; then
+            echo ""
             echo "ERROR: Database does not have enough seed data (expected at least 5 breeds)"
+            echo ""
             echo "=== Full API Logs ==="
-            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test || true
             exit 1
           fi
 
-          echo "Database verified with $BREED_COUNT breeds!"
-          echo "Ready to run functional tests!"
+          echo "✓ Database verified with $BREED_COUNT breeds!"
+          echo "✓ Ready to run functional tests!"
 
       - name: Run functional tests
         env:
