@@ -84,6 +84,15 @@ jobs:
         run: |
           docker compose -f docker/docker-compose.test.yaml up -d hauspet_api_test
 
+      - name: Check API container status
+        run: |
+          echo "Waiting 10 seconds for container to initialize..."
+          sleep 10
+          echo "=== Container Status ==="
+          docker compose -f docker/docker-compose.test.yaml ps hauspet_api_test
+          echo "=== Initial API Logs (first 100 lines) ==="
+          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | head -100
+
       - name: Wait for API to be ready
         run: |
           echo "Waiting for API to be ready (allowing up to 5 minutes for npm install + migrations + seeding)..."
