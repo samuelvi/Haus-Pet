@@ -95,34 +95,36 @@ jobs:
 
       - name: Wait for API to be ready
         run: |
-          echo "Waiting for API to be ready (allowing up to 5 minutes for npm install + migrations + seeding)..."
+          echo "Waiting for API to be ready (allowing up to 5 minutes)..."
+          READY=false
           for i in {1..150}; do
-            if curl -s -f -o /dev/null http://localhost:3000/api/breeds; then
-              echo "API is ready!"
-              echo "Checking API container logs..."
-              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | tail -50
+            if curl -s -f -o /dev/null http://localhost:3000/api/breeds 2>&1; then
+              echo "✓ API is ready after $((i*2)) seconds!"
+              READY=true
               break
             fi
-            if [ $i -eq 150 ]; then
-              echo "API failed to start after 300 seconds (5 minutes)"
-              echo "=== Full API Logs ==="
-              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
-              echo "=== Database Logs ==="
-              docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test
-              exit 1
+
+            # Show progress every 30 attempts (60 seconds)
+            if [ $((i % 30)) -eq 0 ]; then
+              echo "Still waiting... ($((i*2))s / 300s)"
             fi
-            # Show progress logs every 15 attempts (30 seconds)
-            if [ $((i % 15)) -eq 0 ]; then
-              echo "=== Progress check at attempt $i/150 (${i}*2 = $((i*2)) seconds) ==="
-              echo "Container status:"
-              docker compose -f docker/docker-compose.test.yaml ps hauspet_api_test
-              echo "Last 20 lines of API logs:"
-              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | tail -20
-              echo "=== End progress check ==="
-            fi
-            echo "API not ready, waiting... (Attempt $i/150)"
+
             sleep 2
           done
+
+          if [ "$READY" = false ]; then
+            echo "✗ API failed to start after 300 seconds"
+            echo ""
+            echo "=== FULL API LOGS ==="
+            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+            echo ""
+            echo "=== DATABASE LOGS ==="
+            docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test
+            echo ""
+            echo "=== CONTAINER STATUS ==="
+            docker compose -f docker/docker-compose.test.yaml ps
+            exit 1
+          fi
 
           echo "Verifying database has data..."
           BREEDS_RESPONSE=$(curl -s http://localhost:3000/api/breeds)
