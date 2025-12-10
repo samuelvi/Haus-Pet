@@ -16,7 +16,7 @@ services:
       - NODE_ENV=test
       - PORT=3000
       - PERSISTENCE_TYPE=postgres
-      - DATABASE_URL=postgresql://user:password@hauspet_db_test:5432/hauspet_test_db
+      - DATABASE_URL=postgresql://user:password@hauspet_db_test:5432/hauspet_test_db?connect_timeout=5&pool_timeout=5&statement_timeout=30000
       - DB_HOST=hauspet_db_test
       - DB_USER=user
       - DB_PASSWORD=password

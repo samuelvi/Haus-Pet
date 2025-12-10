@@ -19,12 +19,25 @@ import logger from "./infrastructure/logger/logger";
 // This ensures all singletons are created and the container is ready
 logger.info('Initializing DI container...');
 
-// Initialize event system with services from container
-const eventBus = getEventBus();
-const countersService = container.get<SystemCountersService>(TYPES.SystemCountersService);
-setupEventHandlers(eventBus, countersService);
+try {
+  // Initialize event system with services from container
+  logger.info('Getting EventBus...');
+  const eventBus = getEventBus();
+  logger.info('EventBus obtained successfully');
 
-logger.info('DI container initialized successfully');
+  logger.info('Getting SystemCountersService from container...');
+  const countersService = container.get<SystemCountersService>(TYPES.SystemCountersService);
+  logger.info('SystemCountersService obtained successfully');
+
+  logger.info('Setting up event handlers...');
+  setupEventHandlers(eventBus, countersService);
+  logger.info('Event handlers setup successfully');
+
+  logger.info('DI container initialized successfully');
+} catch (error) {
+  logger.fatal({ error }, 'Failed to initialize DI container');
+  process.exit(1);
+}
 
 const app: Express = express();
 
