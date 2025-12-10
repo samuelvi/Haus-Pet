@@ -33,9 +33,10 @@ services:
       - ../playwright.config.ts:/app/playwright.config.ts
       - ../package.json:/app/package.json
       - ../package-lock.json:/app/package-lock.json
+      - ./start-test-api.sh:/start-test-api.sh:ro
       - /app/api/node_modules
       - /app/node_modules
-    command: sh -c "cd /app/api && npm install --silent && npx prisma generate && npx prisma migrate deploy && npx prisma db seed && npx ts-node prisma/seed-pets-readmodel.ts && cd /app && npm install --silent && cd /app/api && ./node_modules/.bin/ts-node index.ts"
+    command: sh /start-test-api.sh
     restart: unless-stopped
     networks:
       - hauspet-test-network
