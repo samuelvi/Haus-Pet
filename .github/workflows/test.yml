@@ -103,8 +103,28 @@ jobs:
             echo "API not ready, waiting... (Attempt $i/60)"
             sleep 2
           done
-          echo "Waiting additional 10 seconds for database seeding to complete..."
-          sleep 10
+
+          echo "Waiting additional 20 seconds for database seeding to complete..."
+          sleep 20
+
+          echo "Checking API container logs for seed completion..."
+          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | tail -30
+
+          echo "Verifying database has data..."
+          BREEDS_RESPONSE=$(curl -s http://localhost:3000/api/breeds)
+          echo "API Response: $BREEDS_RESPONSE"
+
+          BREED_COUNT=$(echo "$BREEDS_RESPONSE" | grep -o '"id"' | wc -l)
+          echo "Found $BREED_COUNT breeds in database"
+
+          if [ "$BREED_COUNT" -lt 5 ]; then
+            echo "ERROR: Database does not have enough seed data (expected at least 5 breeds)"
+            echo "=== Full API Logs ==="
+            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+            exit 1
+          fi
+
+          echo "Database verified with $BREED_COUNT breeds!"
           echo "Ready to run functional tests!"
 
       - name: Run functional tests
@@ -114,10 +134,7 @@ jobs:
           DB_USER: user
           DB_PASSWORD: password
           DB_NAME: hauspet_test_db
-        run: |
-          # Exclude UI tests that require frontend (not running in CI)
-          npx playwright test tests/functional \
-            --grep-invert "should navigate pagination in UI|should filter and reset pagination|should display all breed types|should filter breeds by|should maintain filter when paginating|should reset to page 1 when changing filter|should search breeds by name|should combine search and type filter|should maintain filters when using browser back button|should clear search when clicking clear button|should show correct pagination info|should disable Previous button|should show all breeds when clicking All filter"
+        run: npx playwright test tests/functional --grep-invert "should navigate pagination in UI|should filter and reset pagination|should display all breed types|should filter breeds by|should maintain filter when paginating|should reset to page 1 when changing filter|should search breeds by name|should combine search and type filter|should maintain filters when using browser back button|should clear search when clicking clear button|should show correct pagination info|should disable Previous button|should show all breeds when clicking All filter"
 
       - name: Stop test services
         if: always()
