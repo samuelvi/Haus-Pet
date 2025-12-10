@@ -33,7 +33,8 @@ process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
   process.exit(1);
 });
 
-app.listen(port, () => {
-  logger.info(`Server listening on http://localhost:${port}`);
+// Listen on 0.0.0.0 to accept connections from outside the container (required for Docker)
+app.listen(port, '0.0.0.0', () => {
+  logger.info(`Server listening on http://0.0.0.0:${port}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
