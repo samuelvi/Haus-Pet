@@ -105,11 +105,20 @@ jobs:
             fi
             if [ $i -eq 150 ]; then
               echo "API failed to start after 300 seconds (5 minutes)"
-              echo "=== API Logs ==="
+              echo "=== Full API Logs ==="
               docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
               echo "=== Database Logs ==="
               docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test
               exit 1
+            fi
+            # Show progress logs every 15 attempts (30 seconds)
+            if [ $((i % 15)) -eq 0 ]; then
+              echo "=== Progress check at attempt $i/150 (${i}*2 = $((i*2)) seconds) ==="
+              echo "Container status:"
+              docker compose -f docker/docker-compose.test.yaml ps hauspet_api_test
+              echo "Last 20 lines of API logs:"
+              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | tail -20
+              echo "=== End progress check ==="
             fi
             echo "API not ready, waiting... (Attempt $i/150)"
             sleep 2
