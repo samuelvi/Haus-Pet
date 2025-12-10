@@ -95,6 +95,7 @@ jobs:
 
       - name: Wait for API to be ready
         run: |
+          set +e  # Disable exit on error - we handle errors explicitly
           echo "Waiting for API to be ready (allowing up to 5 minutes)..."
 
           ATTEMPT=0
@@ -106,7 +107,8 @@ jobs:
             ELAPSED=$((ATTEMPT * 2))
 
             # Try to reach the API
-            if curl -f -s -o /dev/null http://localhost:3000/api/breeds; then
+            curl -f -s -o /dev/null http://localhost:3000/api/breeds
+            if [ $? -eq 0 ]; then
               echo "✓ API is ready after ${ELAPSED} seconds!"
               READY=true
               break
@@ -119,6 +121,8 @@ jobs:
 
             sleep 2
           done
+
+          set -e  # Re-enable exit on error for the validation section
 
           if [ "$READY" != "true" ]; then
             echo ""
