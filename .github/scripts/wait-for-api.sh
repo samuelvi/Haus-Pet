@@ -1,63 +1,53 @@
 #!/bin/bash
-# Don't use set -e here - we want the loop to continue even if curl fails
-set -o pipefail
 
-echo "=== Starting API Wait Script ==="
-echo "Will wait up to 5 minutes for API to be ready"
-date || echo "Starting wait loop..."
+echo "=== Wait Script Starting ==="
+echo "PWD: $(pwd)"
+echo "Script permissions: $(ls -la .github/scripts/wait-for-api.sh 2>/dev/null || echo 'cannot check')"
 
-attempt=0
-max_attempts=150
-start_time=$(date +%s || echo "0")
+echo "Testing curl availability..."
+which curl || echo "curl not found!"
 
-while [ $attempt -lt $max_attempts ]; do
-    attempt=$((attempt + 1))
-    current_time=$(date +%s || echo "$start_time")
-    elapsed=$((current_time - start_time))
+echo "Testing docker compose availability..."
+docker compose version || echo "docker compose not found!"
 
-    # Try to reach the API
+echo ""
+echo "=== Starting API Wait Loop ==="
+echo "Will attempt up to 150 times (5 minutes)"
+
+for attempt in $(seq 1 150); do
+    # Try to reach the API - don't let curl failure stop the loop
     if curl --connect-timeout 3 --max-time 5 -f -s http://localhost:3000/api/breeds > /dev/null 2>&1; then
         echo ""
-        echo "✓ API is ready after ${elapsed} seconds (attempt ${attempt})!"
-        echo ""
-        echo "Verifying database has data..."
-        response=$(curl -s http://localhost:3000/api/breeds)
-        echo "API Response: ${response:0:200}"
+        echo "✓ API is ready after attempt ${attempt}!"
 
-        breed_count=$(echo "$response" | grep -o '"id"' | wc -l)
-        echo "Found $breed_count breeds in database"
+        # Verify data
+        response=$(curl -s http://localhost:3000/api/breeds 2>/dev/null || echo '{}')
+        echo "Response: ${response:0:200}"
+
+        breed_count=$(echo "$response" | grep -o '"id"' | wc -l | tr -d ' ')
+        echo "Found $breed_count breeds"
 
         if [ "$breed_count" -ge 5 ]; then
-            echo "✓ Database verified with $breed_count breeds!"
-            echo "✓ Ready to run functional tests!"
+            echo "✓ Database verified!"
             exit 0
         else
-            echo "ERROR: Database does not have enough seed data (expected at least 5 breeds)"
-            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+            echo "ERROR: Not enough data (need 5+ breeds)"
             exit 1
         fi
     fi
 
-    # Show progress every 5 attempts
+    # Progress every 5 attempts
     if [ $((attempt % 5)) -eq 0 ]; then
-        echo "[${elapsed}s] Attempt ${attempt}/${max_attempts} - waiting for API..."
+        echo "[Attempt ${attempt}/150] Still waiting..."
     fi
 
     sleep 2
 done
 
-# If we get here, API never became ready
 echo ""
-echo "✗ API failed to start after 300 seconds"
-date || echo "Wait loop ended"
-echo "Total attempts: $attempt"
-echo ""
-echo "=== CONTAINER STATUS ==="
-docker compose -f docker/docker-compose.test.yaml ps
-echo ""
-echo "=== FULL API LOGS ==="
-docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
-echo ""
-echo "=== DATABASE LOGS ==="
-docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test
+echo "✗ API never became ready after 150 attempts"
+echo "=== Container Status ==="
+docker compose -f docker/docker-compose.test.yaml ps 2>/dev/null || echo "Cannot get status"
+echo "=== API Logs ==="
+docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test 2>/dev/null | tail -50 || echo "Cannot get logs"
 exit 1
