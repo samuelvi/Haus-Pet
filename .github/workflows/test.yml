@@ -94,74 +94,57 @@ jobs:
           docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | head -100
 
       - name: Wait for API to be ready
+        shell: bash
         run: |
-          set +e  # Disable exit on error - we handle errors explicitly
-          echo "Waiting for API to be ready (allowing up to 5 minutes)..."
+          echo "=== Starting API Wait Loop ==="
+          echo "Will wait up to 5 minutes for API to be ready"
 
-          ATTEMPT=0
-          MAX_ATTEMPTS=150
-          READY=false
+          for i in $(seq 1 150); do
+            elapsed=$((i * 2))
 
-          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-            ATTEMPT=$((ATTEMPT + 1))
-            ELAPSED=$((ATTEMPT * 2))
+            # Try to reach the API
+            if curl --connect-timeout 3 --max-time 5 -f -s http://localhost:3000/api/breeds > /dev/null 2>&1; then
+              echo "✓ API is ready after ${elapsed} seconds!"
+              echo ""
+              echo "Verifying database has data..."
+              response=$(curl -s http://localhost:3000/api/breeds)
+              echo "API Response: ${response:0:200}"
 
-            # Try to reach the API with timeouts
-            curl --connect-timeout 5 --max-time 10 -f -s -o /dev/null http://localhost:3000/api/breeds 2>/dev/null
-            CURL_EXIT=$?
+              breed_count=$(echo "$response" | grep -o '"id"' | wc -l)
+              echo "Found $breed_count breeds in database"
 
-            if [ $CURL_EXIT -eq 0 ]; then
-              echo "✓ API is ready after ${ELAPSED} seconds!"
-              READY=true
-              break
+              if [ "$breed_count" -ge 5 ]; then
+                echo "✓ Database verified with $breed_count breeds!"
+                echo "✓ Ready to run functional tests!"
+                exit 0
+              else
+                echo "ERROR: Database does not have enough seed data (expected at least 5 breeds)"
+                docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+                exit 1
+              fi
             fi
 
-            # Show progress every 15 attempts (30 seconds)
-            if [ $((ATTEMPT % 15)) -eq 0 ]; then
-              echo "Still waiting... (${ELAPSED}s / 300s)"
-              # Show container status periodically for debugging
-              docker compose -f docker/docker-compose.test.yaml ps hauspet_api_test 2>/dev/null || true
+            # Show progress
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Still waiting for API... (${elapsed}s / 300s) - Attempt ${i}/150"
             fi
 
             sleep 2
           done
 
-          set -e  # Re-enable exit on error for the validation section
-
-          if [ "$READY" != "true" ]; then
-            echo ""
-            echo "✗ API failed to start after 300 seconds"
-            echo ""
-            echo "=== CONTAINER STATUS ==="
-            docker compose -f docker/docker-compose.test.yaml ps || echo "Failed to get container status"
-            echo ""
-            echo "=== FULL API LOGS ==="
-            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test || echo "Failed to get API logs"
-            echo ""
-            echo "=== DATABASE LOGS ==="
-            docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test || echo "Failed to get DB logs"
-            exit 1
-          fi
-
+          # If we get here, API never became ready
           echo ""
-          echo "Verifying database has data..."
-          BREEDS_RESPONSE=$(curl --connect-timeout 5 --max-time 10 -s http://localhost:3000/api/breeds)
-          echo "API Response (first 200 chars): ${BREEDS_RESPONSE:0:200}"
-
-          BREED_COUNT=$(echo "$BREEDS_RESPONSE" | grep -o '"id"' | wc -l | tr -d ' ')
-          echo "Found $BREED_COUNT breeds in database"
-
-          if [ "$BREED_COUNT" -lt 5 ]; then
-            echo ""
-            echo "ERROR: Database does not have enough seed data (expected at least 5 breeds)"
-            echo ""
-            echo "=== Full API Logs ==="
-            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test || echo "Failed to get API logs"
-            exit 1
-          fi
-
-          echo "✓ Database verified with $BREED_COUNT breeds!"
-          echo "✓ Ready to run functional tests!"
+          echo "✗ API failed to start after 300 seconds"
+          echo ""
+          echo "=== CONTAINER STATUS ==="
+          docker compose -f docker/docker-compose.test.yaml ps
+          echo ""
+          echo "=== FULL API LOGS ==="
+          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+          echo ""
+          echo "=== DATABASE LOGS ==="
+          docker compose -f docker/docker-compose.test.yaml logs hauspet_db_test
+          exit 1
 
       - name: Run functional tests
         env:
