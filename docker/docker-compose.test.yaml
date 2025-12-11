@@ -33,7 +33,7 @@ services:
       - ../playwright.config.ts:/app/playwright.config.ts
       - ../package.json:/app/package.json
       - ../package-lock.json:/app/package-lock.json
-      - ./start-test-api.sh:/start-test-api.sh:ro
+      - ./start-test-api-fast.sh:/start-test-api.sh:ro
       - /app/api/node_modules
       - /app/node_modules
     command: sh /start-test-api.sh
