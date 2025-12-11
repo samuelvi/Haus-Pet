@@ -131,8 +131,31 @@ jobs:
           docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | tail -100
 
       - name: Wait for API to be ready
-        run: bash .github/scripts/wait-for-api.sh
         timeout-minutes: 6
+        run: |
+          echo "=== Starting API Wait Loop ==="
+          for i in {1..150}; do
+            if curl --connect-timeout 3 --max-time 5 -f -s http://localhost:3000/api/breeds > /dev/null 2>&1; then
+              echo "✓ API is ready!"
+              response=$(curl -s http://localhost:3000/api/breeds)
+              breed_count=$(echo "$response" | grep -o '"id"' | wc -l)
+              if [ "$breed_count" -ge 5 ]; then
+                echo "✓ Found $breed_count breeds - ready for tests!"
+                exit 0
+              else
+                echo "ERROR: Only $breed_count breeds found (need 5+)"
+                docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+                exit 1
+              fi
+            fi
+            if [ $((i % 5)) -eq 0 ]; then
+              echo "[Attempt $i/150] Waiting for API..."
+            fi
+            sleep 2
+          done
+          echo "✗ API never became ready"
+          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+          exit 1
 
       - name: Run functional tests
         env:
