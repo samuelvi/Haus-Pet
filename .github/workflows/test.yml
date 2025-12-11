@@ -96,11 +96,20 @@ jobs:
       - name: Wait for API to be ready
         shell: bash
         run: |
+          set -x  # Enable debug mode to see every command
           echo "=== Starting API Wait Loop ==="
+          echo "Bash version: $BASH_VERSION"
           echo "Will wait up to 5 minutes for API to be ready"
+          echo "Starting at: $(date)"
 
-          for i in $(seq 1 150); do
-            elapsed=$((i * 2))
+          attempt=0
+          max_attempts=150
+
+          while [ $attempt -lt $max_attempts ]; do
+            attempt=$((attempt + 1))
+            elapsed=$((attempt * 2))
+
+            echo "Attempt ${attempt}/${max_attempts} (${elapsed}s elapsed)"
 
             # Try to reach the API
             if curl --connect-timeout 3 --max-time 5 -f -s http://localhost:3000/api/breeds > /dev/null 2>&1; then
@@ -124,9 +133,11 @@ jobs:
               fi
             fi
 
-            # Show progress
-            if [ $((i % 10)) -eq 0 ]; then
-              echo "Still waiting for API... (${elapsed}s / 300s) - Attempt ${i}/150"
+            # Show progress every 10 attempts
+            if [ $((attempt % 10)) -eq 0 ]; then
+              echo "Still waiting... (${elapsed}s / 300s)"
+              echo "Container status:"
+              docker compose -f docker/docker-compose.test.yaml ps hauspet_api_test || echo "Failed to get container status"
             fi
 
             sleep 2
@@ -135,6 +146,7 @@ jobs:
           # If we get here, API never became ready
           echo ""
           echo "✗ API failed to start after 300 seconds"
+          echo "Ended at: $(date)"
           echo ""
           echo "=== CONTAINER STATUS ==="
           docker compose -f docker/docker-compose.test.yaml ps
