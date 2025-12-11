@@ -106,9 +106,24 @@ jobs:
             ATTEMPT=$((ATTEMPT + 1))
             ELAPSED=$((ATTEMPT * 2))
 
-            # Try to reach the API
-            curl -f -s -o /dev/null http://localhost:3000/api/breeds
-            if [ $? -eq 0 ]; then
+            # Check if container is still running
+            CONTAINER_STATUS=$(docker compose -f docker/docker-compose.test.yaml ps -q hauspet_api_test 2>/dev/null)
+            if [ -z "$CONTAINER_STATUS" ]; then
+              echo "✗ Container hauspet_api_test is not running!"
+              echo ""
+              echo "=== CONTAINER STATUS ==="
+              docker compose -f docker/docker-compose.test.yaml ps
+              echo ""
+              echo "=== API LOGS ==="
+              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+              exit 1
+            fi
+
+            # Try to reach the API with timeouts
+            curl --connect-timeout 5 --max-time 10 -f -s -o /dev/null http://localhost:3000/api/breeds
+            CURL_EXIT=$?
+
+            if [ $CURL_EXIT -eq 0 ]; then
               echo "✓ API is ready after ${ELAPSED} seconds!"
               READY=true
               break
@@ -116,7 +131,7 @@ jobs:
 
             # Show progress every 15 attempts (30 seconds)
             if [ $((ATTEMPT % 15)) -eq 0 ]; then
-              echo "Still waiting... (${ELAPSED}s / 300s)"
+              echo "Still waiting... (${ELAPSED}s / 300s) [curl exit code: $CURL_EXIT]"
             fi
 
             sleep 2
@@ -141,7 +156,7 @@ jobs:
 
           echo ""
           echo "Verifying database has data..."
-          BREEDS_RESPONSE=$(curl -s http://localhost:3000/api/breeds)
+          BREEDS_RESPONSE=$(curl --connect-timeout 5 --max-time 10 -s http://localhost:3000/api/breeds)
           echo "API Response (first 200 chars): ${BREEDS_RESPONSE:0:200}"
 
           BREED_COUNT=$(echo "$BREEDS_RESPONSE" | grep -o '"id"' | wc -l | tr -d ' ')
