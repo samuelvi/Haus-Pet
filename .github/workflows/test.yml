@@ -106,21 +106,8 @@ jobs:
             ATTEMPT=$((ATTEMPT + 1))
             ELAPSED=$((ATTEMPT * 2))
 
-            # Check if container is still running
-            CONTAINER_STATUS=$(docker compose -f docker/docker-compose.test.yaml ps -q hauspet_api_test 2>/dev/null)
-            if [ -z "$CONTAINER_STATUS" ]; then
-              echo "✗ Container hauspet_api_test is not running!"
-              echo ""
-              echo "=== CONTAINER STATUS ==="
-              docker compose -f docker/docker-compose.test.yaml ps
-              echo ""
-              echo "=== API LOGS ==="
-              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
-              exit 1
-            fi
-
             # Try to reach the API with timeouts
-            curl --connect-timeout 5 --max-time 10 -f -s -o /dev/null http://localhost:3000/api/breeds
+            curl --connect-timeout 5 --max-time 10 -f -s -o /dev/null http://localhost:3000/api/breeds 2>/dev/null
             CURL_EXIT=$?
 
             if [ $CURL_EXIT -eq 0 ]; then
@@ -131,7 +118,9 @@ jobs:
 
             # Show progress every 15 attempts (30 seconds)
             if [ $((ATTEMPT % 15)) -eq 0 ]; then
-              echo "Still waiting... (${ELAPSED}s / 300s) [curl exit code: $CURL_EXIT]"
+              echo "Still waiting... (${ELAPSED}s / 300s)"
+              # Show container status periodically for debugging
+              docker compose -f docker/docker-compose.test.yaml ps hauspet_api_test 2>/dev/null || true
             fi
 
             sleep 2
