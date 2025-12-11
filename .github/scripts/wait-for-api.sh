@@ -1,18 +1,18 @@
 #!/bin/bash
-set -e
+# Don't use set -e here - we want the loop to continue even if curl fails
 set -o pipefail
 
 echo "=== Starting API Wait Script ==="
 echo "Will wait up to 5 minutes for API to be ready"
-echo "Starting at: $(date '+%Y-%m-%d %H:%M:%S')"
+date || echo "Starting wait loop..."
 
 attempt=0
 max_attempts=150
-start_time=$(date +%s)
+start_time=$(date +%s || echo "0")
 
 while [ $attempt -lt $max_attempts ]; do
     attempt=$((attempt + 1))
-    current_time=$(date +%s)
+    current_time=$(date +%s || echo "$start_time")
     elapsed=$((current_time - start_time))
 
     # Try to reach the API
@@ -49,7 +49,7 @@ done
 # If we get here, API never became ready
 echo ""
 echo "✗ API failed to start after 300 seconds"
-echo "Ended at: $(date '+%Y-%m-%d %H:%M:%S')"
+date || echo "Wait loop ended"
 echo "Total attempts: $attempt"
 echo ""
 echo "=== CONTAINER STATUS ==="
