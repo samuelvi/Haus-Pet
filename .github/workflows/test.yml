@@ -83,15 +83,45 @@ jobs:
       - name: Start API service (with migrations)
         run: |
           docker compose -f docker/docker-compose.test.yaml up -d hauspet_api_test
+          echo "Waiting 5 seconds for container to start..."
+          sleep 5
 
-      - name: Check API container status
+      - name: Check API container is running
         run: |
-          echo "Waiting 10 seconds for container to initialize..."
+          echo "=== Checking if API container started ==="
+          CONTAINER_ID=$(docker compose -f docker/docker-compose.test.yaml ps -q hauspet_api_test)
+
+          if [ -z "$CONTAINER_ID" ]; then
+            echo "❌ ERROR: API container did not start!"
+            echo "=== All containers status ==="
+            docker compose -f docker/docker-compose.test.yaml ps
+            echo "=== API Logs ==="
+            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+            exit 1
+          fi
+
+          echo "✓ Container ID: $CONTAINER_ID"
+
+          CONTAINER_STATE=$(docker inspect --format='{{.State.Status}}' $CONTAINER_ID)
+          echo "Container state: $CONTAINER_STATE"
+
+          if [ "$CONTAINER_STATE" != "running" ]; then
+            echo "❌ ERROR: Container is not running (state: $CONTAINER_STATE)"
+            echo "=== Container details ==="
+            docker inspect $CONTAINER_ID
+            echo "=== API Logs ==="
+            docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+            exit 1
+          fi
+
+          echo "✓ API container is running"
+
+      - name: Show initial API logs
+        run: |
+          echo "Waiting 10 seconds for initialization to begin..."
           sleep 10
-          echo "=== Container Status ==="
-          docker compose -f docker/docker-compose.test.yaml ps hauspet_api_test
-          echo "=== Initial API Logs (first 100 lines) ==="
-          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | head -100
+          echo "=== Initial API Logs ==="
+          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | tail -100
 
       - name: Wait for API to be ready
         shell: bash
