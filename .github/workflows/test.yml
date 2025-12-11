@@ -126,24 +126,23 @@ jobs:
       - name: Wait for API to be ready
         shell: bash
         run: |
-          set -x  # Enable debug mode to see every command
           echo "=== Starting API Wait Loop ==="
-          echo "Bash version: $BASH_VERSION"
           echo "Will wait up to 5 minutes for API to be ready"
-          echo "Starting at: $(date)"
+          echo "Starting at: $(date '+%Y-%m-%d %H:%M:%S')"
 
           attempt=0
           max_attempts=150
+          start_time=$(date +%s)
 
           while [ $attempt -lt $max_attempts ]; do
             attempt=$((attempt + 1))
-            elapsed=$((attempt * 2))
-
-            echo "Attempt ${attempt}/${max_attempts} (${elapsed}s elapsed)"
+            current_time=$(date +%s)
+            elapsed=$((current_time - start_time))
 
             # Try to reach the API
             if curl --connect-timeout 3 --max-time 5 -f -s http://localhost:3000/api/breeds > /dev/null 2>&1; then
-              echo "✓ API is ready after ${elapsed} seconds!"
+              echo ""
+              echo "✓ API is ready after ${elapsed} seconds (attempt ${attempt})!"
               echo ""
               echo "Verifying database has data..."
               response=$(curl -s http://localhost:3000/api/breeds)
@@ -163,20 +162,19 @@ jobs:
               fi
             fi
 
-            # Show progress every 10 attempts
-            if [ $((attempt % 10)) -eq 0 ]; then
-              echo "Still waiting... (${elapsed}s / 300s)"
-              echo "Container status:"
-              docker compose -f docker/docker-compose.test.yaml ps hauspet_api_test || echo "Failed to get container status"
+            # Show progress every 5 attempts
+            if [ $((attempt % 5)) -eq 0 ]; then
+              echo "[${elapsed}s] Attempt ${attempt}/${max_attempts} - waiting for API..."
             fi
 
-            sleep 2
+            # Always sleep 2 seconds between attempts
+            sleep 2 || true
           done
 
           # If we get here, API never became ready
           echo ""
           echo "✗ API failed to start after 300 seconds"
-          echo "Ended at: $(date)"
+          echo "Ended at: $(date '+%Y-%m-%d %H:%M:%S')"
           echo ""
           echo "=== CONTAINER STATUS ==="
           docker compose -f docker/docker-compose.test.yaml ps
