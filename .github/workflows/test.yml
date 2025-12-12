@@ -87,6 +87,19 @@ jobs:
             sleep 2
           done
 
+      - name: Setup database (generate, migrate, seed)
+        run: |
+          cd app/api
+          echo "Generating Prisma client..."
+          npx prisma generate
+          echo "Running migrations..."
+          DATABASE_URL="postgresql://user:password@localhost:5433/hauspet_test_db" npx prisma migrate deploy
+          echo "Seeding database..."
+          DATABASE_URL="postgresql://user:password@localhost:5433/hauspet_test_db" npx prisma db seed
+          echo "Seeding pets read model..."
+          DATABASE_URL="postgresql://user:password@localhost:5433/hauspet_test_db" npx ts-node prisma/seed-pets-readmodel.ts
+          echo "✓ Database setup complete"
+
       - name: Start API service (with migrations)
         run: |
           docker compose -f docker/docker-compose.test.yaml up -d hauspet_api_test
