@@ -90,15 +90,23 @@ jobs:
       - name: Setup database (generate, migrate, seed)
         run: |
           cd app/api
-          echo "Generating Prisma client..."
-          npx prisma generate
-          echo "Running migrations..."
-          DATABASE_URL="postgresql://user:password@localhost:5433/hauspet_test_db" npx prisma migrate deploy
-          echo "Seeding database..."
-          DATABASE_URL="postgresql://user:password@localhost:5433/hauspet_test_db" npx prisma db seed
-          echo "Seeding pets read model..."
-          DATABASE_URL="postgresql://user:password@localhost:5433/hauspet_test_db" npx ts-node prisma/seed-pets-readmodel.ts
-          echo "✓ Database setup complete"
+          echo "=== Generating Prisma client ==="
+          npx prisma generate || { echo "FAILED: prisma generate"; exit 1; }
+          echo "✓ Prisma client generated"
+
+          echo "=== Running migrations ==="
+          DATABASE_URL="postgresql://user:password@localhost:5433/hauspet_test_db" npx prisma migrate deploy || { echo "FAILED: prisma migrate"; exit 1; }
+          echo "✓ Migrations completed"
+
+          echo "=== Seeding database ==="
+          DATABASE_URL="postgresql://user:password@localhost:5433/hauspet_test_db" npx prisma db seed || { echo "FAILED: prisma seed"; exit 1; }
+          echo "✓ Database seeded"
+
+          echo "=== Seeding pets read model ==="
+          DATABASE_URL="postgresql://user:password@localhost:5433/hauspet_test_db" npx ts-node prisma/seed-pets-readmodel.ts || { echo "FAILED: seed-pets-readmodel"; exit 1; }
+          echo "✓ Pets read model seeded"
+
+          echo "✓✓✓ Database setup complete ✓✓✓"
 
       - name: Start API service (with migrations)
         run: |
@@ -138,10 +146,12 @@ jobs:
 
       - name: Show initial API logs
         run: |
-          echo "Waiting 10 seconds for initialization to begin..."
-          sleep 10
-          echo "=== Initial API Logs ==="
-          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test | tail -100
+          echo "Waiting 5 seconds for server to start..."
+          sleep 5
+          echo "=== Container Status ==="
+          docker compose -f docker/docker-compose.test.yaml ps hauspet_api_test
+          echo "=== ALL API Logs ==="
+          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
 
       - name: Wait for API to be ready
         timeout-minutes: 6
