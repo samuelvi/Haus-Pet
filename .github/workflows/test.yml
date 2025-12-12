@@ -157,9 +157,14 @@ jobs:
               fi
             fi
 
-            # Show progress
+            # Show progress and logs periodically
             if [ $((attempt % 10)) -eq 0 ]; then
-              echo "Attempt $attempt/$max_attempts - still waiting..."
+              echo "=== Attempt $attempt/$max_attempts - still waiting ==="
+              echo "Container status:"
+              docker compose -f docker/docker-compose.test.yaml ps hauspet_api_test 2>&1 || true
+              echo "Latest API logs (last 20 lines):"
+              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test 2>&1 | tail -20 || true
+              echo "---"
             fi
 
             sleep 2
