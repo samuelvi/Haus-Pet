@@ -133,29 +133,42 @@ jobs:
       - name: Wait for API to be ready
         timeout-minutes: 6
         run: |
+          set +e  # Don't exit on error
           echo "Starting wait loop..."
           attempt=0
-          while [ $attempt -lt 150 ]; do
+          max_attempts=150
+
+          while [ $attempt -lt $max_attempts ]; do
             attempt=$((attempt + 1))
 
-            curl --connect-timeout 3 --max-time 5 -f -s http://localhost:3000/api/breeds > /dev/null 2>&1 && {
-              echo "API ready!"
-              response=$(curl -s http://localhost:3000/api/breeds)
-              breed_count=$(echo "$response" | grep -o '"id"' | wc -l)
-              [ "$breed_count" -ge 5 ] && {
-                echo "Found $breed_count breeds!"
-                exit 0
-              }
-              echo "ERROR: Only $breed_count breeds"
-              docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
-              exit 1
-            }
+            # Try curl - capture result but don't fail
+            if curl --connect-timeout 3 --max-time 5 -f -s http://localhost:3000/api/breeds > /tmp/api_response.txt 2>&1; then
+              echo "API responded!"
 
-            [ $((attempt % 5)) -eq 0 ] && echo "Attempt $attempt/150..."
+              # Check breed count - use || true to never fail
+              breed_count=$(grep -o '"id"' /tmp/api_response.txt 2>/dev/null | wc -l | tr -d ' ' || echo "0")
+              echo "Found $breed_count breeds"
+
+              if [ "$breed_count" -ge 5 ]; then
+                echo "SUCCESS: Database has $breed_count breeds!"
+                exit 0
+              else
+                echo "WARNING: Only $breed_count breeds found (need 5+)"
+              fi
+            fi
+
+            # Show progress
+            if [ $((attempt % 10)) -eq 0 ]; then
+              echo "Attempt $attempt/$max_attempts - still waiting..."
+            fi
+
             sleep 2
           done
-          echo "API never became ready"
-          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test
+
+          echo ""
+          echo "FAILED: API never became ready after $max_attempts attempts"
+          echo "=== API Logs ==="
+          docker compose -f docker/docker-compose.test.yaml logs hauspet_api_test 2>&1 | tail -100 || true
           exit 1
 
       - name: Run functional tests
