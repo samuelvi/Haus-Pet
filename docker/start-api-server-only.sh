@@ -1,25 +1,21 @@
 #!/bin/sh
-echo "======================================"
-echo "Starting API Server"
-echo "======================================"
+set -x  # Show all commands for debugging
+echo "Starting API Server..."
 
 cd /app/api || exit 1
+echo "Current directory: $(pwd)"
 
-# Quick check - ensure Prisma Client exists
+# List what we have
+echo "Checking node_modules..."
+ls -la node_modules/.bin/ts-node || echo "ts-node not found"
+ls -la node_modules/@prisma/client || echo "@prisma/client not found"
+
+# Generate Prisma Client if needed
 if [ ! -d "node_modules/@prisma/client" ]; then
-  echo "Generating Prisma Client in container..."
-  npx prisma generate || exit 1
+  echo "Generating Prisma Client..."
+  npx prisma generate
 fi
 
-# Verify dependencies exist
-if [ ! -f "node_modules/.bin/ts-node" ]; then
-  echo "ERROR: ts-node not found!"
-  ls -la node_modules/.bin/ || echo "node_modules/.bin/ not found"
-  exit 1
-fi
-
-# Start the server
-echo "Starting server on port 3000..."
-echo "Node modules path: $(pwd)/node_modules"
-echo "ts-node path: $(which ts-node || echo 'not in PATH')"
-exec ./node_modules/.bin/ts-node index.ts
+# Start server (no exec - keep it simple)
+echo "Starting ts-node index.ts..."
+node_modules/.bin/ts-node index.ts
