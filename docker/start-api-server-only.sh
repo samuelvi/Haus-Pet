@@ -1,21 +1,15 @@
 #!/bin/sh
-set -x  # Show all commands for debugging
+set -e  # Exit on error
 echo "Starting API Server..."
 
 cd /app/api || exit 1
 echo "Current directory: $(pwd)"
 
-# List what we have
-echo "Checking node_modules..."
-ls -la node_modules/.bin/ts-node || echo "ts-node not found"
-ls -la node_modules/@prisma/client || echo "@prisma/client not found"
+# ALWAYS regenerate Prisma Client inside container to ensure correct binary for container platform
+echo "Generating Prisma Client for container platform..."
+npx prisma generate || { echo "Failed to generate Prisma client"; exit 1; }
+echo "✓ Prisma client generated"
 
-# Generate Prisma Client if needed
-if [ ! -d "node_modules/@prisma/client" ]; then
-  echo "Generating Prisma Client..."
-  npx prisma generate
-fi
-
-# Start server (no exec - keep it simple)
+# Start server
 echo "Starting ts-node index.ts..."
 node_modules/.bin/ts-node index.ts
