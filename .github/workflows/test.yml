@@ -164,8 +164,8 @@ jobs:
           while [ $attempt -lt $max_attempts ]; do
             attempt=$((attempt + 1))
 
-            # Try curl - capture result but don't fail
-            if curl --connect-timeout 3 --max-time 5 -f -s http://localhost:3000/api/breeds > /tmp/api_response.txt 2>&1; then
+            # Try curl with limit=10 to get enough breeds for validation
+            if curl --connect-timeout 3 --max-time 5 -f -s "http://localhost:3000/api/breeds?limit=10" > /tmp/api_response.txt 2>&1; then
               echo "API responded!"
 
               # Check breed count - use || true to never fail
@@ -176,7 +176,7 @@ jobs:
                 echo "SUCCESS: Database has $breed_count breeds!"
                 exit 0
               else
-                echo "WARNING: Only $breed_count breeds found (need 5+)"
+                echo "WARNING: Only $breed_count breeds found (need 5+), retrying..."
               fi
             fi
 
