@@ -1,58 +1,32 @@
 #!/bin/sh
-set -e  # Exit on error
+set -e
 
 echo "========================================"
-echo "Starting API Server Container"
+echo "Starting HausPet API Server"
 echo "========================================"
-echo "Container platform: $(uname -a)"
-echo "Node version: $(node --version)"
-echo "NPM version: $(npm --version)"
+echo "Platform: $(uname -s -m)"
+echo "Node: $(node --version)"
 echo ""
 
-cd /app/api || exit 1
-echo "✓ Working directory: $(pwd)"
+cd /app/api || { echo "ERROR: Cannot cd to /app/api"; exit 1; }
+
+# Verify critical files exist
+echo "Checking dependencies..."
+[ -f "prisma/schema.prisma" ] || { echo "ERROR: schema.prisma not found"; exit 1; }
+[ -d "node_modules" ] || { echo "ERROR: node_modules not found"; exit 1; }
+[ -f "node_modules/.bin/ts-node" ] || { echo "ERROR: ts-node not found"; exit 1; }
+echo "✓ All dependencies found"
 echo ""
 
-# Check if schema exists
-if [ -f "prisma/schema.prisma" ]; then
-  echo "✓ Prisma schema found"
-else
-  echo "✗ ERROR: Prisma schema NOT found at prisma/schema.prisma"
-  ls -la prisma/ || echo "prisma/ directory not found"
-  exit 1
-fi
-
-# Check if node_modules exists
-if [ -d "node_modules" ]; then
-  echo "✓ node_modules directory exists"
-  echo "  - @prisma/client: $(ls -d node_modules/@prisma/client 2>/dev/null && echo 'exists' || echo 'NOT FOUND')"
-  echo "  - ts-node: $(ls node_modules/.bin/ts-node 2>/dev/null && echo 'exists' || echo 'NOT FOUND')"
-else
-  echo "✗ ERROR: node_modules directory NOT found"
-  exit 1
-fi
-echo ""
-
-# ALWAYS regenerate Prisma Client inside container to ensure correct binary for container platform
-echo "Generating Prisma Client for container platform..."
-echo "This ensures the query engine binary matches the container OS/architecture"
-npx prisma generate || { echo "✗ FAILED to generate Prisma client"; exit 1; }
-echo "✓ Prisma client generated successfully"
-echo ""
-
-# Verify Prisma client after generation
+# Prisma client should already be generated on host with all binary targets
+# including the one for this container platform (debian-openssl-3.0.x)
 if [ -d "node_modules/@prisma/client" ]; then
-  echo "✓ Prisma client verified in node_modules"
-  echo "  Available query engines:"
-  find node_modules/@prisma/client -name "libquery_engine-*" -type f 2>/dev/null | head -5 || echo "  (query engines not found)"
+  echo "✓ Prisma client found (generated on host with multi-platform binaries)"
 else
-  echo "✗ ERROR: Prisma client NOT found after generation"
-  exit 1
+  echo "WARNING: Prisma client not found, generating now..."
+  npx prisma generate || { echo "ERROR: Failed to generate Prisma"; exit 1; }
 fi
 echo ""
 
-# Start server
-echo "========================================"
-echo "Starting API Server with ts-node..."
-echo "========================================"
-node_modules/.bin/ts-node index.ts
+echo "Starting API server..."
+exec node_modules/.bin/ts-node index.ts
