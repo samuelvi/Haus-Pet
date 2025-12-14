@@ -1,5 +1,13 @@
 import dotenv from 'dotenv';
-dotenv.config(); // Load environment variables first
+
+// Load environment-specific .env file
+const envFile = process.env.NODE_ENV === 'test'
+  ? '.env.test'
+  : process.env.NODE_ENV === 'production'
+    ? '.env.production'
+    : '.env';
+
+dotenv.config({ path: envFile });
 
 import app from "./app";
 import logger from "./infrastructure/logger/logger";
